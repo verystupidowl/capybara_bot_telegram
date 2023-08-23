@@ -60,11 +60,12 @@ public class CapybaraMapper implements RowMapper<Capybara> {
         capybara.setRspId(resultSet.getInt("r_s_p_id"));
         int job = resultSet.getInt("job");
         capybaraBigJob = new CapybaraBigJob(resultSet.getInt("big_job_timer"),
-                resultSet.getInt("on_big_job"), resultSet.getInt("next_big_job"));
+                resultSet.getInt("on_big_job"), resultSet.getLong("next_big_job"));
         capybara.setCapybaraBigJob(capybaraBigJob);
         capybaraPreparation = new CapybaraPreparation(resultSet.getInt("preparation_improvement"),
-                resultSet.getInt("on_preparation"), resultSet.getInt("prepared"));
+                resultSet.getInt("on_preparation"), resultSet.getLong("prepared"));
         capybara.setCapybaraPreparation(capybaraPreparation);
+        capybara.setTimeZone(resultSet.getInt("time_zone"));
         if (job != 0) {
             major = job / 100;
             minor = (job / 10) % 10;
@@ -75,7 +76,7 @@ public class CapybaraMapper implements RowMapper<Capybara> {
                 case 3 -> capybara.setJob(mainJob.mainJob(Jobs.CRIMINAL, minor));
             }
             capybaraJob = new CapybaraJob(resultSet.getInt("job_time_remaining"),
-                    resultSet.getInt("on_job"), resultSet.getInt("job_time"));
+                    resultSet.getInt("on_job"), resultSet.getLong("job_time"));
             capybara.getJob().setRise(rise);
             capybara.getJob().setJobTimer(capybaraJob);
 

@@ -7,8 +7,8 @@ public class SimpleKeyboardCreator {
     public ReplyKeyboardMarkup createMenuKeyboard() {
         return new ReplyKeyboardMarkup(new String[][]{
                 {"Моя капибара"},
+                {"Топ капибар"},
                 {"Выкинуть бедную капибару"},
-                {"Топ капибар"}
         }).resizeKeyboard(true);
     }
 }

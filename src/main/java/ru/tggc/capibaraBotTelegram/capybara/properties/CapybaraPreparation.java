@@ -3,7 +3,7 @@ package ru.tggc.capibaraBotTelegram.capybara.properties;
 public class CapybaraPreparation extends AbstractCapybaraProperty {
 
 
-    public CapybaraPreparation(int improvement, int onJob, int prepared) {
+    public CapybaraPreparation(int improvement, int onJob, Long prepared) {
         this.timer = improvement;
         this.level = onJob;
         this.nextTime = prepared;
@@ -32,11 +32,11 @@ public class CapybaraPreparation extends AbstractCapybaraProperty {
         this.level = level;
     }
 
-    public void setPrepared(int nextTime) {
+    public void setPrepared(Long nextTime) {
         this.nextTime = nextTime;
     }
 
-    public Integer getPrepared() {
+    public Long getPrepared() {
         return nextTime;
     }
 

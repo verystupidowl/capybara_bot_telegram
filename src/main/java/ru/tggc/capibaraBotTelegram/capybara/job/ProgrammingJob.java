@@ -37,7 +37,7 @@ public class ProgrammingJob implements Job {
             if (capybara.getJob().getJobTimer().getLevel() == 0) {
                 if (capybara.getCapybaraBigJob().getLevel() != 1) {
                     capybara.getJob().getJobTimer().setLevel(1);
-                    capybara.getJob().getJobTimer().setNextJob(message.date() + 21600);
+                    capybara.getJob().getJobTimer().setNextJob((long) (message.date() + 21600));
                     capybara.getJob().getJobTimer().setTimer(message.date() + 7200);
                 } else
                     throw new CapybaraException("3");

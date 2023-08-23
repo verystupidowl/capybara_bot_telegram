@@ -25,6 +25,8 @@ public class Capybara extends AbstractCapybara {
     private int rsp;
     private int rspId;
 
+    private int timeZone;
+
     //Constructors
 
     @Autowired
@@ -37,7 +39,7 @@ public class Capybara extends AbstractCapybara {
         this.capybaraImprovement = capybaraImprovement;
     }
 
-    public Capybara(Username username, String name) {
+    public Capybara(Username username, String name, int timeZone) {
         this.username = username;
         this.name = name;
         this.capybaraPhoto = CapybaraPhoto.getDefaultPhoto();
@@ -53,6 +55,7 @@ public class Capybara extends AbstractCapybara {
         this.defeats = 0;
         this.currency = 300;
         this.isWedding = 0;
+        this.timeZone = timeZone;
     }
 
     public Capybara() {
@@ -70,6 +73,18 @@ public class Capybara extends AbstractCapybara {
 
     public void setCapybaraPreparation(CapybaraPreparation capybaraPreparation) {
         this.capybaraPreparation = capybaraPreparation;
+    }
+
+    public void setIndexOfType(int indexOfType) {
+        this.indexOfType = indexOfType;
+    }
+
+    public int getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(int timeZone) {
+        this.timeZone = timeZone;
     }
 
     public void setCapybaraBigJob(CapybaraBigJob capybaraBigJob) {

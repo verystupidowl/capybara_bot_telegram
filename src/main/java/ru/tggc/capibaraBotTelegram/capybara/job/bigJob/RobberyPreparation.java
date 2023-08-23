@@ -21,7 +21,7 @@ public class RobberyPreparation implements Preparation {
     @Override
     public Capybara getFromPreparation(Message message, Capybara capybara) {
         capybara.setCapybaraPreparation(new CapybaraPreparation(improvement,
-                0, 1));
+                0, 1L));
         return capybara;
     }
 }

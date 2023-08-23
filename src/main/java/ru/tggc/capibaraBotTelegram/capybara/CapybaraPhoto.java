@@ -181,7 +181,7 @@ public class CapybaraPhoto {
 
     @Override
     public String toString() {
-        if (setDefaultPhotos().contains(this)) {
+        if (type != null) {
             if (("" + accessKey).equals("null"))
                 return type + ownerID + "_" + mediaID;
             else

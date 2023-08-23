@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CapybaraJob extends AbstractCapybaraProperty {
 
-    public CapybaraJob(int jobTimer, int onJob, int nextJob) {
+    public CapybaraJob(int jobTimer, int onJob, Long nextJob) {
         this.timer = jobTimer;
         this.level = onJob;
         this.nextTime = nextJob;
@@ -16,11 +16,11 @@ public class CapybaraJob extends AbstractCapybaraProperty {
     }
 
 
-    public int getNextJob() {
+    public Long getNextJob() {
         return nextTime;
     }
 
-    public void setNextJob(int nextJob) {
+    public void setNextJob(Long nextJob) {
         this.nextTime = nextJob;
     }
 

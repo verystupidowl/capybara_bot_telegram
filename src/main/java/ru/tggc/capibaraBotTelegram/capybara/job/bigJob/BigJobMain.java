@@ -130,7 +130,7 @@ public class BigJobMain {
                 }
             }
         } else {
-            capybara.setCapybaraPreparation(new CapybaraPreparation(0, 0, 0));
+            capybara.setCapybaraPreparation(new CapybaraPreparation(0, 0, 0L));
         }
         return capybara;
     }

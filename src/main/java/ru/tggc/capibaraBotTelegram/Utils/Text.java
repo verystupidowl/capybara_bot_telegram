@@ -10,7 +10,7 @@ import java.util.Objects;
 public class Text {
     public final String ALREADY_HAVE_CAPYBARA = "У тебя уже есть капибара!\n" +
             "Ты можешь выкинуть ее и взять новую";
-    public final String DONT_HAVE_CAPYBARA = "Сперва возьми капибару!";
+    public final String DONT_HAVE_CAPYBARA = "Сперва возьми капибару!\nЧтобы сделать это напиши \"Взять капибару\"";
     public final String ALREADY_ON_WORK = "Твоя капибара уже на работе!\n " +
             "Неужели ты хочешь, чтобы она работала на нескольких работах???";
 
@@ -156,7 +156,7 @@ public class Text {
 
             4. \uD83D\uDC4C\uD83C\uDFFBНичего: Начать проект без улучшений""";
 
-    private static String timeToString(Integer secs) {
+    private static String timeToString(long secs) {
         long hour = secs / 3600,
                 min = secs / 60 % 60,
                 sec = secs % 60;

@@ -11,13 +11,7 @@ import java.util.List;
 
 public class InlineKeyboardCreator {
 
-    public InlineKeyboardMarkup startKeyboard() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Взять капибару").callbackData("take_capybara")}
-        });
-    }
-
-    public InlineKeyboardMarkup myCapybaraKeyboard(Capybara capybara, Message message) {
+    public InlineKeyboardMarkup myCapybaraKeyboard(Capybara capybara, int date) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> change = new ArrayList<>();
         InlineKeyboardButton setName = new InlineKeyboardButton("Изменить имя").callbackData("set_name");
@@ -28,13 +22,13 @@ public class InlineKeyboardCreator {
         rows.add(change);
         List<InlineKeyboardButton> feedHappy = null;
 
-        if (capybara.getSatiety().getTimeRemaining() <= message.date()) {
+        if (capybara.getSatiety().getTimeRemaining() <= date) {
             InlineKeyboardButton feedCapybara = new InlineKeyboardButton("Покормить/Откормить").callbackData("feed_fatten");
             feedHappy = new ArrayList<>();
             feedHappy.add(feedCapybara);
         }
 
-        if (capybara.getHappiness().getTimeRemaining() <= message.date()) {
+        if (capybara.getHappiness().getTimeRemaining() <= date) {
             InlineKeyboardButton makeHappy = new InlineKeyboardButton("Осчастливить капибару").callbackData("make_happy");
             if (feedHappy == null)
                 feedHappy = new ArrayList<>();
@@ -47,18 +41,18 @@ public class InlineKeyboardCreator {
 
         List<InlineKeyboardButton> bigJobs = null;
 
-        if (capybara.hasWork() && capybara.getCapybaraBigJob().getNextJob() <= message.date()
+        if (capybara.hasWork() && capybara.getCapybaraBigJob().getNextJob() <= date
                 && capybara.getCapybaraPreparation().getPrepared() == 1 && capybara.getCapybaraBigJob().getLevel() == 0) {
             InlineKeyboardButton bigJob = new InlineKeyboardButton("Большое дело").callbackData("big_job");
             bigJobs = new ArrayList<>();
             bigJobs.add(bigJob);
         } else if (capybara.hasWork() && capybara.getCapybaraPreparation().getPrepared() == 0 && capybara.getCapybaraPreparation().getOnJob() == 0
-                && capybara.getCapybaraBigJob().getNextJob() <= message.date() && capybara.getLevel() >= 20
+                && capybara.getCapybaraBigJob().getNextJob() <= date && capybara.getLevel() >= 20
                 && capybara.getJob().getJobTimer().getLevel() != 1) {
             InlineKeyboardButton bigJob = new InlineKeyboardButton("Подготовка к большому делу").callbackData("big_job_preparation");
             bigJobs = new ArrayList<>();
             bigJobs.add(bigJob);
-        } else if (capybara.hasWork() && capybara.getCapybaraBigJob().getTimeRemaining() <= message.date()
+        } else if (capybara.hasWork() && capybara.getCapybaraBigJob().getTimeRemaining() <= date
                 && capybara.getCapybaraPreparation().getPrepared() == 1 && capybara.getCapybaraBigJob().getLevel() == 1) {
             InlineKeyboardButton bigJob = new InlineKeyboardButton("Завершить большое дело").callbackData("end_big_job");
             bigJobs = new ArrayList<>();
@@ -72,7 +66,7 @@ public class InlineKeyboardCreator {
         List<InlineKeyboardButton> jobs = null;
 
         if (capybara.hasWork()) {
-            if (capybara.getJob().getJobTimer().getTimeRemaining() <= message.date() && capybara.getJob().getJobTimer().getLevel() == 1) {
+            if (capybara.getJob().getJobTimer().getTimeRemaining() <= date && capybara.getJob().getJobTimer().getLevel() == 1) {
                 InlineKeyboardButton job = new InlineKeyboardButton("Забрать с работы").callbackData("take_from_job");
                 jobs = new ArrayList<>();
                 jobs.add(job);
@@ -97,7 +91,7 @@ public class InlineKeyboardCreator {
         return new InlineKeyboardMarkup(rows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new));
     }
 
-    public InlineKeyboardMarkup infoKeyboard(Capybara capybara, CallbackQuery query) {
+    public InlineKeyboardMarkup infoKeyboard(Capybara capybara, int date) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
         List<InlineKeyboardButton> mainRow = new ArrayList<>();
@@ -109,14 +103,14 @@ public class InlineKeyboardCreator {
         mainRow.add(main);
         rows.add(mainRow);
 
-        if (capybara.getTea().getTimeRemaining() <= query.message().date() && capybara.getTea().getLevel() == 0) {
+        if (capybara.getTea().getTimeRemaining() <= date && capybara.getTea().getLevel() == 0) {
             InlineKeyboardButton teaBtn = new InlineKeyboardButton("Пойти на чаепитие").callbackData("go_tea");
             tea = new ArrayList<>();
             tea.add(teaBtn);
             rows.add(tea);
         }
 
-        if (capybara.hasWork() && capybara.getJob().getJobTimer().getNextJob() <= query.message().date()
+        if (capybara.hasWork() && capybara.getJob().getJobTimer().getNextJob() <= date
                 && capybara.getJob().getJobTimer().getLevel() == 0 && capybara.getCapybaraBigJob().getLevel() != 1) {
             InlineKeyboardButton jobBtn = new InlineKeyboardButton("Отправить капибару на работу").callbackData("go_job");
             job = new ArrayList<>();

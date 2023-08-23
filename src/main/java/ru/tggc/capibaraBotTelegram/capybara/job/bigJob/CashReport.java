@@ -16,14 +16,14 @@ public class CashReport implements BigJob {
     @Override
     public Capybara goToBigJob(Message message) {
         capybara.setCapybaraBigJob(new CapybaraBigJob(message.date() +
-                (capybara.getCapybaraPreparation().getImprove() == 3337 ?  7200 : 10800), 1, message.date() + 259200));
+                (capybara.getCapybaraPreparation().getImprove() == 3337 ?  7200 : 10800), 1, (long) (message.date() + 259200)));
         return capybara;
     }
 
     @Override
     public Capybara getFromBigJob(Message message) {
         capybara.setCapybaraBigJob(new CapybaraBigJob(capybara.getCapybaraBigJob().getTimeRemaining(), 0, capybara.getCapybaraBigJob().getNextJob()));
-        capybara.setCapybaraPreparation(new CapybaraPreparation(0, 0, 0));
+        capybara.setCapybaraPreparation(new CapybaraPreparation(0, 0, 0L));
         return capybara;
     }
 }

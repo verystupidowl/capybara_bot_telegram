@@ -4,5 +4,5 @@ abstract class AbstractCapybaraProperty {
 
     protected Integer timer;
     protected Integer level;
-    protected Integer nextTime;
+    protected Long nextTime;
 }

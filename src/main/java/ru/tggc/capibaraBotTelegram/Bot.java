@@ -5,12 +5,16 @@ import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.SendDocument;
+import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SendSticker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.tggc.capibaraBotTelegram.keyboard.SimpleKeyboardCreator;
 import ru.tggc.capibaraBotTelegram.serveCommands.CallbackServer;
 import ru.tggc.capibaraBotTelegram.serveCommands.TextCommandsServer;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,9 +51,22 @@ public class Bot extends TelegramBot {
                     .ifPresent(command -> serveCommand(update.message()));
             Optional.ofNullable(update.message().photo())
                     .ifPresent(photo -> servePhoto(update.message()));
+            if (update.message().newChatMembers().length != 0) {
+                if (!Arrays.stream(update.message().newChatMembers()).toList().stream().filter(member -> member.id() == 6653668731L).toList().isEmpty()) {
+                    greetings(update.message().chat().id());
+                }
+            }
         } else if (update.callbackQuery() != null) {
             serveCallback(update.callbackQuery());
         }
+    }
+
+    private void greetings(Long chatId) {
+        execute(new SendMessage(chatId, """
+                Привет! Я капибаработ!
+                Чтобы ты мог играть со мной, мне нужно дать права доступа
+                Как только ты это сделаешь, смело пиши "Взять капибару", чтобы начать играть\uD83D\uDCAB"""));
+        execute(new SendDocument(chatId, "CgACAgQAAx0CZNf_xQACAYJk5heHk6jC9_LZtiqNjWZ5iwABkhcAAlsDAAJGV1VTOovbEOP3PPcwBA"));
     }
 
     private void serveCommand(Message message) {

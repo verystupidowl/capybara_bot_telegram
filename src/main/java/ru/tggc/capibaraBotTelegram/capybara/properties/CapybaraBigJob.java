@@ -2,7 +2,7 @@ package ru.tggc.capibaraBotTelegram.capybara.properties;
 
 public class CapybaraBigJob extends AbstractCapybaraProperty {
 
-    public CapybaraBigJob(int jobTimer, int onJob, int nextJob) {
+    public CapybaraBigJob(int jobTimer, int onJob, Long nextJob) {
         this.timer = jobTimer;
         this.level = onJob;
         this.nextTime = nextJob;
@@ -13,11 +13,11 @@ public class CapybaraBigJob extends AbstractCapybaraProperty {
     }
 
 
-    public int getNextJob() {
+    public Long getNextJob() {
         return nextTime;
     }
 
-    public void setNextJob(int nextJob) {
+    public void setNextJob(Long nextJob) {
         this.nextTime = nextJob;
     }
 

@@ -14,7 +14,7 @@ public class CapybaraRace extends AbstractCapybaraProperty {
     }
 
     public void setWantsRace(String wantsRace) {
-        this.nextTime = Integer.parseInt(wantsRace);
+        this.nextTime = Long.parseLong(wantsRace);
     }
 
 
@@ -43,7 +43,7 @@ public class CapybaraRace extends AbstractCapybaraProperty {
     public CapybaraRace(int raceTimer, int race, String wantsRace, int startedRace) {
         this.timer = raceTimer;
         this.level = race;
-        this.nextTime = Integer.parseInt(wantsRace);
+        this.nextTime = Long.parseLong(wantsRace);
         this.startedRace = startedRace;
     }
 
@@ -61,5 +61,15 @@ public class CapybaraRace extends AbstractCapybaraProperty {
 
     public void setStartedRace(int startedRace) {
         this.startedRace = startedRace;
+    }
+
+    @Override
+    public String toString() {
+        return "CapybaraRace{" +
+                "startedRace=" + startedRace +
+                ", timer=" + timer +
+                ", level=" + level +
+                ", nextTime=" + nextTime +
+                '}';
     }
 }
