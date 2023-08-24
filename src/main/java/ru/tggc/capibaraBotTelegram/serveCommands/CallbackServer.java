@@ -2,7 +2,9 @@ package ru.tggc.capibaraBotTelegram.serveCommands;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.request.InputMediaPhoto;
 import com.pengrad.telegrambot.request.EditMessageCaption;
+import com.pengrad.telegrambot.request.EditMessageMedia;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +69,7 @@ public class CallbackServer {
                 Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
                 try {
                     capybara.checkNotNull();
+                    bot.execute(new EditMessageMedia(chatId, query.message().messageId(), new InputMediaPhoto(capybara.getCapybaraPhoto().toUrl())));
                     bot.execute(new EditMessageCaption(chatId, query.message().messageId())
                             .caption(text.getMyCapybara(capybara, query.message(), capybaraDAO))
                             .replyMarkup(inlineCreator.myCapybaraKeyboard(capybara, (date - capybara.getTimeZone()))));
@@ -446,15 +449,16 @@ public class CallbackServer {
                             if (capybara.getRace().getStartedRace() == 0 && raceCapybara.getRace().getStartedRace() == 1) {
                                 raceCapybara.setRace(new CapybaraRace(raceCapybara.getRace().getTimeRemaining(), raceCapybara.getRace().getLevel(), "0", 0));
                                 capybara.setRace(new CapybaraRace(capybara.getRace().getTimeRemaining(), capybara.getRace().getLevel(), "0", 0));
-                                capybaraDAO.updateDB(new Request(capybara, ""));
-                                capybaraDAO.updateDB(new Request(capybara, ""));
                                 Random random1 = new Random();
                                 Random random2 = new Random();
 
                                 CapybaraPhoto capybaraPhoto = Capybara.racePhoto();
 
                                 Thread raceThread = new Thread(() -> {
-                                    int messageId = 0;
+                                    capybaraDAO.updateDB(new Request(raceCapybara, ""));
+                                    capybaraDAO.updateDB(new Request(capybara, ""));
+                                    System.out.println("thread");
+                                    int messageId;
                                     Message message = null;
                                     while (message == null) {
                                         System.out.println("yes");
@@ -501,9 +505,12 @@ public class CallbackServer {
                                     raceCapybara.setRace(new CapybaraRace((date - capybara.getTimeZone()) + 300, race1, raceCapybara.getRace().getWantsRace(), 0));
                                     CapybaraImprovement capybaraImprovement = new CapybaraImprovement();
                                     capybaraImprovement.setLevel(0);
+                                    Random random = new Random();
+                                    CapybaraPhoto winCapybaraPhoto = CapybaraPhoto.winCapybara().get(random.nextInt(4));
 
 
                                     if (percent1 > percent2) {
+                                        bot.execute(new EditMessageMedia(chatId, messageId, new InputMediaPhoto(winCapybaraPhoto.toUrl())));
                                         bot.execute(new EditMessageCaption(chatId, messageId)
                                                 .caption("\uD83C\uDFC6Выиграла капибара " + capybara.getName() +
                                                         "\nЕё счастье увеличилось на 10!\nСчастье проигравшей уменьшилось на " +
@@ -525,8 +532,8 @@ public class CallbackServer {
                                         levelUp(capybara);
                                     } else if (percent1 < percent2) {
                                         bot.execute(new EditMessageCaption(chatId, messageId)
-                                                .caption("\uD83C\uDFC6Выиграла капибара" + raceCapybara.getName() +
-                                                        "Её счастье увеличилось на 10!\nСчастье проигравшей уменьшилось на " +
+                                                .caption("\uD83C\uDFC6Выиграла капибара " + raceCapybara.getName() +
+                                                        " Её счастье увеличилось на 10!\nСчастье проигравшей уменьшилось на " +
                                                         (capybara.getImprovement().getLevel() == 2 ? "0" :
                                                                 (capybara.getImprovement().getLevel() == 3 ? "30" : "10"))));
 
@@ -597,6 +604,205 @@ public class CallbackServer {
                         bot.execute(new SendMessage(chatId, "Забег отменен"));
                     }
                 }
+            }
+            case "do_massage" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                try {
+                    capybara.checkNotNull();
+                    if (capybaraDAO.checkChangeName(userId, chatId))
+                        capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                    if (capybara.getRace().getLevel() < 5) {
+                        if (capybara.getCurrency() >= 50) {
+                            capybara.setCurrency(capybara.getCurrency() - 50);
+                            capybara.setRace(new CapybaraRace(((date - capybara.getTimeZone())), 5, capybara.getRace().getWantsRace(),
+                                    capybara.getRace().getStartedRace()));
+                            Request request = new Request(capybara, query.data());
+                            capybaraDAO.updateDB(request);
+                            bot.execute(new SendMessage(chatId, "Ты сделал капибаре массаж! Бодрость полностью восстановлена!"));
+                        } else {
+                            bot.execute(new SendMessage(chatId, "У тебя не хватает арбузных долек!"));
+                        }
+                    } else {
+                        bot.execute(new SendMessage(chatId, "У твоей капибары и так полная бодрость!"));
+                    }
+                } catch (CapybaraNullException e) {
+                    bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                }
+            }
+            case "buy_improve" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                try {
+                    capybara.checkNotNull();
+                    if (capybaraDAO.checkChangeName(userId, chatId))
+                        capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                    if (capybara.getImprovement().getLevel() == 0) {
+                        bot.execute(new EditMessageCaption(chatId, query.message().messageId())
+                                .caption(text.LIST_OF_IMPROVEMENTS)
+                                .replyMarkup(inlineCreator.improvements()));
+                    } else {
+                        bot.execute(new SendMessage(chatId, "У твоей капибары уже есть улучшения!"));
+                    }
+                } catch (CapybaraNullException e) {
+                    bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                }
+            }
+            case "improve_boots" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                try {
+                    capybara.checkNotNull();
+                    if (capybaraDAO.checkChangeName(userId, chatId))
+                        capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                    if (capybara.getImprovement().getLevel() == 0) {
+                        if (capybara.getCurrency() >= 50) {
+                            CapybaraImprovement capybaraImprovement = new CapybaraImprovement();
+                            capybaraImprovement.setLevel(1);
+                            capybara.setImprovement(capybaraImprovement);
+                            capybara.setCurrency(capybara.getCurrency() - 50);
+                            bot.execute(new SendMessage(chatId, "Твоя капибара теперь носит новые стильные ботиночки"));
+                            capybaraDAO.updateImprovement(capybara);
+                        } else {
+                            bot.execute(new SendMessage(chatId, "Похоже у твоей капибары не хватает арбузных долек! " +
+                                    "\nМожет ей стоит сходить на работу?"));
+                        }
+                    } else {
+                        bot.execute(new SendMessage(chatId, "У твоей капибары уже есть улучшения!"));
+                    }
+                } catch (CapybaraNullException e) {
+                    bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                }
+            }
+            case "improve_watermelon" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                try {
+                    capybara.checkNotNull();
+                    if (capybaraDAO.checkChangeName(userId, chatId))
+                        capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                    if (capybara.getImprovement().getLevel() == 0) {
+                        if (capybara.getCurrency() >= 100) {
+                            CapybaraImprovement capybaraImprovement = new CapybaraImprovement();
+                            capybaraImprovement.setLevel(2);
+                            capybara.setImprovement(capybaraImprovement);
+                            capybara.setCurrency(capybara.getCurrency() - 100);
+                            bot.execute(new SendMessage(chatId, "Твоя капибара съела вкусный сладкий арбуз"));
+                            capybaraDAO.updateImprovement(capybara);
+                        } else {
+                            bot.execute(new SendMessage(chatId, "Похоже у твоей капибары не хватает арбузных долек! " +
+                                    "\nМожет ей стоит сходить на работу?"));
+                        }
+                    } else {
+                        bot.execute(new SendMessage(chatId, "У твоей капибары уже есть улучшения!"));
+                    }
+                } catch (CapybaraNullException e) {
+                    bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                }
+            }
+            case "improve_pill" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                try {
+                    capybara.checkNotNull();
+                    if (capybaraDAO.checkChangeName(userId, chatId))
+                        capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                    if (capybara.getImprovement().getLevel() == 0) {
+                        if (capybara.getCurrency() >= 150) {
+                            CapybaraImprovement capybaraImprovement = new CapybaraImprovement();
+                            capybaraImprovement.setLevel(3);
+                            capybara.setImprovement(capybaraImprovement);
+                            capybara.setCurrency(capybara.getCurrency() - 150);
+                            bot.execute(new SendMessage(chatId, "Твоя капибара приняла антипроигрыш!"));
+                            capybaraDAO.updateImprovement(capybara);
+                        } else {
+                            bot.execute(new SendMessage(chatId, "Похоже у твоей капибары не хватает арбузных долек! " +
+                                    "\nМожет ей стоит сходить на работу?"));
+                        }
+                    } else {
+                        bot.execute(new SendMessage(chatId, "У твоей капибары уже есть улучшения!"));
+                    }
+                } catch (CapybaraNullException e) {
+                    bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                }
+            }
+            case "accept_wedding" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                if (!("" + capybara.getName()).equals("null")) {
+                    Capybara capybaraWedding = capybaraDAO.getCapybaraFromDB(capybara.getWantsWedding().toString(), chatId.toString());
+                    if (!("" + capybaraWedding.getName()).equals("null")) {
+                        if (capybaraDAO.checkChangeName(userId, chatId))
+                            capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                        if (capybaraWedding.getIsWedding() == 1) {
+                            if (capybaraWedding.getWantsWedding().toString().equals(userId.toString())) {
+                                capybara.setWedding(capybaraWedding.getUsername().getUserID());
+                                capybaraWedding.setWedding(capybara.getUsername().getUserID());
+                                capybara.setWantsWedding(0L);
+                                capybaraWedding.setWantsWedding(0L);
+                                capybara.setIsWedding(0);
+                                capybaraWedding.setIsWedding(0);
+                                Request request = new Request(capybara, query.data());
+                                Request request1 = new Request(capybaraWedding, query.data());
+                                capybaraDAO.updateDB(request);
+                                capybaraDAO.updateDB(request1);
+                                bot.execute(new SendPhoto(chatId, new CapybaraPhoto("photo", -209917797, 457245520).toUrl())
+                                        .caption("Ура!\nТеперь " + capybara.getName() + " и " + capybaraWedding.getName() + " Женаты!"));
+                            } else {
+                                bot.execute(new SendMessage(chatId, "Ты не можешь согласиться на брак!\nВозможно тебе никто и не делал предложения"));
+                            }
+                        } else {
+                            bot.execute(new SendMessage(chatId, "Ты не можешь согласиться на брак!\nВозможно тебе никто и не делал предложения"));
+                        }
+                    }
+                }
+            }
+            case "refuse_wedding" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                try {
+                    capybara.checkNotNull();
+                    if (capybaraDAO.checkChangeName(userId, chatId))
+                        capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);
+                    if (!capybara.getWantsWedding().toString().equals("0")) {
+                        Capybara capybara1 = capybaraDAO.getCapybaraFromDB(capybara.getWantsWedding().toString(), chatId.toString());
+                        capybara1.setWantsWedding(0L);
+                        capybara.setWantsWedding(0L);
+                        capybara.setIsWedding(0);
+                        capybara1.setIsWedding(0);
+                        Request request = new Request(capybara, query.data());
+                        Request request1 = new Request(capybara1, query.data());
+                        capybaraDAO.updateDB(request);
+                        capybaraDAO.updateDB(request1);
+                        bot.execute(new SendMessage(chatId, "Вы забрали свои слова назад"));
+                    } else {
+                        bot.execute(new SendMessage(chatId, "Тебе нечего забирать назад!"));
+                    }
+                } catch (CapybaraNullException e) {
+                    bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                }
+            }
+            case "un_wedding" -> {
+                Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                Capybara secondCapybara = capybaraDAO.getCapybaraFromDB(capybara.getWedding(), chatId.toString());
+                if (!secondCapybara.getName().equals("null")) {
+                    try {
+                        capybara.checkNotNull();
+                        if (capybara.getWedding().equals(secondCapybara.getUsername().getUserID()) &&
+                                secondCapybara.getWantsWedding().toString().equals(capybara.getUsername().getUserID()) && secondCapybara.getIsWedding() == 1) {
+                            capybara.setWedding("0");
+                            secondCapybara.setWedding("0");
+                            capybara.setWantsWedding(0L);
+                            secondCapybara.setWantsWedding(0L);
+                            Request request = new Request(capybara, query.data());
+                            Request request1 = new Request(secondCapybara, query.data());
+                            capybaraDAO.updateDB(request);
+                            capybaraDAO.updateDB(request1);
+                            bot.execute(new SendMessage(chatId, "Капибары разведены! Теперь у каждой своя дорога"));
+                        }
+                    } catch (CapybaraNullException e) {
+                        bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                    }
+                } else {
+                    bot.execute(new SendMessage(chatId, "Тебе не с кем разводиться!"));
+                }
+            }
+            case "exactly_delete" -> {
+                capybaraDAO.deleteCapybara(userId.toString(), chatId.toString());
+                bot.execute(new SendMessage(chatId, "Ты выкинул бедную капибарку(\nНадеюсь ты счастлив!"));
             }
             default -> System.out.println(query.data());
         }

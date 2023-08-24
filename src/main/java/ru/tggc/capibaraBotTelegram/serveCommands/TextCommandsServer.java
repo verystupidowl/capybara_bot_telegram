@@ -1,6 +1,7 @@
 package ru.tggc.capibaraBotTelegram.serveCommands;
 
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.request.SendDocument;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +53,7 @@ public class TextCommandsServer {
                     System.out.println(new Date().getTime());
                     System.out.println(message.date().longValue() * 1000);
                     System.out.println(new Date(message.date().longValue() * 1000));
-                    bot.execute(new SendMessage(chatId, new Date(message.date().longValue() * 1000).toString()));
+                    bot.execute(new SendMessage(chatId, "@" + message.from().id() + "\n" + new Date(message.date().longValue() * 1000)));
                 }
                 case "взять капибару" -> {
                     Capybara mbCabybara = capybaraDAO.getCapybaraFromDB(message.from().id().toString(), chatId.toString());
@@ -79,7 +80,7 @@ public class TextCommandsServer {
                         bot.execute(new SendMessage(chatId, text.ALREADY_HAVE_CAPYBARA).replyMarkup(keyboardCreator.createMenuKeyboard()));
                     }
                 }
-                case "моя капибара" -> {
+                case "моя капибара", "/mycapybara" -> {
                     Capybara capybara = capybaraDAO.getCapybaraFromDB(message.from().id().toString(), chatId.toString());
                     try {
                         capybara.checkNotNull();
@@ -108,9 +109,30 @@ public class TextCommandsServer {
                     }
                     bot.execute(new SendPhoto(chatId, capybaraPhoto.toUrl()).caption("\uD83D\uDD1DТоп капибар на данный момент:\n " + s));
                 }
-                case "в главное меню" -> {
-                    bot.execute(new SendMessage(chatId, "ok").replyMarkup(keyboardCreator.createMenuKeyboard()));
+                case "выкинуть бедную капибару" -> {
+                    bot.execute(new SendMessage(chatId, "Ты точно хочешь выкинуть свою капибару?").replyMarkup(creator.deleteCapybaraKeyboard()));
+                    bot.execute(new SendDocument(chatId, "CgACAgQAAx0CdQiYOQACAd5k5ju_JuE0b7eJ_3WlQtcbklonlAACJgMAAlHxBVMdVrQJnCG5KjAE"));
                 }
+                case "расторгнуть брак" -> {
+                    Capybara capybara = capybaraDAO.getCapybaraFromDB(message.from().id().toString(), message.chat().id().toString());
+                    try {
+                        capybara.checkNotNull();
+                        if (!capybara.getWedding().equals("0")) {
+                            capybara.setWantsWedding(Long.parseLong(capybara.getWedding()));
+                            capybara.setIsWedding(1);
+                            Capybara weddingCapybara = capybaraDAO.getCapybaraFromDB(capybara.getWedding(), message.chat().id().toString());
+                            Request request = new Request(capybara, message.text());
+                            capybaraDAO.updateDB(request);
+                            bot.execute(new SendMessage(chatId, weddingCapybara.getName() + ", Для подтверждения расторжения брака, напиши \"Подтвердить расторжение\"")
+                                            .replyMarkup(creator.unWeddingKeyboard()));
+                        } else {
+                            bot.execute(new SendMessage(chatId, "Тебе нечего расторгать!"));
+                        }
+                    } catch (CapybaraNullException e) {
+                        bot.execute(new SendMessage(chatId, text.DONT_HAVE_CAPYBARA));
+                    }
+                }
+                case "в главное меню" -> bot.execute(new SendMessage(chatId, "ok").replyMarkup(keyboardCreator.createMenuKeyboard()));
                 default -> {
                     if (message.text().toLowerCase(Locale.ROOT).equals("гонка") || message.text().toLowerCase(Locale.ROOT).equals("забег")
                             || message.text().toLowerCase(Locale.ROOT).matches("забег @.+") ||
@@ -151,12 +173,6 @@ public class TextCommandsServer {
                                                 raceCapybara.setRace(new CapybaraRace(raceCapybara.getRace().getTimeRemaining(), race1, raceCapybara.getRace().getWantsRace(), capybara.getRace().getStartedRace()));
                                                 if (capybara.getRace().getLevel() > 0) {
                                                     if (raceCapybara.getRace().getLevel() > 0) {
-                                                        System.out.println(capybara.getRace());
-                                                        try {
-                                                            System.out.println(Integer.parseInt("5884986597"));
-                                                        } catch (NumberFormatException e) {
-                                                            System.out.println(e.getMessage());
-                                                        }
                                                         capybara.setRace(new CapybaraRace(capybara.getRace().getTimeRemaining(), capybara.getRace().getLevel(), raceCapybara.getUsername().getUserID(), 1));
                                                         raceCapybara.setRace(new CapybaraRace(raceCapybara.getRace().getTimeRemaining(), raceCapybara.getRace().getLevel(), capybara.getUsername().getUserID(), 0));
                                                         Request request = new Request(capybara, message.text());
@@ -195,6 +211,30 @@ public class TextCommandsServer {
                                 bot.execute(new SendMessage(chatId, "Чтобы вызвать кого-либо на забег, перешли любое его сообщение с сообщением \"Забег\""));
                             }
                         }
+                    } else if (message.text().toLowerCase(Locale.ROOT).equals("пожениться") && message.replyToMessage() != null && !Objects.equals(message.from().id(), message.chat().id())
+                            && !Objects.equals(message.replyToMessage().from().id(), message.from().id())) {
+                        Capybara capybara = capybaraDAO.getCapybaraFromDB(message.from().id().toString(), message.chat().id().toString());
+                        Capybara capybaraWedding = capybaraDAO.getCapybaraFromDB(message.replyToMessage().from().id().toString(), message.chat().id().toString());
+                        if (!("" + capybara.getName()).equals("null") && !("" + capybaraWedding.getName()).equals("null")) {
+                            if (capybaraDAO.checkChangeName(message.from().id(), message.chat().id()))
+                                capybaraDAO.checkOriginalName(capybara.getName(), message.from().id(), message.chat().id());
+                            if (capybaraWedding.getWedding().equals("0") && capybara.getWedding().equals("0") && capybara.getWantsWedding().toString().equals("0") && capybaraWedding.getWantsWedding().toString().equals("0")
+                                    && capybara.getIsWedding() == 0 && capybaraWedding.getIsWedding() == 0) {
+                                Request request = new Request(capybara, message.text());
+                                Request request1 = new Request(capybaraWedding, message.text());
+                                capybara.setWantsWedding(message.replyToMessage().from().id());
+                                capybaraWedding.setWantsWedding(Long.parseLong(capybara.getUsername().getUserID()));
+                                capybara.setIsWedding(1);
+                                capybaraDAO.updateDB(request);
+                                capybaraDAO.updateDB(request1);
+                                bot.execute(new SendMessage(chatId, capybaraWedding.getName() + " Тебе сделали предложение\uD83D\uDC8D" +
+                                        "\nПерешли сообщение пользователя, сделавшего его и напиши \"Принять брак\", чтобы принять предложение").replyMarkup(creator.weddingKeyboard()));
+                            } else {
+                                bot.execute(new SendMessage(chatId, "Вы не можете пожениться!\nВозможно кто-то из вас уже замужем или женат"));
+                            }
+                        } else {
+                            bot.execute(new SendMessage(chatId, "Вы не можете пожениться!\nУ кого-то из вас нет капибарки"));
+                        }
                     } else if (message.text().toLowerCase(Locale.ROOT).matches("казино \\d+ (чёрное|красное|ноль|черное)")) {
                         int amount;
                         Capybara capybara = capybaraDAO.getCapybaraFromDB(message.from().id().toString(), chatId.toString());
@@ -216,34 +256,34 @@ public class TextCommandsServer {
                                                 bot.execute(new SendMessage(chatId, "Вау! Твоя капибара выиграла целых " + ((amount * 2) - amount) +
                                                         " арбузных долек!\uD83C\uDF49"));
                                             } else {
-                                                bot.execute(new SendMessage(chatId,  "Не повезло! Выпало чёрное⚫ " +
-                                                                "\nТвоя капибара проиграла " + amount +
-                                                                " арбузных долек!\uD83C\uDF49"));
+                                                bot.execute(new SendMessage(chatId, "Не повезло! Выпало чёрное⚫ " +
+                                                        "\nТвоя капибара проиграла " + amount +
+                                                        " арбузных долек!\uD83C\uDF49"));
                                             }
                                         } else if (random <= 46) {
                                             if (choose.equals("красное")) {
                                                 capybara.setCurrency(capybara.getCurrency() + (amount * 2));
                                                 bot.execute(new SendMessage(chatId, "Вау! Твоя капибара выиграла целых " + ((amount * 2) - amount) +
-                                                                " арбузных долек!\uD83C\uDF49"));
+                                                        " арбузных долек!\uD83C\uDF49"));
                                             } else {
                                                 bot.execute(new SendMessage(chatId, "Не повезло! Выпало красное\uD83D\uDD34\nТвоя капибара проиграла " + amount +
-                                                                " арбузных долек!\uD83C\uDF49"));
+                                                        " арбузных долек!\uD83C\uDF49"));
                                             }
                                         } else {
                                             if (choose.equals("ноль")) {
                                                 capybara.setCurrency(capybara.getCurrency() + (amount * 10));
                                                 bot.execute(new SendMessage(chatId, "Вау! Твоя капибара выиграла целых " + ((amount * 10) - amount) +
-                                                                " арбузных долек!\uD83C\uDF49"));
+                                                        " арбузных долек!\uD83C\uDF49"));
                                             } else {
                                                 bot.execute(new SendMessage(chatId, "Не повезло! Выпал ноль\uD83D\uDFE2\nТвоя капибара проиграла " + amount +
-                                                                " арбузных долек!\uD83C\uDF49"));
+                                                        " арбузных долек!\uD83C\uDF49"));
                                             }
                                         }
                                         capybaraDAO.updateDB(new Request(capybara, ""));
                                     } else {
                                         bot.execute(new SendMessage(chatId, "Минимальная ставка для тебя в казино - " +
-                                                        (capybara.getLevel() / 10) * 25 +
-                                                        " арбузных долек!\uD83C\uDF49"));
+                                                (capybara.getLevel() / 10) * 25 +
+                                                " арбузных долек!\uD83C\uDF49"));
                                     }
                                 } else {
                                     bot.execute(new SendMessage(chatId, "У твоей капибары нет столько долек!\nМожет ей стоит сходить на работу?"));

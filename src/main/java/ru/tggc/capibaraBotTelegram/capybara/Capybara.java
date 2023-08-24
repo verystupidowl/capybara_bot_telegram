@@ -17,7 +17,7 @@ public class Capybara extends AbstractCapybara {
     private int indexOfType;
     private int level;
     private String wedding;
-    private int wantsWedding;
+    private Long wantsWedding;
     private int wins;
     private int defeats;
     private int currency;
@@ -50,7 +50,7 @@ public class Capybara extends AbstractCapybara {
         this.capybaraHappiness = CapybaraHappiness.getNewTimer();
         this.level = 0;
         this.wedding = "0";
-        this.wantsWedding = 0;
+        this.wantsWedding = 0L;
         this.wins = 0;
         this.defeats = 0;
         this.currency = 300;
@@ -127,7 +127,7 @@ public class Capybara extends AbstractCapybara {
         this.wedding = wedding;
     }
 
-    public void setWantsWedding(int wantsWedding) {
+    public void setWantsWedding(Long wantsWedding) {
         this.wantsWedding = wantsWedding;
     }
 
@@ -213,7 +213,7 @@ public class Capybara extends AbstractCapybara {
         return wedding;
     }
 
-    public Integer getWantsWedding() {
+    public Long getWantsWedding() {
         return wantsWedding;
     }
 

@@ -46,9 +46,6 @@ public abstract class AbstractCapybara {
         racePhoto.add(new CapybaraPhoto("photo", -209917797, 457241922));
         racePhoto.add(new CapybaraPhoto("photo", -209917797, 457241921));
         racePhoto.add(new CapybaraPhoto("photo", -209917797, 457241920));
-        racePhoto.add(new CapybaraPhoto("doc", -210742067, 624812466));
-        racePhoto.add(new CapybaraPhoto("doc", 178675218, 627719215));
-        racePhoto.add(new CapybaraPhoto("doc", 178675218, 627720028));
     }
 
 

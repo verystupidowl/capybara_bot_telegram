@@ -1,7 +1,5 @@
 package ru.tggc.capibaraBotTelegram.keyboard;
 
-import com.pengrad.telegrambot.model.CallbackQuery;
-import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import ru.tggc.capibaraBotTelegram.capybara.Capybara;
@@ -159,7 +157,7 @@ public class InlineKeyboardCreator {
 
     public InlineKeyboardMarkup unWeddingKeyboard() {
         return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Забрать свои слова назад").callbackData("no_unwedding")},
+                {new InlineKeyboardButton("Забрать свои слова назад").callbackData("refuse_wedding")},
                 {new InlineKeyboardButton("Подтвердить расторжение").callbackData("un_wedding")},
         });
     }

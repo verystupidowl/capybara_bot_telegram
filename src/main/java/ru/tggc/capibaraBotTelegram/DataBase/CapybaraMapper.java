@@ -44,7 +44,7 @@ public class CapybaraMapper implements RowMapper<Capybara> {
                 Integer.parseInt(resultSet.getString("wants_tea"))));
         capybara.setLevel(resultSet.getInt("capibara_level"));
         capybara.setWedding(resultSet.getString("wedding"));
-        capybara.setWantsWedding(Integer.parseInt(resultSet.getString("wants_wedding")));
+        capybara.setWantsWedding(Long.parseLong(resultSet.getString("wants_wedding")));
         capybara.setRace(new CapybaraRace(resultSet.getInt("race_time")
                 , Integer.parseInt(resultSet.getString("race")),
                 resultSet.getString("wants_race"), resultSet.getInt("started_race")));

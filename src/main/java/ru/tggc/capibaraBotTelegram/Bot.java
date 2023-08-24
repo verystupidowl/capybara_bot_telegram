@@ -7,7 +7,6 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendDocument;
 import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.request.SendSticker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.tggc.capibaraBotTelegram.keyboard.SimpleKeyboardCreator;
@@ -22,7 +21,7 @@ import java.util.concurrent.Executors;
 @Component
 public class Bot extends TelegramBot {
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(8);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(12);
     private final SimpleKeyboardCreator keyboardCreator = new SimpleKeyboardCreator();
 
 
