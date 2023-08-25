@@ -232,7 +232,8 @@ public class InlineKeyboardCreator {
     public InlineKeyboardMarkup feedKeyboard() {
         return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
                 {new InlineKeyboardButton("Покормить капибару").callbackData("feed")},
-                {new InlineKeyboardButton("Откормить капибару").callbackData("fatten")}
+                {new InlineKeyboardButton("Откормить капибару").callbackData("fatten")},
+                {new InlineKeyboardButton("Не делать ничего").callbackData("go_to_main")}
         });
     }
 }

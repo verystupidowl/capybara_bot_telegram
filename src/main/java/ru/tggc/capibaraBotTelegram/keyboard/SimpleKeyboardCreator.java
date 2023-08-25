@@ -9,6 +9,7 @@ public class SimpleKeyboardCreator {
                 {"Моя капибара"},
                 {"Топ капибар"},
                 {"Выкинуть бедную капибару"},
+                {"Убрать клавиатуру"}
         }).resizeKeyboard(true);
     }
 }
