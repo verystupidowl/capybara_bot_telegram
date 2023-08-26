@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.InputMediaPhoto;
 import com.pengrad.telegrambot.request.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,7 @@ import static ru.tggc.capibaraBotTelegram.Utils.Utils.levelUp;
 import static ru.tggc.capibaraBotTelegram.Utils.Utils.timeToString;
 
 @Component
+@Slf4j
 public class CallbackServer {
 
     private final JdbcTemplate jdbcTemplate;
@@ -47,7 +49,7 @@ public class CallbackServer {
         CapybaraDAO capybaraDAO = new CapybaraDAO(jdbcTemplate);
         Text text = new Text();
         InlineKeyboardCreator inlineCreator = new InlineKeyboardCreator();
-        System.out.println(query.data());
+        log.info("callback data: {}", query.data());
         Long userId = query.from().id();
         Long chatId = query.message().chat().id();
         int date = (int) (new Date().getTime() / 1000);
@@ -473,16 +475,9 @@ public class CallbackServer {
                                         capybaraDAO.updateDB(new Request(capybara, ""));
                                         capybaraDAO.updateDB(new Request(raceCapybara, ""));
                                         int messageId;
-                                        Message message = null;
-                                        while (message == null) {
-                                            try {
-                                                message = bot.execute(new SendPhoto(chatId, capybaraPhoto.toUrl()).caption("\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " +
-                                                        capybara.getName() + " и " + raceCapybara.getName())).message();
-                                                Thread.sleep(100);
-                                            } catch (InterruptedException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        }
+                                        Message message;
+                                        message = bot.execute(new SendPhoto(chatId, capybaraPhoto.toUrl()).caption("\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " +
+                                                capybara.getName() + " и " + raceCapybara.getName())).message();
                                         bot.execute(new DeleteMessage(chatId, query.message().messageId()));
                                         messageId = message.messageId();
                                         int percent1 = 0;
@@ -948,7 +943,7 @@ public class CallbackServer {
                 capybaraDAO.deleteCapybara(userId.toString(), chatId.toString());
                 bot.execute(new SendMessage(chatId, "Ты выкинул бедную капибарку(\nНадеюсь ты счастлив!"));
             }
-            default -> System.out.println(query.data());
+            default -> log.info("query data: {}", query.data());
         }
     }
 

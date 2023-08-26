@@ -1,10 +1,13 @@
 package ru.tggc.capibaraBotTelegram.serveCommands;
 
+import com.pengrad.telegrambot.Callback;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.*;
 import com.pengrad.telegrambot.request.SendDocument;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
+import com.pengrad.telegrambot.response.SendResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -24,6 +27,7 @@ import ru.tggc.capibaraBotTelegram.exceptions.CapybaraNullException;
 import ru.tggc.capibaraBotTelegram.keyboard.InlineKeyboardCreator;
 import ru.tggc.capibaraBotTelegram.keyboard.SimpleKeyboardCreator;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +35,7 @@ import java.util.regex.Pattern;
 import static ru.tggc.capibaraBotTelegram.Utils.Utils.timeToString;
 
 @Component
+@Slf4j
 public class TextCommandsServer {
 
     private final JdbcTemplate jdbcTemplate;
@@ -56,9 +61,6 @@ public class TextCommandsServer {
                         bot.execute(new SendMessage(chatId, "Ну привет, дружок-пирожок!"));
 
                 case "da" -> {
-                    System.out.println(new Date().getTime());
-                    System.out.println(message.date().longValue() * 1000);
-                    System.out.println(new Date(message.date().longValue() * 1000));
                     bot.execute(new SendMessage(chatId, new Date(message.date().longValue() * 1000).toString()));
                 }
                 case "взять капибару" -> {
