@@ -4,6 +4,8 @@ public class Username {
     private String userID;
     private String peerID;
 
+    private String username;
+
     public String getPeerID() {
         return peerID;
     }
@@ -20,18 +22,28 @@ public class Username {
         this.userID = userID;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public Username() {
 
     }
 
-    public Username(String userID, String peerID) {
+    public Username(String userID, String peerID, String username) {
         this.userID = userID;
         this.peerID = peerID;
+        this.username = username;
     }
 
     @Override
     public String toString() {
         return "Username{" +
+                "username='" + username + '\'' +
                 "userID='" + userID + '\'' +
                 ", peerID='" + peerID + '\'' +
                 '}';

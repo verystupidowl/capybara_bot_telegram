@@ -236,4 +236,16 @@ public class InlineKeyboardCreator {
                 {new InlineKeyboardButton("Не делать ничего").callbackData("go_to_main")}
         });
     }
+
+    public InlineKeyboardMarkup myCapybaraList(List<Capybara> capybaraList) {
+        List<List<InlineKeyboardButton>> capybaraNameRows = new ArrayList<>();
+        for (Capybara capybara : capybaraList) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            row.add(new InlineKeyboardButton(capybara.getName()).callbackData(capybara.getUsername().getUserID() + "_" + capybara.getUsername().getPeerID()));
+            capybaraNameRows.add(row);
+        }
+        return new InlineKeyboardMarkup(
+                capybaraNameRows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new)
+        );
+    }
 }

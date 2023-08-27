@@ -59,8 +59,8 @@ public class CapybaraDAO {
         String sql = "INSERT INTO tg_bot (user_id, capibara_name, capibara_type, capibara_photo_url, capibara_satiety, " +
                 "capibara_happiness, satiety_date, happiness_data, wants_tea, tea_time, user_peer_id, capibara_level, wedding, wants_wedding, race, wants_race, wins, defeats" +
                 ", currency, race_time, change_name, change_photo, job, job_time_remaining, on_job, job_time, improvement, job_rise, big_job_timer, " +
-                "next_big_job, on_big_job, preparation_improvement, on_preparation, prepared, needed_happiness, r_s_p, r_s_p_id, started_race, time_zone) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, 0 ,0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?)";
+                "next_big_job, on_big_job, preparation_improvement, on_preparation, prepared, needed_happiness, r_s_p, r_s_p_id, started_race, time_zone, username) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, 0 ,0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, ?, ?)";
         jdbcTemplate.update(sql, request.getCapybara().getUsername().getUserID(),
                 request.getCapybara().getName(), request.getCapybara().getIndexOfType().toString(),
                 request.getCapybara().getCapybaraPhoto().toString(),
@@ -80,7 +80,8 @@ public class CapybaraDAO {
                 request.getCapybara().getDefeats().toString(),
                 request.getCapybara().getCurrency(),
                 request.getCapybara().getRace().getTimeRemaining(),
-                request.getCapybara().getTimeZone());
+                request.getCapybara().getTimeZone(),
+                request.getCapybara().getUsername().getUsername());
     }
 
     public void updateImprovement(Capybara capybara) {
@@ -112,7 +113,7 @@ public class CapybaraDAO {
         String sql = "UPDATE tg_bot SET capibara_name = ?, capibara_type = ?, capibara_photo_url = ?, capibara_satiety = ?, " +
                 "capibara_happiness = ?, satiety_date = ?, happiness_data = ?, wants_tea = ?, tea_time = ?, user_peer_id = ?, capibara_level = ?, wedding = ?, wants_wedding = ?, " +
                 "race = ?, wants_race = ?, wins = ?, defeats = ?, currency = ?, race_time = ?, improvement=?, is_wedding=?, wedding_gift_date=?, big_job_timer=?, next_big_job=?, on_big_job=?," +
-                "preparation_improvement=?, on_preparation=?, prepared=?, started_race=?, time_zone=?" +
+                "preparation_improvement=?, on_preparation=?, prepared=?, started_race=?, time_zone=?, username=?" +
                 "WHERE user_id = ? AND user_peer_id = ?";
         jdbcTemplate.update(sql, request.getCapybara().getName(), request.getCapybara().getIndexOfType().toString(), request.getCapybara().getCapybaraPhoto().toString(),
                 request.getCapybara().getSatiety().getLevel().toString(), request.getCapybara().getHappiness().getLevel().toString(), request.getCapybara().getSatiety().getTimeRemaining(), request.getCapybara().getHappiness().getTimeRemaining().toString(),
@@ -122,7 +123,7 @@ public class CapybaraDAO {
                 request.getCapybara().getImprovement().getLevel(), request.getCapybara().getIsWedding(), request.getCapybara().getWeddingGiftDate().getTimeRemaining(),
                 request.getCapybara().getCapybaraBigJob().getTimeRemaining(), request.getCapybara().getCapybaraBigJob().getNextJob(), request.getCapybara().getCapybaraBigJob().getLevel(),
                 request.getCapybara().getCapybaraPreparation().getImprovement(), request.getCapybara().getCapybaraPreparation().getOnJob(), request.getCapybara().getCapybaraPreparation().getPrepared(),
-                request.getCapybara().getRace().getStartedRace(), request.getCapybara().getTimeZone(),
+                request.getCapybara().getRace().getStartedRace(), request.getCapybara().getTimeZone(), request.getCapybara().getUsername().getUsername(),
                 request.getCapybara().getUsername().getUserID(), request.getCapybara().getUsername().getPeerID());
     }
 
@@ -172,5 +173,12 @@ public class CapybaraDAO {
     public List<Capybara> getRSP(Capybara capybara) {
         return jdbcTemplate.query("SELECT * FROM tg_bot WHERE user_peer_id=? AND r_s_p <> 0",
                 new Object[]{capybara.getUsername().getPeerID()}, new CapybaraMapper());
+    }
+
+    public List<Capybara> getCapybaraByUserId(Long userId) {
+        String sql = "SELECT * FROM tg_bot WHERE user_id=?";
+        List<Capybara> capybaraList = jdbcTemplate.query(sql, new Object[]{userId.toString()}, new CapybaraMapper())
+                .stream().limit(10).collect(Collectors.toList());
+        return capybaraList;
     }
 }

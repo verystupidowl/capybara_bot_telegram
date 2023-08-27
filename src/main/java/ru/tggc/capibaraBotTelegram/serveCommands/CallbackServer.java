@@ -3,6 +3,7 @@ package ru.tggc.capibaraBotTelegram.serveCommands;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.InputMediaPhoto;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -261,12 +262,12 @@ public class CallbackServer {
                             Capybara capybara1 = capybaraDAO.getTeaCapybara(userId.toString(), chatId.toString());
                             if (!("" + capybara1.getName()).equals("null")) {
                                 bot.execute(new SendPhoto(chatId, capybara1.getCapybaraPhoto().toUrl())
-                                        .caption("[id" + capybara.getUsername().getUserID() + "|" + capybara.getName() +
-                                                "]" + ", твой собеседник сегодня - " + capybara1.getName() + "\nСчастье увеличено на 10"));
+                                        .caption("[" + capybara.getName() + "](https://t.me/" + capybara.getUsername().getUsername() +
+                                                ")" + ", твой собеседник сегодня - " + capybara1.getName() + "\nСчастье увеличено на 10").parseMode(ParseMode.Markdown));
 
                                 bot.execute(new SendPhoto(capybara1.getUsername().getPeerID(), capybara.getCapybaraPhoto().toUrl())
-                                        .caption("[id" + capybara1.getUsername().getUserID() + "|" + capybara1.getName() +
-                                                "]" + ", твой собеседник сегодня - " + capybara.getName() + "\nСчастье увеличено на 10"));
+                                        .caption("[" + capybara1.getName() + "](https://t.me/" + capybara1.getUsername().getUsername() +
+                                                ")" + ", твой собеседник сегодня - " + capybara.getName() + "\nСчастье увеличено на 10").parseMode(ParseMode.Markdown));
                                 capybara.setTeaTime(new CapybaraTea((date - capybara.getTimeZone()) + 10800, 0));
                                 capybara.setHappiness(new CapybaraHappiness(capybara.getHappiness().getTimeRemaining(), capybara.getHappiness().getLevel() + 10));
                                 capybara1.setTeaTime(new CapybaraTea((date - capybara.getTimeZone()) + 10800, 0));
@@ -454,6 +455,7 @@ public class CallbackServer {
             }
             case "accept_race" -> {
                 Capybara capybara = capybaraDAO.getCapybaraFromDB(userId.toString(), chatId.toString());
+                log.info("accept race");
                 if (!("" + capybara.getName()).equals("null")) {
                     if (capybaraDAO.checkChangeName(userId, chatId))
                         capybaraDAO.checkOriginalName(capybara.getName(), userId, chatId);

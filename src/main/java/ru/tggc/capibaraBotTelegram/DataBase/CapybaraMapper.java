@@ -32,6 +32,7 @@ public class CapybaraMapper implements RowMapper<Capybara> {
 
         username.setUserID(resultSet.getString("user_id"));
         username.setPeerID(resultSet.getString("user_peer_id"));
+        username.setUsername(resultSet.getString("username"));
         capybara.setUsername(username);
         capybara.setName(resultSet.getString("capibara_name"));
         capybara.setIndexOfType(Integer.parseInt(resultSet.getString("capibara_type")));

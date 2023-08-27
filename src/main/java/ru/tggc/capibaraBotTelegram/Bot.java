@@ -13,6 +13,7 @@ import ru.tggc.capibaraBotTelegram.serveCommands.CallbackServer;
 import ru.tggc.capibaraBotTelegram.serveCommands.TextCommandsServer;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,7 +68,10 @@ public class Bot extends TelegramBot {
     }
 
     private void serveCommand(Message message) {
-        textCommandsServer.serveTextCommands(message, this);
+        if (!Objects.equals(message.chat().id(), message.from().id()))
+            textCommandsServer.serveTextCommandsPublic(message, this);
+        else
+            textCommandsServer.serveTextCommandsPrivate(message, this);
     }
 
     private void serveCallback(CallbackQuery callbackQuery) {
