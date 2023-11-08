@@ -1,9 +1,13 @@
 package ru.tggc.capibaraBotTelegram.serveCommands;
 
 import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.model.PhotoSize;
-import com.pengrad.telegrambot.model.request.*;
-import com.pengrad.telegrambot.request.*;
+import com.pengrad.telegrambot.model.request.InputMediaPhoto;
+import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove;
+import com.pengrad.telegrambot.request.SendDocument;
+import com.pengrad.telegrambot.request.SendMediaGroup;
+import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,7 +31,6 @@ import ru.tggc.capibaraBotTelegram.keyboard.SimpleKeyboardCreator;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static ru.tggc.capibaraBotTelegram.Utils.Utils.timeToString;
 
@@ -48,7 +51,6 @@ public class TextCommandsServer {
         Long chatId = message.chat().id();
         Long userId = message.from().id();
         Text text = new Text();
-        SimpleKeyboardCreator keyboardCreator = new SimpleKeyboardCreator();
         InlineKeyboardCreator creator = new InlineKeyboardCreator();
         switch (message.text()) {
             case "/command_list@capybara_pet_bot", "/command_list" -> {
