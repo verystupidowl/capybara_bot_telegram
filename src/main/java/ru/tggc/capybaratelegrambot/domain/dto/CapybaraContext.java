@@ -3,7 +3,7 @@ package ru.tggc.capybaratelegrambot.domain.dto;
 import lombok.Builder;
 
 @Builder
-public record CapybaraHistoryDto(
+public record CapybaraContext(
         String chatId,
         String userId
 ) {

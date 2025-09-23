@@ -12,7 +12,7 @@ import java.util.List;
 @Component
 public class InlineKeyboardCreator {
 
-    public InlineKeyboardMarkup myCapybaraKeyboard(Capybara capybara, int date) {
+    public InlineKeyboardMarkup myCapybaraKeyboard(ru.tggc.capybaratelegrambot.domain.model.Capybara capybara) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> change = new ArrayList<>();
         InlineKeyboardButton setName = new InlineKeyboardButton("Изменить имя").callbackData("set_name");
@@ -23,13 +23,13 @@ public class InlineKeyboardCreator {
         rows.add(change);
         List<InlineKeyboardButton> feedHappy = null;
 
-        if (capybara.getSatiety().getTimeRemaining() <= date) {
+        if (capybara.getSatiety().canPerform()) {
             InlineKeyboardButton feedCapybara = new InlineKeyboardButton("Покормить/Откормить").callbackData("feed_fatten");
             feedHappy = new ArrayList<>();
             feedHappy.add(feedCapybara);
         }
 
-        if (capybara.getHappiness().getTimeRemaining() <= date) {
+        if (capybara.getHappiness().canPerform()) {
             InlineKeyboardButton makeHappy = new InlineKeyboardButton("Осчастливить капибару").callbackData("make_happy");
             if (feedHappy == null)
                 feedHappy = new ArrayList<>();
@@ -40,47 +40,47 @@ public class InlineKeyboardCreator {
             rows.add(feedHappy);
         }
 
-        List<InlineKeyboardButton> bigJobs = null;
+//        List<InlineKeyboardButton> bigJobs = null;
+//
+//        if (capybara.hasWork() && capybara.getCapybaraBigJob().getNextJob() <= date
+//                && capybara.getCapybaraPreparation().getPrepared() == 1 && capybara.getCapybaraBigJob().getLevel() == 0) {
+//            InlineKeyboardButton bigJob = new InlineKeyboardButton("Большое дело").callbackData("big_job");
+//            bigJobs = new ArrayList<>();
+//            bigJobs.add(bigJob);
+//        } else if (capybara.hasWork() && capybara.getCapybaraPreparation().getPrepared() == 0 && capybara.getCapybaraPreparation().getOnJob() == 0
+//                && capybara.getCapybaraBigJob().getNextJob() <= date && capybara.getLevel() >= 20
+//                && capybara.getJob().getJobTimer().getLevel() != 1) {
+//            InlineKeyboardButton bigJob = new InlineKeyboardButton("Подготовка к большому делу").callbackData("big_job_preparation");
+//            bigJobs = new ArrayList<>();
+//            bigJobs.add(bigJob);
+//        } else if (capybara.hasWork() && capybara.getCapybaraBigJob().getTimeRemaining() <= date
+//                && capybara.getCapybaraPreparation().getPrepared() == 1 && capybara.getCapybaraBigJob().getLevel() == 1) {
+//            InlineKeyboardButton bigJob = new InlineKeyboardButton("Завершить большое дело").callbackData("end_big_job");
+//            bigJobs = new ArrayList<>();
+//            bigJobs.add(bigJob);
+//        }
 
-        if (capybara.hasWork() && capybara.getCapybaraBigJob().getNextJob() <= date
-                && capybara.getCapybaraPreparation().getPrepared() == 1 && capybara.getCapybaraBigJob().getLevel() == 0) {
-            InlineKeyboardButton bigJob = new InlineKeyboardButton("Большое дело").callbackData("big_job");
-            bigJobs = new ArrayList<>();
-            bigJobs.add(bigJob);
-        } else if (capybara.hasWork() && capybara.getCapybaraPreparation().getPrepared() == 0 && capybara.getCapybaraPreparation().getOnJob() == 0
-                && capybara.getCapybaraBigJob().getNextJob() <= date && capybara.getLevel() >= 20
-                && capybara.getJob().getJobTimer().getLevel() != 1) {
-            InlineKeyboardButton bigJob = new InlineKeyboardButton("Подготовка к большому делу").callbackData("big_job_preparation");
-            bigJobs = new ArrayList<>();
-            bigJobs.add(bigJob);
-        } else if (capybara.hasWork() && capybara.getCapybaraBigJob().getTimeRemaining() <= date
-                && capybara.getCapybaraPreparation().getPrepared() == 1 && capybara.getCapybaraBigJob().getLevel() == 1) {
-            InlineKeyboardButton bigJob = new InlineKeyboardButton("Завершить большое дело").callbackData("end_big_job");
-            bigJobs = new ArrayList<>();
-            bigJobs.add(bigJob);
-        }
 
-
-        if (bigJobs != null) {
-            rows.add(bigJobs);
-        }
-        List<InlineKeyboardButton> jobs = null;
-
-        if (capybara.hasWork()) {
-            if (capybara.getJob().getJobTimer().getTimeRemaining() <= date && capybara.getJob().getJobTimer().getLevel() == 1) {
-                InlineKeyboardButton job = new InlineKeyboardButton("Забрать с работы").callbackData("take_from_job");
-                jobs = new ArrayList<>();
-                jobs.add(job);
-            }
-        } else {
-            InlineKeyboardButton getJob = new InlineKeyboardButton("Устроиться на работу").callbackData("get_job");
-            jobs = new ArrayList<>();
-            jobs.add(getJob);
-        }
-
-        if (jobs != null) {
-            rows.add(jobs);
-        }
+//        if (bigJobs != null) {
+//            rows.add(bigJobs);
+//        }
+//        List<InlineKeyboardButton> jobs = null;
+//
+//        if (capybara.getJob().getJobAction().canPerform()) {
+//            if (capybara.getJob().getJobTimer().getTimeRemaining() <= date && capybara.getJob().getJobTimer().getLevel() == 1) {
+//                InlineKeyboardButton job = new InlineKeyboardButton("Забрать с работы").callbackData("take_from_job");
+//                jobs = new ArrayList<>();
+//                jobs.add(job);
+//            }
+//        } else {
+//            InlineKeyboardButton getJob = new InlineKeyboardButton("Устроиться на работу").callbackData("get_job");
+//            jobs = new ArrayList<>();
+//            jobs.add(getJob);
+//        }
+//
+//        if (jobs != null) {
+//            rows.add(jobs);
+//        }
 
         List<InlineKeyboardButton> infoBtn = new ArrayList<>();
 

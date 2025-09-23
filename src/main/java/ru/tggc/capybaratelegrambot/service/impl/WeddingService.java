@@ -1,6 +1,7 @@
 package ru.tggc.capybaratelegrambot.service.impl;
 
 import org.springframework.stereotype.Service;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
@@ -9,29 +10,25 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.WeddingRequestType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WeddingStatus;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.repository.WeddingRequestRepository;
-import ru.tggc.capybaratelegrambot.service.CapybaraService;
-import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.service.WeddingService;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 
 import java.time.LocalDateTime;
 
 @Service
-public class WeddingServiceImpl extends AbstractRequestService<WeddingRequest> implements WeddingService {
+public class WeddingService extends AbstractRequestService<WeddingRequest> {
     private final WeddingRequestRepository weddingRequestRepository;
     private final CapybaraService capybaraService;
 
-    public WeddingServiceImpl(CapybaraService capybaraService,
-                              UserService userService,
-                              WeddingRequestRepository weddingRequestRepository) {
+    public WeddingService(CapybaraService capybaraService,
+                          UserService userService,
+                          WeddingRequestRepository weddingRequestRepository) {
         super(capybaraService, userService);
         this.weddingRequestRepository = weddingRequestRepository;
         this.capybaraService = capybaraService;
     }
 
-    @Override
-    public PhotoDto respondWedding(String userId, String chatId, boolean accept) {
-        Capybara accepter = capybaraService.getCapybaraByUserId(userId, chatId);
+    public PhotoDto respondWedding(CapybaraContext ctx, boolean accept) {
+        Capybara accepter = capybaraService.getCapybaraByContext(ctx);
         WeddingRequest request = weddingRequestRepository.findByTargetIdAndStatusAndType(
                         accepter.getId(),
                         WeddingStatus.PENDING,
@@ -39,13 +36,13 @@ public class WeddingServiceImpl extends AbstractRequestService<WeddingRequest> i
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), chatId);
+        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), ctx.chatId());
 
         String caption;
         if (accept) {
             request.setStatus(WeddingStatus.ACCEPTED);
-            accepter.setSpouseId(proposer.getId());
-            proposer.setSpouseId(accepter.getId());
+            accepter.setSpouse(proposer);
+            proposer.setSpouse(accepter);
             caption = "Ура! " + accepter.getName() + " и " + proposer.getName() + " теперь женаты!";
         } else {
             request.setStatus(WeddingStatus.DECLINED);
@@ -54,15 +51,14 @@ public class WeddingServiceImpl extends AbstractRequestService<WeddingRequest> i
 
         weddingRequestRepository.save(request);
         return PhotoDto.builder()
-                .url(//todo)
+                .url("") //todo
                 .caption(caption)
-                .chatId(chatId)
+                .chatId(ctx.chatId())
                 .build();
     }
 
-    @Override
-    public String respondUnWedding(String userId, String chatId, boolean accept) {
-        Capybara accepter = capybaraService.getCapybaraByUserId(userId, chatId);
+    public String respondUnWedding(CapybaraContext ctx, boolean accept) {
+        Capybara accepter = capybaraService.getCapybaraByContext(ctx);
         WeddingRequest request = weddingRequestRepository.findByTargetIdAndStatusAndType(
                         accepter.getId(),
                         WeddingStatus.PENDING,
@@ -70,13 +66,13 @@ public class WeddingServiceImpl extends AbstractRequestService<WeddingRequest> i
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), chatId);
+        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), ctx.chatId());
 
         String message;
         if (accept) {
             request.setStatus(WeddingStatus.ACCEPTED);
-            accepter.setSpouseId(null);
-            proposer.setSpouseId(null);
+            accepter.setSpouse(null);
+            proposer.setSpouse(null);
             message = accepter.getName() + " и " + proposer.getName() + " теперь разведены!";
         } else {
             request.setStatus(WeddingStatus.DECLINED);

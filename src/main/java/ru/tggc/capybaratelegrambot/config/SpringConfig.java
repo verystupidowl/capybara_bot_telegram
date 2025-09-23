@@ -14,7 +14,7 @@ import javax.sql.DataSource;
 
 @Configuration
 @ComponentScan("ru.tggc.capybaratelegrambot")
-@PropertySource("classpath:Application.properties")
+@PropertySource("classpath:application.yml")
 public class SpringConfig {
     @Value("${database.url}")
     private String url;

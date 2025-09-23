@@ -1,49 +1,51 @@
 package ru.tggc.capybaratelegrambot.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
+import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
-import ru.tggc.capybaratelegrambot.utils.CasinoTargetType;
-import ru.tggc.capybaratelegrambot.service.CapybaraService;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
+import ru.tggc.capybaratelegrambot.sender.Sender;
+import ru.tggc.capybaratelegrambot.service.impl.CapybaraService;
+import ru.tggc.capybaratelegrambot.service.impl.CasinoService;
 
 @BotHandler
 public class CommandTextHandler extends TextHandler {
     private final CapybaraService capybaraService;
+    private final CasinoService casinoService;
 
-    public CommandTextHandler(CapybaraService capybaraService) {
+    protected CommandTextHandler(Sender sender,
+                                 MessageHandleRegistry messageHandleRegistry,
+                                 CapybaraService capybaraService,
+                                 CasinoService casinoService) {
+        super(sender, messageHandleRegistry);
         this.capybaraService = capybaraService;
+        this.casinoService = casinoService;
     }
 
     @MessageHandle("уволиться с работы")
-    public void dismissal(@UserId String userId, @ChatId String chatId) {
-        capybaraService.dismissal(userId, chatId);
-        sendSimpleMessage(chatId, "ur capy has no work now", null);
+    public void dismissal(@Ctx CapybaraContext ctx) {
+        capybaraService.dismissal(ctx);
+        sendSimpleMessage(ctx.chatId(), "ur capy has no work now", null);
     }
 
-    @MessageHandle("казино ${count} ${target}")
-    public void casino(@HandleParam("count") long count,
-                       @HandleParam("target") String target,
-                       @ChatId String chatId,
-                       @UserId String userId) {
-        CasinoTargetType type = CasinoTargetType.getByLabel(target);
-        String response = capybaraService.casino(userId, chatId, count, type);
-
-        sendSimpleMessage(chatId, response, null);
+    @MessageHandle("казино")
+    public void startCasino(@Ctx CapybaraContext ctx) {
+        casinoService.startCasino(ctx);
+        sendSimpleMessage(ctx.chatId(), "Введите ставку", null);
     }
 
     @MessageHandle("перевести дольки ${amount} ${username}")
     public void transferMoney(@HandleParam("amount") Long amount,
                               @HandleParam("username") String username,
                               @MessageParam Message message,
-                              @ChatId String chatId,
-                              @UserId String userId) {
-        String targetUsername = getTargetUsername(username, message, chatId);
-        capybaraService.transferMoney(userId, chatId, targetUsername, amount);
+                              @Ctx CapybaraContext ctx) {
+        String targetUsername = getTargetUsername(username, message, ctx.chatId());
+        capybaraService.transferMoney(ctx, targetUsername, amount);
 
-        sendSimpleMessage(chatId, "ok", null);
+        sendSimpleMessage(ctx.chatId(), "ok", null);
     }
 }

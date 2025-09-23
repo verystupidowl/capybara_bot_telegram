@@ -2,8 +2,8 @@ package ru.tggc.capybaratelegrambot.provider.impl;
 
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
-import ru.tggc.capybaratelegrambot.domain.model.Job;
-import ru.tggc.capybaratelegrambot.domain.model.enums.JobType;
+import ru.tggc.capybaratelegrambot.domain.model.Work;
+import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +14,10 @@ public class CriminalJobProvider extends AbstractJobProvider {
     @Override
     public List<String> takeFromWork(Capybara capybara) {
         checkHasWork(capybara);
-        Job job = capybara.getJob();
-        checkCanTakeFromWork(job);
+        Work work = capybara.getWork();
+        checkCanTakeFromWork(work);
 
-        int salary = getJobType().getCalculateSalary().apply(job.getIndex());
+        int salary = getJobType().getCalculateSalary().apply(work.getIndex());
         List<String> messages = new ArrayList<>();
         if (salary != -1) {
             capybara.setCurrency(capybara.getCurrency() + salary);
@@ -35,7 +35,7 @@ public class CriminalJobProvider extends AbstractJobProvider {
     }
 
     @Override
-    public JobType getJobType() {
-        return JobType.CRIMINAL;
+    public WorkType getJobType() {
+        return WorkType.CRIMINAL;
     }
 }

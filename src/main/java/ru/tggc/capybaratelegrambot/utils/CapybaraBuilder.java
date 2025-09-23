@@ -4,14 +4,14 @@ import lombok.experimental.UtilityClass;
 import ru.tggc.capybaratelegrambot.domain.model.BigJob;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Cheerfulness;
-import ru.tggc.capybaratelegrambot.domain.model.Happiness;
-import ru.tggc.capybaratelegrambot.domain.model.Job;
-import ru.tggc.capybaratelegrambot.domain.model.enums.JobType;
+import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.Level;
-import ru.tggc.capybaratelegrambot.domain.model.Satiety;
-import ru.tggc.capybaratelegrambot.domain.model.Tea;
-import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
 import ru.tggc.capybaratelegrambot.domain.model.User;
+import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
 
 import java.time.LocalDateTime;
 
@@ -26,21 +26,18 @@ public class CapybaraBuilder {
                 .maxValue(10)
                 .build();
         Happiness happiness = Happiness.builder()
-                .lastTime(LocalDateTime.now())
-                .nextTime(LocalDateTime.now())
+                .lastHappy(LocalDateTime.now())
                 .maxLevel(100)
                 .level(0)
                 .build();
         Satiety satiety = Satiety.builder()
-                .lastTime(LocalDateTime.now())
-                .nextTime(LocalDateTime.now())
+                .lastFed(LocalDateTime.now())
                 .maxLevel(100)
                 .level(0)
                 .build();
         Tea tea = Tea.builder()
-                .isWaiting(false)
-                .lastTime(LocalDateTime.now())
-                .nextTime(LocalDateTime.now())
+                .capybara(null)
+                .lastTea(LocalDateTime.now())
                 .build();
         Cheerfulness cheerfulness = Cheerfulness.builder()
                 .cheerfulnessLevel(100)
@@ -51,14 +48,14 @@ public class CapybaraBuilder {
                 .active(false)
                 .isOnBigJob(false)
                 .build();
-        Job job = Job.builder()
+        Work work = Work.builder()
                 .index(0)
                 .rise(0)
                 .isWorking(false)
                 .bigJob(bigJob)
                 .lastTime(LocalDateTime.now())
                 .nextTime(LocalDateTime.now())
-                .jobType(JobType.NONE)
+                .jobType(WorkType.NONE)
                 .build();
         return Capybara.builder()
                 .name(name)
@@ -74,7 +71,7 @@ public class CapybaraBuilder {
                 .photo(RandomUtils.getRandomPhoto())
                 .cheerfulness(cheerfulness)
                 .chatId(chatId)
-                .job(job)
+                .work(work)
                 .build();
     }
 }

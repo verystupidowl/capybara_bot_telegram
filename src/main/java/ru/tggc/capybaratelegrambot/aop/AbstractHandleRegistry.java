@@ -8,12 +8,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.aop.annotation.handle.DefaultMessageHandle;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.CallbackParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
@@ -37,6 +40,8 @@ public abstract class AbstractHandleRegistry<P> {
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
     protected final TelegramBot bot;
     protected final ListableBeanFactory beanFactory;
+    protected Method defaultMethod;
+    protected Object defaultBean;
 
     protected AbstractHandleRegistry(TelegramBot bot, ListableBeanFactory beanFactory) {
         this.bot = bot;
@@ -62,6 +67,14 @@ public abstract class AbstractHandleRegistry<P> {
                     }
                     log.info("Registered handler '{}' -> {}.{}",
                             key, bean.getClass().getSimpleName(), method.getName());
+                } else if (method.isAnnotationPresent(DefaultMessageHandle.class)) {
+                    if (defaultMethod != null) {
+                        throw new IllegalStateException("Должен быть только один @DefaultMessageHandle");
+                    }
+                    defaultMethod = method;
+                    defaultBean = bean;
+                    log.info("Registered default message handler: {}.{}",
+                            bean.getClass().getSimpleName(), method.getName());
                 }
             }
         }
@@ -107,6 +120,7 @@ public abstract class AbstractHandleRegistry<P> {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
                     case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
                     case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;

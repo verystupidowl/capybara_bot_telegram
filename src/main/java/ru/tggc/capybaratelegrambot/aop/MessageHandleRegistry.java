@@ -7,6 +7,8 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.dto.response.TextResponse;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -45,13 +47,19 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
                 .findFirst()
                 .orElse(null);
 
+        String chatId = message.chat().id().toString();
+        String userId = message.from().id().toString();
+
         if (method == null) {
-            log.warn("Unknown message: {}", text);
+            if (defaultMethod == null) {
+                log.warn("Unknown message: {}", text);
+            } else {
+                Object[] args = buildArgs(defaultMethod, message, chatId, userId, 0, null, message);
+                invokeWithCatch(defaultMethod, defaultBean, args, chatId);
+            }
             return;
         }
 
-        String chatId = message.chat().id().toString();
-        String userId = message.from().id().toString();
 
         String template = method.getAnnotation(MessageHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(text) : null;

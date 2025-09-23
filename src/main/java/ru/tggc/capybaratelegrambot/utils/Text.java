@@ -1,9 +1,7 @@
 package ru.tggc.capybaratelegrambot.utils;
 
 
-import com.pengrad.telegrambot.model.request.ParseMode;
 import lombok.experimental.UtilityClass;
-import ru.tggc.capybaratelegrambot.capybara.Capybara;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraTeaDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
@@ -107,27 +105,70 @@ public class Text {
     public final String NO_MONEY = "У твоей капибары недостаточно денег. Может ей стоит сходить на работу?";
 
     public String getInfo(CapybaraInfoDto capybara) {
-        return "ℹИформация о твоей капибаре:" +
-                "\n\n✨Имя: " + capybara.name() +
-                "\n ☕Чаепитие " + (capybara.isTeaWaiting() ? capybara.canTea() ? "уже можно" :
-                ("через: " + timeToString(capybara.teaTime())) : "в ожидании собеседника") +
-                (capybara.hasWork() ?
-                        (!capybara.isOnBigJob() ?
-                                (!capybara.isWorking() ?
-                                        "\n\uD83D\uDD28Отправить на работу " +
-                                                (!capybara.canGoWork() ? "через: " + timeToString(capybara.workTime()) : "уже можно") :
-                                        "\n\uD83D\uDD28Забрать с работы " + (capybara.canTakeFromWork() ? "через: " + timeToString(capybara.takeFromWork()) : "уже можно")) : "")
-                                + "\n\uD83D\uDCBCПовышение: " + capybara.rise() + "/" + (capybara.index() + 1) * 10 +
-                                (capybara.isOnBigJob() ? (capybara.canTakeFromBigJob() ? "\n\uD83D\uDE0FМожно забрать с большого дела" :
-                                        "\n\uD83D\uDE0FМожно забрать с большого дела через: " + timeToString(capybara.takeFromBigJob())) :
-                                        capybara.level() >= 20 ? (capybara.isWorking() ? (capybara.canGoBigJob() ?
-                                                "\n\uD83D\uDE0FМожно отправить на большое дело" : "\n\uD83D\uDE0FМожно отправить на большое дело через: " + timeToString(capybara.bigJobTime())) : "") : "") :
-                        "") + "\n\uD83C\uDF3DПокормить/откормить " + (capybara.canSatiety() ? "уже можно" :
-                "через: " + timeToString(capybara.satietyTime())) +
-                "\n\uD83E\uDD29Осчастливить " + (capybara.canHappiness() ? "уже можно" :
-                "через: " + timeToString(capybara.happinessTime())) + (capybara.canRace() ? "" :
-                "\n\uD83E\uDD71Времени до полного восстановления бодрости:" + timeToString(capybara.raceTime())) +
-                "\n⬆Улучшения для гонок: " + capybara.improvement();
+        StringBuilder sb = new StringBuilder("ℹ Информация о твоей капибаре:\n\n");
+
+        sb.append("✨ Имя: ").append(capybara.name());
+
+        sb.append("\n ☕ Чаепитие ");
+        if (capybara.isTeaWaiting()) {
+            sb.append(capybara.canTea()
+                    ? "уже можно"
+                    : "через: " + capybara.teaTime());
+        } else {
+            sb.append("в ожидании собеседника");
+        }
+
+        if (capybara.hasWork()) {
+            if (!capybara.isOnBigJob()) {
+                if (!capybara.isWorking()) {
+                    sb.append("\n🔨 Отправить на работу ")
+                            .append(capybara.canGoWork()
+                                    ? "уже можно"
+                                    : "через: " + capybara.workTime());
+                } else {
+                    sb.append("\n🔨 Забрать с работы ")
+                            .append(capybara.canTakeFromWork()
+                                    ? "уже можно"
+                                    : "через: " + timeToString(capybara.takeFromWork()));
+                }
+            }
+
+            sb.append("\n💼 Повышение: ")
+                    .append(capybara.rise())
+                    .append("/")
+                    .append((capybara.index() + 1) * 10);
+
+            if (capybara.isOnBigJob()) {
+                sb.append(capybara.canTakeFromBigJob()
+                        ? "\n😏 Можно забрать с большого дела"
+                        : "\n😏 Можно забрать с большого дела через: "
+                        + timeToString(capybara.takeFromBigJob()));
+            } else if (capybara.level() >= 20 && capybara.isWorking()) {
+                sb.append(capybara.canGoBigJob()
+                        ? "\n😏 Можно отправить на большое дело"
+                        : "\n😏 Можно отправить на большое дело через: "
+                        + timeToString(capybara.bigJobTime()));
+            }
+        }
+
+        sb.append("\n🌽 Покормить/откормить ")
+                .append(capybara.canSatiety()
+                        ? "уже можно"
+                        : "через: " + capybara.satietyTime());
+
+        sb.append("\n🥳 Осчастливить ")
+                .append(capybara.canHappiness()
+                        ? "уже можно"
+                        : "через: " + capybara.happinessTime());
+
+        if (!capybara.canRace()) {
+            sb.append("\n🩱 Времени до полного восстановления бодрости: ")
+                    .append(timeToString(capybara.raceTime()));
+        }
+
+        sb.append("\n⬆ Улучшения для гонок: ").append(capybara.improvement());
+
+        return sb.toString();
     }
 
     public final String LIST_OF_IMPROVEMENTS = """

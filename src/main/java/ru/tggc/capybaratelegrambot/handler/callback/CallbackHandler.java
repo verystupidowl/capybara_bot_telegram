@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.handler.AbstractHandler;
 import ru.tggc.capybaratelegrambot.sender.Sender;
@@ -22,6 +23,10 @@ public abstract class CallbackHandler extends AbstractHandler<CallbackQuery> {
         String chatId = query.maybeInaccessibleMessage().chat().id().toString();
         int messageId = Integer.parseInt(query.inlineMessageId());
         sendSimpleMessage(chatId, messageId, text, markup);
+    }
+
+    public void sendSimpleMessage(String chatId, int messageId, String text) {
+        sendSimpleMessage(chatId, messageId, text, null);
     }
 
     public void sendSimpleMessage(String chatId, int messageId, String text, Keyboard markup) {

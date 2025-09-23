@@ -2,8 +2,8 @@ package ru.tggc.capybaratelegrambot.provider.impl;
 
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
-import ru.tggc.capybaratelegrambot.domain.model.Job;
-import ru.tggc.capybaratelegrambot.domain.model.enums.JobType;
+import ru.tggc.capybaratelegrambot.domain.model.Work;
+import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.provider.JobProvider;
 
@@ -17,10 +17,10 @@ public abstract class AbstractJobProvider implements JobProvider {
     @Override
     public List<String> takeFromWork(Capybara capybara) {
         checkHasWork(capybara);
-        Job job = capybara.getJob();
-        checkCanTakeFromWork(job);
+        Work work = capybara.getWork();
+        checkCanTakeFromWork(work);
 
-        int salary = getJobType().getCalculateSalary().apply(job.getIndex());
+        int salary = getJobType().getCalculateSalary().apply(work.getIndex());
         capybara.setCurrency(capybara.getCurrency() + salary);
 
         List<String> messages = new ArrayList<>();
@@ -37,65 +37,65 @@ public abstract class AbstractJobProvider implements JobProvider {
     @Override
     public void dismissal(Capybara capybara) {
         checkHasWork(capybara);
-        Job job = Job.builder()
-                .jobType(JobType.NONE)
+        Work work = Work.builder()
+                .workType(WorkType.NONE)
                 .build();
-        capybara.setJob(job);
+        capybara.setWork(work);
     }
 
     @Override
     public void setJob(Capybara capybara) {
         checkHasNoWork(capybara);
-        Job job = Job.builder()
-                .jobType(getJobType())
+        Work work = Work.builder()
+                .workType(getJobType())
                 .index(0)
                 .isWorking(true)
                 .rise(1)
                 .build();
-        capybara.setJob(job);
+        capybara.setWork(work);
     }
 
     @Override
     public void goWork(Capybara capybara) {
         checkHasWork(capybara);
-        Job job = capybara.getJob();
-        checkCanGoWork(job);
+        Work work = capybara.getWork();
+        checkCanGoWork(work);
 
-        job.setIsWorking(true);
-        job.setTimer(LocalDateTime.now().plusHours(2));
-        capybara.setJob(job);
+        work.setIsWorking(true);
+        work.setTimer(LocalDateTime.now().plusHours(2));
+        capybara.setWork(work);
     }
 
-    protected static void checkCanTakeFromWork(Job job) {
-        if (!job.getIsWorking()) {
+    protected static void checkCanTakeFromWork(Work work) {
+        if (!work.getIsWorking()) {
             throw new CapybaraException("Capybara wsnt on work!");
         }
-        if (LocalDateTime.now().isBefore(job.getTimer())) {
+        if (LocalDateTime.now().isBefore(work.getTimer())) {
             throw new CapybaraException("U cant take ur capy yet!");
         }
     }
 
 
     protected boolean checkRise(Capybara capybara) {
-        Job job = capybara.getJob();
-        if (job.getRise() + 1 >= 10 * (job.getIndex() + 1) && job.getIndex() <= 5) {
-            capybara.getJob().setRise(1);
-            capybara.getJob().setIndex(capybara.getJob().getIndex() + 1);
+        Work work = capybara.getWork();
+        if (work.getRise() + 1 >= 10 * (work.getIndex() + 1) && work.getIndex() <= 5) {
+            capybara.getWork().setRise(1);
+            capybara.getWork().setIndex(capybara.getWork().getIndex() + 1);
             capybara.setCurrency(capybara.getCurrency() + 150);
             return true;
         }
         return false;
     }
 
-    protected void checkCanGoWork(Job job) {
-        if (job.getIsWorking()) {
+    protected void checkCanGoWork(Work work) {
+        if (work.getIsWorking()) {
             throw new CapybaraException("Capybara is already on work!");
         }
-        if (job.getBigJob().getIsOnBigJob()) {
+        if (work.getBigJob().getIsOnBigJob()) {
             throw new CapybaraException("Capybara is on big job!");
         }
-        if (LocalDateTime.now().isBefore(job.getNextTime())) {
-            String delta = String.valueOf(job.getNextTime().compareTo(LocalDateTime.now()));
+        if (LocalDateTime.now().isBefore(work.getNextTime())) {
+            String delta = String.valueOf(work.getNextTime().compareTo(LocalDateTime.now()));
             throw new CapybaraException("Capybara can go job only in " + delta);
         }
     }
@@ -113,6 +113,6 @@ public abstract class AbstractJobProvider implements JobProvider {
     }
 
     protected boolean checkWork(Capybara capybara) {
-        return JobType.NONE == capybara.getJob().getJobType();
+        return WorkType.NONE == capybara.getWork().getWorkType();
     }
 }

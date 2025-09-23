@@ -11,7 +11,7 @@ public record MyCapybaraDto(
         String type,
         Integer cheerfulness,
         String job,
-        Integer currency,
+        Long currency,
         String wedding,
         Integer satietyLevel,
         Integer satietyMaxLevel,

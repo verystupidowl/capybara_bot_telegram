@@ -1,7 +1,7 @@
 package ru.tggc.capybaratelegrambot.provider;
 
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
-import ru.tggc.capybaratelegrambot.domain.model.enums.JobType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ public interface JobProvider {
 
     void goWork(Capybara capybara);
 
-    JobType getJobType();
+    WorkType getJobType();
 
     List<String> takeFromWork(Capybara capybara);
 

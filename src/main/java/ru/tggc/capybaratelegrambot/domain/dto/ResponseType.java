@@ -2,7 +2,7 @@ package ru.tggc.capybaratelegrambot.domain.dto;
 
 public enum ResponseType {
     PHOTO,
-    MESSAGE,
+    TEXT_MESSAGE,
     EDIT,
     DELETE
 }

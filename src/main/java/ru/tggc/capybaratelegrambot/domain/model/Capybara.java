@@ -14,6 +14,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,9 +41,10 @@ public class Capybara {
     private String chatId;
     private int consecutiveRaces;
     private LocalDateTime lastRaceAt;
-    private Long spouseId;
+    @OneToOne(cascade = CascadeType.ALL)
+    private Capybara spouse;
     boolean deleted = false;
-    @OneToOne(mappedBy = "challenger", cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL)
     private RaceRequest raceRequest;
     @OneToOne
     private Level level;
@@ -53,7 +57,7 @@ public class Capybara {
     @OneToOne
     private Tea tea;
     @OneToOne
-    private Job job;
+    private Work work;
     @OneToOne
     private Improvement improvement;
     @OneToOne

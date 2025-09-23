@@ -53,7 +53,6 @@ public class BigJobMain {
     }
 
     public Capybara startPreparation(Capybara capybara, Message message) {
-        Text text = new Text();
         if (capybara.hasWork() && capybara.getCapybaraBigJob().getNextJob() <= message.date() &&
                 capybara.getCapybaraPreparation().getPrepared() == 0) {
             if (capybara.getJob().getJobTimer().getLevel() != 1) {
@@ -65,7 +64,7 @@ public class BigJobMain {
                                 Чтобы начать ограбление, тебе нужно купить претметы!
                                 Вот список
                                 Вперед!"""));
-                        bot.execute(new SendMessage(message.chat().id(), text.LIST_OF_THINGS_FOR_ROBBERY)
+                        bot.execute(new SendMessage(message.chat().id(), Text.LIST_OF_THINGS_FOR_ROBBERY)
                                 .replyMarkup(keyboardCreator.robberyImprovement()));
                         preparation.goToPreparation(message, capybara);
                     }
@@ -76,7 +75,7 @@ public class BigJobMain {
                                 Чтобы начать его, тебе нужно купить претметы!
                                 Вот список
                                 Вперед!"""));
-                        bot.execute(new SendMessage(message.chat().id(), text.LIST_OF_THINGS_FOR_CASH_REPORT)
+                        bot.execute(new SendMessage(message.chat().id(), Text.LIST_OF_THINGS_FOR_CASH_REPORT)
                                 .replyMarkup(keyboardCreator.cashReportImprovement()));
                         preparation2.goToPreparation(message, capybara);
                     }
@@ -87,7 +86,7 @@ public class BigJobMain {
                                 Чтобы начать его, тебе нужно купить претметы!
                                 Вот список
                                 Вперед!"""));
-                        bot.execute(new SendMessage(message.chat().id(), text.LIST_OF_THINGS_FOR_BIG_IT_PROJECT)
+                        bot.execute(new SendMessage(message.chat().id(), Text.LIST_OF_THINGS_FOR_BIG_IT_PROJECT)
                                 .replyMarkup(keyboardCreator.bigItProject()));
                         preparation1.goToPreparation(message, capybara);
                     }

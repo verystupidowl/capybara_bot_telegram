@@ -19,6 +19,6 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
 
     String user(User user);
 
-    @Query(nativeQuery = true, "SELECT * FROM capybara ORDER BY level LIMIT 10")
+    @Query(nativeQuery = true, value = "SELECT * FROM capybara ORDER BY level LIMIT 10")
     List<Capybara> getTopCapybaras();
 }

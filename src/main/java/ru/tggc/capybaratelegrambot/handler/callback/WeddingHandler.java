@@ -3,12 +3,12 @@ package ru.tggc.capybaratelegrambot.handler.callback;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.sender.Sender;
-import ru.tggc.capybaratelegrambot.service.WeddingService;
+import ru.tggc.capybaratelegrambot.service.impl.WeddingService;
 
 @BotHandler
 public class WeddingHandler extends CallbackHandler {
@@ -20,32 +20,28 @@ public class WeddingHandler extends CallbackHandler {
     }
 
     @CallbackHandle("accept_wedding")
-    public void acceptWedding(@ChatId String chatId,
-                              @UserId String userId) {
-        PhotoDto response = weddingService.respondWedding(userId, chatId, true);
+    public void acceptWedding(@Ctx CapybaraContext ctx) {
+        PhotoDto response = weddingService.respondWedding(ctx, true);
         sendSimplePhoto(response);
     }
 
     @CallbackHandle("accept_unwedding")
-    public void unwedding(@ChatId String chatId,
-                          @UserId String userId,
+    public void unwedding(@Ctx CapybaraContext ctx,
                           @MessageId int messageId) {
-        String message = weddingService.respondUnWedding(userId, chatId, true);
-        sendSimpleMessage(chatId, messageId, message, null);
+        String message = weddingService.respondUnWedding(ctx, true);
+        sendSimpleMessage(ctx.chatId(), messageId, message, null);
     }
 
     @CallbackHandle("refuse_wedding")
-    public void refuseWedding(@ChatId String chatId,
-                              @UserId String userId) {
-        PhotoDto response = weddingService.respondWedding(userId, chatId, false);
+    public void refuseWedding(@Ctx CapybaraContext ctx) {
+        PhotoDto response = weddingService.respondWedding(ctx, false);
         sendSimplePhoto(response);
     }
 
     @CallbackHandle("refuse_unwedding")
-    public void refuseUnwedding(@ChatId String chatId,
-                                @UserId String userId,
+    public void refuseUnwedding(@Ctx CapybaraContext ctx,
                                 @MessageId int messageId) {
-        String message = weddingService.respondUnWedding(userId, chatId, false);
-        sendSimpleMessage(chatId, messageId, message, null);
+        String message = weddingService.respondUnWedding(ctx, false);
+        sendSimpleMessage(ctx.chatId(), messageId, message, null);
     }
 }

@@ -55,11 +55,10 @@ public class ProgrammingJob implements Job {
     public Capybara getFromWork(Message message, Capybara capybara, Bot bot) {
         if (message.date() > capybara.getJob().getJobTimer().getTimeRemaining()) {
             if (capybara.getJob().getJobTimer().getLevel() == 1) {
-                Text text = new Text();
                 capybara.getJob().getJobTimer().setLevel(0);
                 int random1 = capybara.getJob().getIndex() != 0 ? random.nextInt(capybara.getJob().getIndex() * 100) + 100 : 0;
                 capybara.setCurrency(capybara.getCurrency() + random1);
-                bot.execute(new SendMessage(message.chat().id(), text.getCurrency(random1)));
+                bot.execute(new SendMessage(message.chat().id(), Text.getCurrency(random1)));
                 if (capybara.getJob().getRise() + 1 >= 10 * (index + 1) && index <= 5) {
                     capybara.getJob().setRise(1);
                     capybara.getJob().setIndex(capybara.getJob().getIndex() + 1);

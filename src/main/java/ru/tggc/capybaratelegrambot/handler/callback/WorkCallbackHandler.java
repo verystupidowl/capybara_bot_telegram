@@ -4,13 +4,15 @@ import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
-import ru.tggc.capybaratelegrambot.domain.model.enums.JobType;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
+import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.sender.Sender;
-import ru.tggc.capybaratelegrambot.service.CapybaraService;
+import ru.tggc.capybaratelegrambot.service.impl.CapybaraService;
 
 @BotHandler
 public class WorkCallbackHandler extends CallbackHandler {
@@ -29,10 +31,9 @@ public class WorkCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("take_from_work")
     private void takeFromWork(@MessageId int messageId,
-                              @ChatId String chatId,
-                              @UserId String userId) {
-        capybaraService.takeFromWork(userId, chatId)
-                .forEach(text -> sendSimpleMessage(chatId, messageId, text, null));
+                              @Ctx CapybaraContext ctx) {
+        capybaraService.takeFromWork(ctx)
+                .forEach(text -> sendSimpleMessage(ctx.chatId(), messageId, text, null));
 
     }
 
@@ -43,27 +44,24 @@ public class WorkCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("set_job${jobType}")
     private void setJob(@MessageId int messageId,
-                        @UserId String userId,
-                        @ChatId String chatId,
-                        @HandleParam("jobType") JobType jobType) {
-        capybaraService.setJob(userId, chatId, jobType);
+                        @Ctx CapybaraContext ctx,
+                        @HandleParam("jobType") WorkType workType) {
+        capybaraService.setJob(ctx, workType);
         sendSimpleMessage(
-                chatId,
+                ctx.chatId(),
                 messageId,
-                "Твоя капибара теперь " + jobType.getLabel() + "! Поздравляю!",
-                null
+                "Твоя капибара теперь " + workType.getLabel() + "! Поздравляю!"
         );
     }
 
     @CallbackHandle("get_job")
     private void getJob(@MessageId int messageId,
-                        @ChatId String chatId,
-                        @UserId String userId) {
-        boolean hasWork = capybaraService.hasWork(userId, chatId);
+                        @Ctx CapybaraContext ctx) {
+        boolean hasWork = capybaraService.hasWork(ctx);
         if (!hasWork) {
-            sendSimpleMessage(chatId, messageId, "Выбери работу", inlineCreator.newJob());
+            sendSimpleMessage(ctx.chatId(), messageId, "Выбери работу", inlineCreator.newJob());
         } else {
-            sendSimpleMessage(chatId, messageId, "Твоя капибара уже имеет работу", null);
+            sendSimpleMessage(ctx.chatId(), messageId, "Твоя капибара уже имеет работу", null);
         }
     }
 }

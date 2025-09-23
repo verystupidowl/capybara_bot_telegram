@@ -1,11 +1,14 @@
 package ru.tggc.capybaratelegrambot.utils;
 
+import lombok.experimental.UtilityClass;
 import ru.tggc.capybaratelegrambot.capybara.Capybara;
 import ru.tggc.capybaratelegrambot.capybara.properties.CapybaraHappiness;
 import ru.tggc.capybaratelegrambot.capybara.properties.CapybaraSatiety;
 
+import java.time.Duration;
 import java.util.Random;
 
+@UtilityClass
 public class Utils {
 
     public static String timeToString(Integer secs) {
@@ -13,6 +16,15 @@ public class Utils {
                 min = secs / 60 % 60,
                 sec = secs % 60;
         return String.format("%02d:%02d:%02d", hour, min, sec);
+    }
+
+    public static String formatDuration(Duration duration) {
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+        if (hours > 0) return hours + "ч " + minutes + "м";
+        if (minutes > 0) return minutes + "м " + seconds + "с";
+        return seconds + "с";
     }
 
     public static String levelUp(Capybara capybara) {

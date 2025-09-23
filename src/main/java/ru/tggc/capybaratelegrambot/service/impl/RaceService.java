@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
-import ru.tggc.capybaratelegrambot.domain.model.Happiness;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.Photo;
 import ru.tggc.capybaratelegrambot.domain.model.Race;
 import ru.tggc.capybaratelegrambot.domain.model.RaceRequest;
@@ -19,9 +19,6 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.RaceStatus;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.handler.callback.CallbackHandler;
 import ru.tggc.capybaratelegrambot.repository.RaceRequestRepository;
-import ru.tggc.capybaratelegrambot.service.CapybaraService;
-import ru.tggc.capybaratelegrambot.service.RaceService;
-import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
@@ -36,18 +33,17 @@ import java.util.function.BiConsumer;
 
 @Slf4j
 @Service
-public class RaceServiceImpl extends AbstractRequestService<RaceRequest> implements RaceService {
+public class RaceService extends AbstractRequestService<RaceRequest> {
     private static final Random random = new Random();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private final RaceRequestRepository raceRequestRepository;
 
-    public RaceServiceImpl(CapybaraService capybaraService, UserService userService,
-                           RaceRequestRepository raceRequestRepository) {
+    public RaceService(CapybaraService capybaraService, UserService userService,
+                       RaceRequestRepository raceRequestRepository) {
         super(capybaraService, userService);
         this.raceRequestRepository = raceRequestRepository;
     }
 
-    @Override
     public BiConsumer<CallbackHandler, CallbackQuery> respondRace(Capybara opponent, boolean accept) {
         return Optional.ofNullable(opponent.getRaceRequest())
                 .map(raceRequest -> {

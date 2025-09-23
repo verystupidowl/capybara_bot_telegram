@@ -1,12 +1,13 @@
 package ru.tggc.capybaratelegrambot.service.factory;
 
 import lombok.RequiredArgsConstructor;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.User;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
-import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.RequestService;
-import ru.tggc.capybaratelegrambot.service.UserService;
+import ru.tggc.capybaratelegrambot.service.impl.CapybaraService;
+import ru.tggc.capybaratelegrambot.service.impl.UserService;
 
 @RequiredArgsConstructor
 public abstract class AbstractRequestService<Rq> implements RequestService {
@@ -14,13 +15,13 @@ public abstract class AbstractRequestService<Rq> implements RequestService {
     private final UserService userService;
 
     @Override
-    public void sendRequest(String opponentUsername, String challengerId, String chatId) {
-        Capybara challenger = capybaraService.getCapybaraByUserId(challengerId, chatId);
+    public void sendRequest(String opponentUsername, CapybaraContext ctx) {
+        Capybara challenger = capybaraService.getCapybaraByContext(ctx);
         User user = userService.getUserByUsername(opponentUsername);
-        Capybara opponent = capybaraService.getCapybaraByUserId(user.getUserId(), chatId);
+        Capybara opponent = capybaraService.getCapybaraByUserId(user.getUserId(), ctx.chatId());
 
         if (challenger.equals(opponent)) {
-            throw new CapybaraException("u cant challenge urself!", chatId);
+            throw new CapybaraException("u cant challenge urself!", ctx.chatId());
         }
 
         challenge(challenger, opponent);

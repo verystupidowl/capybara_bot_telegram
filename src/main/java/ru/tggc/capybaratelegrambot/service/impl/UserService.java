@@ -7,23 +7,20 @@ import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.domain.model.User;
 import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.repository.UserRepository;
-import ru.tggc.capybaratelegrambot.service.UserService;
 
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserService {
     private final UserRepository userRepository;
 
-    @Override
     @Transactional(readOnly = true)
     public User getUserByUserId(String userId) {
         return userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserNotFoundException("User with userId " + userId + " not found"));
     }
 
-    @Override
     @Transactional
     public User saveOrUpdate(UserDto dto) {
         User user = userRepository.findByUserId(dto.userId())
@@ -37,7 +34,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
-    @Override
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));

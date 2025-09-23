@@ -9,12 +9,12 @@ import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendDocument;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
+import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
-import ru.tggc.capybaratelegrambot.handler.text.TextHandler;
-import ru.tggc.capybaratelegrambot.handler.callback.CallbackHandler;
-import ru.tggc.capybaratelegrambot.service.UserService;
+import ru.tggc.capybaratelegrambot.service.impl.UserService;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -24,14 +24,17 @@ import java.util.concurrent.CompletableFuture;
 @Component
 @Slf4j
 public class Bot extends TelegramBot {
-    private final TextHandler textCommandsHandler;
-    private final CallbackHandler callbackHandler;
+    private final MessageHandleRegistry messageHandleRegistry;
+    private final CallbackRegistry callbackRegistry;
     private final UserService userService;
 
-    public Bot(TextHandler textCommandsHandler, CallbackHandler callbackHandler, UserService userService, CallbackRegistry callbackRegistry) {
-        super("6653668731:AAEP6-0Bd3H-Y8sUgo-9o9tAX8XkAq_mZ2Q");
-        this.textCommandsHandler = textCommandsHandler;
-        this.callbackHandler = callbackHandler;
+    public Bot(@Value("${botToken}") String botToken,
+               MessageHandleRegistry messageHandleRegistry,
+               CallbackRegistry callbackRegistry,
+               UserService userService) {
+        super(botToken);
+        this.messageHandleRegistry = messageHandleRegistry;
+        this.callbackRegistry = callbackRegistry;
         this.userService = userService;
     }
 
@@ -51,9 +54,9 @@ public class Bot extends TelegramBot {
             userService.saveOrUpdate(user);
 
             Optional.ofNullable(update.message().text())
-                    .ifPresent(_ -> serveCommand(update.message()));
-            Optional.ofNullable(update.message().photo())
-                    .ifPresent(_ -> servePhoto(update.message()));
+                    .ifPresent(s -> serveCommand(update.message()));
+//            Optional.ofNullable(update.message().photo())
+//                    .ifPresent(_ -> servePhoto(update.message()));
             if (!Arrays.stream(update.message().newChatMembers()).filter(member -> member.id() == 6653668731L).toList().isEmpty()) {
                 greetings(update.message().chat().id());
             }
@@ -72,17 +75,17 @@ public class Bot extends TelegramBot {
 
     private void serveCommand(Message message) {
         if (!Objects.equals(message.chat().id(), message.from().id())) {
-            textCommandsHandler.serveTextCommandsPublic(message, this);
+            messageHandleRegistry.dispatch(message);//todo
         } else {
-            textCommandsHandler.handle(message, this);
+            messageHandleRegistry.dispatch(message);
         }
     }
 
     private void serveCallback(CallbackQuery callbackQuery) {
-        callbackHandler.handle(callbackQuery);
+        callbackRegistry.dispatch(callbackQuery);
     }
-
-    private void servePhoto(Message message) {
-        textCommandsHandler.servePhoto(message, this);
-    }
+//
+//    private void servePhoto(Message message) {
+//        messageHandleRegistry.servePhoto(message, this);
+//    }
 }
