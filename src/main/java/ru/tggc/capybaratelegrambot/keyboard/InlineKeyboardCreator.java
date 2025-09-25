@@ -2,17 +2,21 @@ package ru.tggc.capybaratelegrambot.keyboard;
 
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import com.pengrad.telegrambot.model.request.Keyboard;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.capybara.Capybara;
+import ru.tggc.capybaratelegrambot.oldcapybara.capybara.Capybara;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
+import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class InlineKeyboardCreator {
 
-    public InlineKeyboardMarkup myCapybaraKeyboard(ru.tggc.capybaratelegrambot.domain.model.Capybara capybara) {
+    public InlineKeyboardMarkup myCapybaraKeyboard(MyCapybaraDto capybara) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> change = new ArrayList<>();
         InlineKeyboardButton setName = new InlineKeyboardButton("Изменить имя").callbackData("set_name");
@@ -23,13 +27,13 @@ public class InlineKeyboardCreator {
         rows.add(change);
         List<InlineKeyboardButton> feedHappy = null;
 
-        if (capybara.getSatiety().canPerform()) {
+        if (capybara.canSatiety()) {
             InlineKeyboardButton feedCapybara = new InlineKeyboardButton("Покормить/Откормить").callbackData("feed_fatten");
             feedHappy = new ArrayList<>();
             feedHappy.add(feedCapybara);
         }
 
-        if (capybara.getHappiness().canPerform()) {
+        if (capybara.canHappy()) {
             InlineKeyboardButton makeHappy = new InlineKeyboardButton("Осчастливить капибару").callbackData("make_happy");
             if (feedHappy == null)
                 feedHappy = new ArrayList<>();
@@ -59,28 +63,26 @@ public class InlineKeyboardCreator {
 //            bigJobs = new ArrayList<>();
 //            bigJobs.add(bigJob);
 //        }
-
-
+//
+//
 //        if (bigJobs != null) {
 //            rows.add(bigJobs);
 //        }
-//        List<InlineKeyboardButton> jobs = null;
+        List<InlineKeyboardButton> jobs = null;
+
+        if (capybara.canTakeFromWork()) {
+            InlineKeyboardButton job = new InlineKeyboardButton("Забрать с работы").callbackData("take_from_job");
+            jobs = new ArrayList<>();
+            jobs.add(job);
+        } else if (!capybara.hasWork()) {
+            InlineKeyboardButton getJob = new InlineKeyboardButton("Устроиться на работу").callbackData("get_job");
+            jobs = new ArrayList<>();
+            jobs.add(getJob);
+        }
 //
-//        if (capybara.getJob().getJobAction().canPerform()) {
-//            if (capybara.getJob().getJobTimer().getTimeRemaining() <= date && capybara.getJob().getJobTimer().getLevel() == 1) {
-//                InlineKeyboardButton job = new InlineKeyboardButton("Забрать с работы").callbackData("take_from_job");
-//                jobs = new ArrayList<>();
-//                jobs.add(job);
-//            }
-//        } else {
-//            InlineKeyboardButton getJob = new InlineKeyboardButton("Устроиться на работу").callbackData("get_job");
-//            jobs = new ArrayList<>();
-//            jobs.add(getJob);
-//        }
-//
-//        if (jobs != null) {
-//            rows.add(jobs);
-//        }
+        if (jobs != null) {
+            rows.add(jobs);
+        }
 
         List<InlineKeyboardButton> infoBtn = new ArrayList<>();
 
@@ -239,6 +241,14 @@ public class InlineKeyboardCreator {
         });
     }
 
+    public InlineKeyboardMarkup casinoTargetKeyboard() {
+        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
+                {new InlineKeyboardButton("Красное").callbackData("casino_RED")},
+                {new InlineKeyboardButton("Черное").callbackData("casino_BLACK")},
+                {new InlineKeyboardButton("Зеро").callbackData("casino_ZERO")}
+        });
+    }
+
     public InlineKeyboardMarkup myCapybaraList(List<Capybara> capybaraList) {
         List<List<InlineKeyboardButton>> capybaraNameRows = new ArrayList<>();
         for (Capybara capybara : capybaraList) {
@@ -248,6 +258,12 @@ public class InlineKeyboardCreator {
         }
         return new InlineKeyboardMarkup(
                 capybaraNameRows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new)
+        );
+    }
+
+    public Keyboard takeCapybara() {
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton("Взять капибару").callbackData("take_capybara")
         );
     }
 }

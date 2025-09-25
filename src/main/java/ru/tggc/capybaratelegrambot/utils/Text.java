@@ -92,7 +92,7 @@ public class Text {
     }
 
     public String getTea(CapybaraTeaDto capybara, CapybaraTeaDto capybara1) {
-        return "[id" + capybara.userId() + "|" + capybara.name() + "]"
+        return capybara.name()
                 + ", твой собеседник сегодня - " + capybara1.name() + "\nСчастье увеличено на 10";
     }
 
@@ -110,7 +110,7 @@ public class Text {
         sb.append("✨ Имя: ").append(capybara.name());
 
         sb.append("\n ☕ Чаепитие ");
-        if (capybara.isTeaWaiting()) {
+        if (Boolean.FALSE.equals(capybara.isTeaWaiting())) {
             sb.append(capybara.canTea()
                     ? "уже можно"
                     : "через: " + capybara.teaTime());
@@ -129,7 +129,7 @@ public class Text {
                     sb.append("\n🔨 Забрать с работы ")
                             .append(capybara.canTakeFromWork()
                                     ? "уже можно"
-                                    : "через: " + timeToString(capybara.takeFromWork()));
+                                    : "через: " + capybara.takeFromWork());
                 }
             }
 

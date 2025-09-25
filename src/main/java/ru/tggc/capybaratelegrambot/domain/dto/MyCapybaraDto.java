@@ -16,6 +16,12 @@ public record MyCapybaraDto(
         Integer satietyLevel,
         Integer satietyMaxLevel,
         Integer happinessLevel,
-        Integer happinessMaxLevel
+        Integer happinessMaxLevel,
+        Boolean canGoWork,
+        Boolean canTakeFromWork,
+        Boolean canSatiety,
+        Boolean canHappy,
+        Boolean hasWork,
+        String photoUrl
 ) {
 }

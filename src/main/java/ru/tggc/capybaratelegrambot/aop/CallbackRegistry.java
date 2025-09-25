@@ -1,12 +1,13 @@
 package ru.tggc.capybaratelegrambot.aop;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
+import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -17,8 +18,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
 
-    protected CallbackRegistry(TelegramBot bot, ListableBeanFactory beanFactory) {
-        super(bot, beanFactory);
+    protected CallbackRegistry(ListableBeanFactory beanFactory, InlineKeyboardCreator inlineKeyboardCreator) {
+        super(beanFactory, inlineKeyboardCreator);
     }
 
     @Override
@@ -26,12 +27,7 @@ public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
         return CallbackHandle.class;
     }
 
-    @Override
-    protected CheckType getCheckType(Method method) {
-        return method.getAnnotation(CallbackHandle.class).checkType();
-    }
-
-    public void dispatch(CallbackQuery query) {
+    public Response dispatch(CallbackQuery query) {
         String data = query.data();
         Method method = methods.values().stream()
                 .filter(m -> {
@@ -42,20 +38,23 @@ public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
                 })
                 .findFirst()
                 .orElse(null);
+        long chatId = query.maybeInaccessibleMessage().chat().id();
+        String userId = query.from().id().toString();
+        int messageId = query.maybeInaccessibleMessage().messageId();
 
         if (method == null) {
             log.warn("Unknown callback: {}", data);
-            return;
+            String message = buildMessageToAdmin("Unknown callback: " + data);
+            SendMessage sendMessageToUser = new SendMessage(chatId, NOT_IMPLEMENTED_MESSAGE);
+            SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, message);
+            return Response.ofMessages(sendMessageToAdmin, sendMessageToUser);
         }
 
-        String chatId = query.maybeInaccessibleMessage().chat().id().toString();
-        String userId = query.from().id().toString();
-        int messageId = query.inlineMessageId() != null ? Integer.parseInt(query.inlineMessageId()) : 0;
 
         String template = method.getAnnotation(CallbackHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;
 
         Object[] args = buildArgs(method, query, chatId, userId, messageId, matcher, query);
-        invokeWithCatch(method, beans.get(template), args, chatId);
+        return invokeWithCatch(method, beans.get(template), args, chatId);
     }
 }

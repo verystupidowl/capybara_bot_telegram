@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 public class Cheerfulness {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     @OneToOne(fetch = FetchType.EAGER)
     private Capybara capybara;
     private Integer cheerfulnessLevel;

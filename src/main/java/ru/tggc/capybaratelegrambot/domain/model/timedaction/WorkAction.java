@@ -1,11 +1,13 @@
 package ru.tggc.capybaratelegrambot.domain.model.timedaction;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.Instant;
 
 @Data
+@NoArgsConstructor
 public class WorkAction implements LongTimedAction {
     private Instant lastTaken;
     private Instant startTime;
@@ -25,7 +27,7 @@ public class WorkAction implements LongTimedAction {
     }
 
     public void takeFromWork() {
-        if (!isInProgress() && timeUntilFinish().isZero()) {
+        if (canTakeFrom()) {
             lastTaken = Instant.now();
             startTime = null;
         } else {
@@ -53,6 +55,11 @@ public class WorkAction implements LongTimedAction {
         if (!isInProgress()) return Duration.ZERO;
         Instant end = startTime.plus(duration);
         return Duration.between(Instant.now(), end);
+    }
+
+    @Override
+    public boolean canTakeFrom() {
+        return !isInProgress() && timeUntilFinish().isZero();
     }
 
     @Override

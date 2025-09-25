@@ -29,6 +29,11 @@ public class BigJobAction implements LongTimedAction {
     }
 
     @Override
+    public boolean canTakeFrom() {
+        return false;
+    }
+
+    @Override
     public boolean canPerform() {
         return false;
     }

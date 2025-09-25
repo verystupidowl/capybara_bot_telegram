@@ -6,57 +6,32 @@ import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
-import ru.tggc.capybaratelegrambot.handler.AbstractHandler;
-import ru.tggc.capybaratelegrambot.sender.Sender;
+import ru.tggc.capybaratelegrambot.handler.Handler;
 
 @Slf4j
-public abstract class TextHandler extends AbstractHandler<Message> {
-//
-//    private final JdbcTemplate jdbcTemplate;
-//    private final CapybaraDAO capybaraDAO;
-//    private final CapybaraService capybaraService;
-    private final MessageHandleRegistry messageHandleRegistry;
+public abstract class TextHandler extends Handler {
 
-    protected TextHandler(Sender sender, MessageHandleRegistry messageHandleRegistry) {
-        super(sender);
-        this.messageHandleRegistry = messageHandleRegistry;
-    }
-
-//    @Autowired
-//    public TextHandler(JdbcTemplate jdbcTemplate, CapybaraService capybaraService, MessageHandleRegistry messageHandleRegistry) {
-//        this.jdbcTemplate = jdbcTemplate;
-//        this.capybaraDAO = new CapybaraDAO(jdbcTemplate);
-//        this.capybaraService = capybaraService;
-//        this.messageHandleRegistry = messageHandleRegistry;
-//    }
-
-
-    @Override
-    public void handle(Message data) {
-        messageHandleRegistry.dispatch(data);
-    }
-
-    protected void sendSimpleMessage(@NotNull String chatId,
-                                     @NotNull String text,
-                                     @Nullable Keyboard markup) {
+    protected Response sendSimpleMessage(@NotNull String chatId,
+                                         @NotNull String text,
+                                         @Nullable Keyboard markup) {
         SendMessage sendMessage = new SendMessage(chatId, text);
         if (markup != null) {
             sendMessage.replyMarkup(markup);
         }
-        create(sendMessage).send();
+        return Response.ofMessage(sendMessage);
     }
 
     protected void sendSimpleMessage(@NotNull String chatId, @NotNull String text) {
         sendSimpleMessage(chatId, text, null);
     }
 
-    protected String getTargetUsername(String username, Message message, String chatId) {
+    protected String getTargetUsername(String username, Message message) {
         if (username == null && message.replyToMessage() != null) {
             return message.replyToMessage().from().username();
         } else if (username == null && message.replyToMessage() == null) {
-            throw new CapybaraException("Ответь на сообщение", chatId); //todo
+            throw new CapybaraException("Ответь на сообщение");
         }
         return username;
     }

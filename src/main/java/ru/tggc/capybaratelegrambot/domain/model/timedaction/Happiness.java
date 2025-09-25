@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class Happiness implements TimedAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private Integer level;
     private Integer maxLevel;
 

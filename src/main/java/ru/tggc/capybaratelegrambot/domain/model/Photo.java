@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private int ownerID;
     private int mediaID;
     private String accessKey;

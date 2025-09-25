@@ -22,10 +22,7 @@ import java.time.LocalDateTime;
 public class Satiety implements TimedAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
-
-    @OneToOne
-    private Capybara capybara;
+    private Long id;
 
     private Integer level;
     private Integer maxLevel;

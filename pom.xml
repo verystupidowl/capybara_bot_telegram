@@ -32,6 +32,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <telegram.version>9.2.0</telegram.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
+        <google.guava.version>32.1.2-jre</google.guava.version>
     </properties>
 
     <dependencyManagement>
@@ -51,6 +52,11 @@
             <groupId>com.github.pengrad</groupId>
             <artifactId>java-telegram-bot-api</artifactId>
             <version>${telegram.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${google.guava.version}</version>
         </dependency>
 
         <dependency>

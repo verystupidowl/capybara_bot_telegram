@@ -17,7 +17,7 @@ public record CapybaraInfoDto(
         Boolean isWorking,
         Boolean isOnBigJob,
         Boolean canTakeFromWork,
-        Integer takeFromWork,
+        String takeFromWork,
         Integer rise,
         Integer index,
         Boolean canTakeFromBigJob,

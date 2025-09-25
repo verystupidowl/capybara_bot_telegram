@@ -6,8 +6,8 @@ import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.User;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.service.RequestService;
-import ru.tggc.capybaratelegrambot.service.impl.CapybaraService;
-import ru.tggc.capybaratelegrambot.service.impl.UserService;
+import ru.tggc.capybaratelegrambot.service.CapybaraService;
+import ru.tggc.capybaratelegrambot.service.UserService;
 
 @RequiredArgsConstructor
 public abstract class AbstractRequestService<Rq> implements RequestService {
@@ -18,7 +18,7 @@ public abstract class AbstractRequestService<Rq> implements RequestService {
     public void sendRequest(String opponentUsername, CapybaraContext ctx) {
         Capybara challenger = capybaraService.getCapybaraByContext(ctx);
         User user = userService.getUserByUsername(opponentUsername);
-        Capybara opponent = capybaraService.getCapybaraByUserId(user.getUserId(), ctx.chatId());
+        Capybara opponent = capybaraService.getCapybaraByUserId(user.getId().toString(), ctx.chatId());
 
         if (challenger.equals(opponent)) {
             throw new CapybaraException("u cant challenge urself!", ctx.chatId());

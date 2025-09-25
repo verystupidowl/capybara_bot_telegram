@@ -1,46 +1,58 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
-import com.pengrad.telegrambot.model.request.Keyboard;
-import com.pengrad.telegrambot.request.DeleteMessage;
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import com.pengrad.telegrambot.request.EditMessageCaption;
+import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
-import ru.tggc.capybaratelegrambot.handler.AbstractHandler;
-import ru.tggc.capybaratelegrambot.sender.Sender;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.handler.Handler;
+
+import java.util.List;
 
 @Slf4j
-public abstract class CallbackHandler extends AbstractHandler<CallbackQuery> {
-    private final CallbackRegistry callbackRegistry;
+public abstract class CallbackHandler extends Handler {
 
-    protected CallbackHandler(Sender sender, CallbackRegistry callbackRegistry) {
-        super(sender);
-        this.callbackRegistry = callbackRegistry;
-    }
-
-    public void sendSimpleMessage(CallbackQuery query, String text, Keyboard markup) {
-        String chatId = query.maybeInaccessibleMessage().chat().id().toString();
-        int messageId = Integer.parseInt(query.inlineMessageId());
-        sendSimpleMessage(chatId, messageId, text, markup);
-    }
-
-    public void sendSimpleMessage(String chatId, int messageId, String text) {
-        sendSimpleMessage(chatId, messageId, text, null);
-    }
-
-    public void sendSimpleMessage(String chatId, int messageId, String text, Keyboard markup) {
-        DeleteMessage deleteMessage = new DeleteMessage(chatId, messageId);
+    public Response sendSimpleMessage(String chatId, String text, InlineKeyboardMarkup markup) {
         SendMessage sendMessage = new SendMessage(chatId, text);
         if (markup != null) {
             sendMessage.replyMarkup(markup);
         }
-        create(deleteMessage).send();
-        create(sendMessage).send();
+        return Response.ofMessages(List.of(sendMessage));
     }
 
-    @Override
-    public void handle(CallbackQuery data) {
-        callbackRegistry.dispatch(data);
+    public Response sendSimpleMessages(String chatId, List<String> texts) {
+        List<SendMessage> responses = texts.stream()
+                .map(text -> new SendMessage(chatId, text))
+                .toList();
+        return Response.ofMessages(responses);
+    }
+
+    public Response editMessageCaption(String chatId, Integer messageId, String caption, InlineKeyboardMarkup markup) {
+        EditMessageCaption emc = new EditMessageCaption(chatId, messageId);
+        emc.caption(caption);
+        if (markup != null) {
+            emc.replyMarkup(markup);
+        }
+        return Response.ofMessage(emc);
+    }
+
+    public Response editSimpleMessage(CallbackQuery query, String text, InlineKeyboardMarkup markup) {
+        String chatId = query.maybeInaccessibleMessage().chat().id().toString();
+        int messageId = Integer.parseInt(query.inlineMessageId());
+        return editSimpleMessage(chatId, messageId, text, markup);
+    }
+
+    public Response editSimpleMessage(String chatId, int messageId, String text) {
+        return editSimpleMessage(chatId, messageId, text, null);
+    }
+
+    public Response editSimpleMessage(String chatId, int messageId, String text, InlineKeyboardMarkup markup) {
+        EditMessageText sendMessage = new EditMessageText(chatId, messageId, text);
+        if (markup != null) {
+            sendMessage.replyMarkup(markup);
+        }
+        return Response.ofEditTexts(List.of(sendMessage));
     }
 }

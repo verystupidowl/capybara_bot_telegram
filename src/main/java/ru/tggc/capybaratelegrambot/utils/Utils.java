@@ -1,15 +1,30 @@
 package ru.tggc.capybaratelegrambot.utils;
 
 import lombok.experimental.UtilityClass;
-import ru.tggc.capybaratelegrambot.capybara.Capybara;
-import ru.tggc.capybaratelegrambot.capybara.properties.CapybaraHappiness;
-import ru.tggc.capybaratelegrambot.capybara.properties.CapybaraSatiety;
+import ru.tggc.capybaratelegrambot.oldcapybara.capybara.Capybara;
+import ru.tggc.capybaratelegrambot.oldcapybara.capybara.properties.CapybaraHappiness;
+import ru.tggc.capybaratelegrambot.oldcapybara.capybara.properties.CapybaraSatiety;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @UtilityClass
 public class Utils {
+
+    public static  <T, R> R getOrNull(T t, Function<T, R> function) {
+        return Optional.ofNullable(t).map(function).orElse(null);
+    }
+
+    public static  <T, R> R getOr(T t, Function<T, R> function, R orElse) {
+        return Optional.ofNullable(t).map(function).orElse(orElse);
+    }
+
+    public <T> void ifPresent(T t, Consumer<T> consumer) {
+        Optional.ofNullable(t).ifPresent(consumer);
+    }
 
     public static String timeToString(Integer secs) {
         long hour = secs / 3600,

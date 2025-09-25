@@ -20,7 +20,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
 public class Level {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private Integer value;
     @Enumerated(EnumType.STRING)
     private Type type;

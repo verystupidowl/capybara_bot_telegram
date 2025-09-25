@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class Race {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     @ManyToOne
     private Capybara winner;
     @ManyToOne

@@ -1,6 +1,7 @@
 package ru.tggc.capybaratelegrambot.domain.model.timedaction;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -9,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 
 import java.time.Duration;
@@ -22,8 +24,9 @@ import java.time.LocalDateTime;
 public class Tea implements TimedAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
-    @OneToOne
+    private Long id;
+    @OneToOne(mappedBy = "tea")
+    @ToString.Exclude
     private Capybara capybara;
     private boolean isWaiting;
 

@@ -77,7 +77,7 @@ public class CheckCapybaraAspect {
 
     private Object handleCheckWithSearch(ProceedingJoinPoint joinPoint, CheckType checkType) throws Throwable {
         CallbackQuery query = (CallbackQuery) joinPoint.getArgs()[0];
-        String userId = query.from().id().toString();
+        long userId = Long.parseLong(query.from().id().toString());
         String chatId = query.maybeInaccessibleMessage().chat().id().toString();
 
         boolean hasCapybara = capybaraRepository.findByUserIdAndChatId(userId, chatId).isPresent();

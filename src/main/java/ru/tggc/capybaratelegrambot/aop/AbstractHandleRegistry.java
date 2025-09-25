@@ -1,12 +1,11 @@
 package ru.tggc.capybaratelegrambot.aop;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.SendMessage;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
-import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.DefaultMessageHandle;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.CallbackParam;
@@ -17,36 +16,40 @@ import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 import ru.tggc.capybaratelegrambot.utils.Text;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractHandleRegistry<P> {
     protected final Map<String, Method> methods = new ConcurrentHashMap<>();
     protected final Map<String, Object> beans = new ConcurrentHashMap<>();
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
-    protected final TelegramBot bot;
     protected final ListableBeanFactory beanFactory;
+    private final InlineKeyboardCreator inlineKeyboardCreator;
     protected Method defaultMethod;
     protected Object defaultBean;
-
-    protected AbstractHandleRegistry(TelegramBot bot, ListableBeanFactory beanFactory) {
-        this.bot = bot;
-        this.beanFactory = beanFactory;
-    }
+    protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
+    protected static final String NOT_IMPLEMENTED_MESSAGE = "Пока не реализовано, следите за новостями!";
+    protected static final long ADMIN_ID = 428873987;
 
     @PostConstruct
     @SneakyThrows
@@ -80,37 +83,49 @@ public abstract class AbstractHandleRegistry<P> {
         }
     }
 
-    protected void invokeWithCatch(Method method, Object bean, Object[] args, String chatId) {
-        CheckType checkType = getCheckType(method);
+    protected Response invokeWithCatch(Method method, Object bean, Object[] args, long chatId) {
+        Response response;
         try {
-            method.invoke(bean, args);
-        } catch (CapybaraNotFoundException e) {
-            if (checkType == CheckType.CHECK_NOT_EXISTS) {
-                log.info(e.getMessage(), e.getChatId());
-                bot.execute(new SendMessage(e.getChatId(), Text.DONT_HAVE_CAPYBARA));
-            }
-        } catch (CapybaraAlreadyExistsException e) {
-            if (checkType == CheckType.CHECK_EXISTS) {
-                log.info(e.getMessage(), e.getChatId());
-                bot.execute(new SendMessage(e.getChatId(), Text.ALREADY_HAVE_CAPYBARA));
-            }
-        } catch (CapybaraHasNoMoneyException e) {
-            String messageToSend = "ur capy has no money(";
-            bot.execute(new SendMessage(chatId, messageToSend));
-        } catch (CapybaraException e) {
-            log.info(e.getMessage(), e.getChatId());
-            String messageToSend = e.getMessageToSend();
-            if (messageToSend != null) {
-                bot.execute(new SendMessage(chatId, messageToSend));
+            response = (Response) method.invoke(bean, args);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            switch (cause) {
+                case CapybaraNotFoundException ex -> {
+                    log.info(ex.getMessage(), ex.getChatId());
+                    SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
+                    message.replyMarkup(inlineKeyboardCreator.takeCapybara());
+                    response = Response.ofMessage(message);
+                }
+                case CapybaraAlreadyExistsException ex -> {
+                    log.info(ex.getMessage(), ex.getChatId());
+                    response = Response.ofMessage(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
+                }
+                case CapybaraHasNoMoneyException ex -> {
+                    String messageToSend = "ur capy has no money(";
+                    response = Response.ofMessage(new SendMessage(chatId, messageToSend));
+                }
+                case CapybaraException ex -> {
+                    log.info(ex.getMessage(), ex.getChatId());
+                    String messageToSend = ex.getMessageToSend();
+                    response = Response.ofMessage(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
+                }
+                default -> {
+                    log.error("Error invoking callback", cause);
+                    SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);
+                    SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage()));
+                    response = Response.ofMessages(sendMessageToAdmin, sendMessageToUser);
+                }
             }
         } catch (Exception e) {
             log.error("Error invoking callback", e);
+            response = Response.ofMessage(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
         }
+        return response;
     }
 
     protected Object[] buildArgs(Method method,
                                  Object update,
-                                 String chatId,
+                                 Long chatId,
                                  String userId,
                                  int messageId,
                                  Matcher matcher,
@@ -118,9 +133,10 @@ public abstract class AbstractHandleRegistry<P> {
         return Arrays.stream(method.getParameters())
                 .map(parameter -> switch (parameter) {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
-                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
+                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId.toString();
                     case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId);
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) ->
+                            new CapybaraContext(chatId.toString(), userId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;
@@ -137,5 +153,7 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
 
-    protected abstract CheckType getCheckType(Method method);
+    protected String buildMessageToAdmin(String message) {
+        return LocalDateTime.now() + "\n" + message;
+    }
 }

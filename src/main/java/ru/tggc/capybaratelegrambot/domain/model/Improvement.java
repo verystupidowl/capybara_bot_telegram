@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class Improvement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private LocalDateTime lastTime;
     private Integer level;
     private LocalDateTime nextTime;

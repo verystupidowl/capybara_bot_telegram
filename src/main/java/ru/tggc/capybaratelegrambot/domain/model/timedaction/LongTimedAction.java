@@ -24,4 +24,6 @@ public interface LongTimedAction extends TimedAction {
      * Сколько осталось до завершения
      */
     Duration timeUntilFinish();
+
+    boolean canTakeFrom();
 }

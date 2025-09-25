@@ -11,8 +11,8 @@ import java.util.Optional;
 
 public interface WeddingRequestRepository extends JpaRepository<WeddingRequest, Long> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM wedding_request WHERE target_id = :targetId")
-    Optional<WeddingRequest> findByTargetIdAndStatusAndType(@Param("targetId") Long targetId, WeddingStatus status, WeddingRequestType type);
+    @Query(nativeQuery = true, value = "SELECT * FROM wedding_requests WHERE target_id = :targetId and status = :status and type = :type")
+    Optional<WeddingRequest> findByTargetIdAndStatusAndType(@Param("targetId") Long targetId, @Param("status") WeddingStatus status, WeddingRequestType type);
 
     Optional<WeddingRequest> findByProposerIdAndStatus(Long proposerId, WeddingStatus status);
 }

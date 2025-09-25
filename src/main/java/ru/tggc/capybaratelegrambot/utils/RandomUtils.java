@@ -5,6 +5,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraDefaultPhoto;
 import ru.tggc.capybaratelegrambot.domain.dto.HappinessThings;
 import ru.tggc.capybaratelegrambot.domain.model.Photo;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static ru.tggc.capybaratelegrambot.utils.CasinoTargetType.BLACK;
@@ -21,8 +23,9 @@ public class RandomUtils {
     }
 
     public Photo getRandomPhoto() {
-        CapybaraDefaultPhoto[] values = CapybaraDefaultPhoto.values();
-        String url = values[RANDOM.nextInt(values.length)].getUrl();
+        List<String> values = CapybaraDefaultPhoto.DEFAULT_PHOTOS;
+        String id = values.get(RANDOM.nextInt(values.size()));
+        String url = "https://vk.com/photo-206143282_" + id;
         return Photo.builder()
                 .url(url)
                 .build();
@@ -38,11 +41,16 @@ public class RandomUtils {
 
     public static CasinoTargetType randomWeighted() {
         double r = RANDOM.nextDouble();
-
-        return switch (r) {
-            case double v when v < 1.0 / 37 -> ZERO;
-            case double v when v < (1.0 / 37) + (18.0 / 37) -> RED;
-            default -> BLACK;
-        };
+        return Map.of(
+                        ZERO, 1.0 / 37,
+                        RED, (1.0 / 37) + (18.0 / 37),
+                        BLACK, 1.0
+                )
+                .entrySet()
+                .stream()
+                .filter(entry -> r < entry.getValue())
+                .findFirst()
+                .map(Map.Entry::getKey)
+                .orElseThrow(IllegalArgumentException::new);
     }
 }

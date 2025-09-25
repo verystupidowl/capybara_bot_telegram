@@ -22,7 +22,7 @@ import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
 public class Work {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     @Embedded
     private WorkAction workAction;
     private Integer rise;

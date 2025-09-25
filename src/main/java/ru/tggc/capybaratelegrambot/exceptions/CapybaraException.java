@@ -12,12 +12,11 @@ public class CapybaraException extends RuntimeException {
         this.messageToSend = messageToSend;
     }
 
-    @Deprecated
-    public CapybaraException(String message) {
-        super(message);
+    public CapybaraException(String messageToSend) {
+        super(messageToSend);
+        this.messageToSend = messageToSend;
     }
 
-    @Deprecated
     public CapybaraException(String message, String chatId, String messageToSend) {
         super(message);
         this.chatId = chatId;

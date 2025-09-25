@@ -1,6 +1,5 @@
 package ru.tggc.capybaratelegrambot.aop;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -8,7 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
-import ru.tggc.capybaratelegrambot.domain.dto.response.TextResponse;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -20,8 +19,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
 
-    protected MessageHandleRegistry(TelegramBot bot, ListableBeanFactory beanFactory) {
-        super(bot, beanFactory);
+    protected MessageHandleRegistry(ListableBeanFactory beanFactory, InlineKeyboardCreator inlineKeyboardCreator) {
+        super(beanFactory, inlineKeyboardCreator);
     }
 
     @Override
@@ -29,13 +28,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         return MessageHandle.class;
     }
 
-    @Override
-    protected CheckType getCheckType(Method method) {
-        return method.getAnnotation(MessageHandle.class).checkType();
-    }
-
-
-    public void dispatch(Message message) {
+    public Response dispatch(Message message) {
         String text = message.text();
         Method method = methods.values().stream()
                 .filter(m -> {
@@ -47,17 +40,18 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
                 .findFirst()
                 .orElse(null);
 
-        String chatId = message.chat().id().toString();
+        long chatId = message.chat().id();
         String userId = message.from().id().toString();
+        Response response = null;
 
         if (method == null) {
             if (defaultMethod == null) {
                 log.warn("Unknown message: {}", text);
             } else {
                 Object[] args = buildArgs(defaultMethod, message, chatId, userId, 0, null, message);
-                invokeWithCatch(defaultMethod, defaultBean, args, chatId);
+                response = invokeWithCatch(defaultMethod, defaultBean, args, chatId);
             }
-            return;
+            return response;
         }
 
 
@@ -65,6 +59,6 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(text) : null;
 
         Object[] args = buildArgs(method, message, chatId, userId, 0, matcher, message);
-        invokeWithCatch(method, beans.get(template), args, chatId);
+        return invokeWithCatch(method, beans.get(template), args, chatId);
     }
 }

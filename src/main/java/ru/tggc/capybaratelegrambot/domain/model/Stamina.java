@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 public class Stamina {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
-    Integer level;
-    LocalDateTime next;
-    Integer maxLevel;
+    private Long id;
+    private Integer level;
+    private LocalDateTime next;
+    private Integer maxLevel;
 }
