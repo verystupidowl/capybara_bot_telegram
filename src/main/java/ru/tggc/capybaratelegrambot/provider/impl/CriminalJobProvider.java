@@ -39,6 +39,11 @@ public class CriminalJobProvider extends AbstractJobProvider {
     }
 
     @Override
+    protected String getSetWorkPhoto() {
+        return "https://vk.com/photo-209917797_457242283";
+    }
+
+    @Override
     protected Duration getWorkCooldown() {
         return Duration.ofHours(3);
     }

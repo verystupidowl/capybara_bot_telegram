@@ -14,7 +14,7 @@ public class HistoryService {
 
     public void setHistory(CapybaraContext dto, HistoryType type) {
         if (capybaraHistory.containsKey(dto)) {
-            throw new CapybaraException("ur capy already doing" + type, dto.chatId());
+            throw new CapybaraException("ur capy already doing " + type, dto.chatId());
         }
         capybaraHistory.putIfAbsent(dto, type);
     }

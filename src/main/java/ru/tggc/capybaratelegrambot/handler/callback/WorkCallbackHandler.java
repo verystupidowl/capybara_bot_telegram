@@ -31,14 +31,15 @@ public class WorkCallbackHandler extends CallbackHandler {
         return sendSimpleMessage(ctx.chatId(), "ur capy has gone to work", null);
     }
 
-    @CallbackHandle("set_job${jobType}")
+    @CallbackHandle("set_job_${jobType}")
     public Response setJob(@MessageId int messageId,
                            @Ctx CapybaraContext ctx,
                            @HandleParam("jobType") WorkType workType) {
-        capybaraService.setJob(ctx, workType);
-        return editSimpleMessage(
+        String photoUrl = capybaraService.setJob(ctx, workType);
+        return editPhoto(
                 ctx.chatId(),
                 messageId,
+                photoUrl,
                 "Твоя капибара теперь " + workType.getLabel() + "! Поздравляю!"
         );
     }

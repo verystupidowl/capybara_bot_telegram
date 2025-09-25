@@ -27,13 +27,13 @@ public class InlineKeyboardCreator {
         rows.add(change);
         List<InlineKeyboardButton> feedHappy = null;
 
-        if (capybara.canSatiety()) {
+        if (Boolean.TRUE.equals(capybara.canSatiety())) {
             InlineKeyboardButton feedCapybara = new InlineKeyboardButton("Покормить/Откормить").callbackData("feed_fatten");
             feedHappy = new ArrayList<>();
             feedHappy.add(feedCapybara);
         }
 
-        if (capybara.canHappy()) {
+        if (Boolean.TRUE.equals(capybara.canHappy())) {
             InlineKeyboardButton makeHappy = new InlineKeyboardButton("Осчастливить капибару").callbackData("make_happy");
             if (feedHappy == null)
                 feedHappy = new ArrayList<>();
@@ -70,11 +70,11 @@ public class InlineKeyboardCreator {
 //        }
         List<InlineKeyboardButton> jobs = null;
 
-        if (capybara.canTakeFromWork()) {
+        if (Boolean.TRUE.equals(capybara.canTakeFromWork())) {
             InlineKeyboardButton job = new InlineKeyboardButton("Забрать с работы").callbackData("take_from_job");
             jobs = new ArrayList<>();
             jobs.add(job);
-        } else if (!capybara.hasWork()) {
+        } else if (Boolean.FALSE.equals(capybara.hasWork())) {
             InlineKeyboardButton getJob = new InlineKeyboardButton("Устроиться на работу").callbackData("get_job");
             jobs = new ArrayList<>();
             jobs.add(getJob);
@@ -194,9 +194,10 @@ public class InlineKeyboardCreator {
 
     public InlineKeyboardMarkup newJob() {
         return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Программист\uD83D\uDC68\u200D\uD83D\uDCBB").callbackData("prog_job")},
-                {new InlineKeyboardButton("Грабитель\uD83E\uDD77").callbackData("crim_job")},
-                {new InlineKeyboardButton("Кассир\uD83D\uDCB5").callbackData("cash_job")}
+                {new InlineKeyboardButton("Программист\uD83D\uDC68\u200D\uD83D\uDCBB").callbackData("set_job_PROGRAMMING")},
+                {new InlineKeyboardButton("Грабитель\uD83E\uDD77").callbackData("set_job_CRIMINAL")},
+                {new InlineKeyboardButton("Кассир\uD83D\uDCB5").callbackData("set_job_CASHIER")},
+                {new InlineKeyboardButton("Моя капибара").callbackData("go_to_main")}
         });
     }
 
@@ -264,6 +265,12 @@ public class InlineKeyboardCreator {
     public Keyboard takeCapybara() {
         return new InlineKeyboardMarkup(
                 new InlineKeyboardButton("Взять капибару").callbackData("take_capybara")
+        );
+    }
+
+    public Keyboard toMainMenu() {
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton("Моя капибара").callbackData("my_capybara")
         );
     }
 }

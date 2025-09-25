@@ -8,6 +8,7 @@ import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
+import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
@@ -27,6 +28,12 @@ public class CommandTextHandler extends TextHandler {
     @MessageHandle("казино")
     public Response startCasino(@Ctx CapybaraContext ctx) {
         casinoService.startCasino(ctx);
+        return sendSimpleMessage(ctx.chatId(), "Введите ставку", null);
+    }
+
+    @MessageHandle("слоты")
+    public Response startSlots(@Ctx CapybaraContext ctx) {
+        casinoService.startSlots(ctx);
         return sendSimpleMessage(ctx.chatId(), "Введите ставку", null);
     }
 

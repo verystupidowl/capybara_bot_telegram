@@ -59,6 +59,10 @@ public class CapybaraService {
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
 
+    public Optional<Capybara> findCapybara(CapybaraContext ctx) {
+        return capybaraRepository.findMyCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId());
+    }
+
     public Capybara getCapybara(Long id, String chatId) {
         return capybaraRepository.findById(id)
                 .orElseThrow(() -> new CapybaraNotFoundException("Capy didnt found", chatId));
@@ -229,12 +233,13 @@ public class CapybaraService {
                 .orElse(false);
     }
 
-    public void setJob(CapybaraContext ctx, WorkType workType) {
+    public String setJob(CapybaraContext ctx, WorkType workType) {
         Capybara capybara = getCapybaraByContext(ctx);
 
         JobProvider jobProvider = jobProviderFactory.getJobProvider(workType);
-        jobProvider.setJob(capybara);
+        String photoUrl = jobProvider.setJob(capybara);
         capybaraRepository.save(capybara);
+        return photoUrl;
     }
 
     public void goJob(CapybaraContext ctx) {

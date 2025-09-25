@@ -109,6 +109,7 @@ public abstract class AbstractHandleRegistry<P> {
                     String messageToSend = ex.getMessageToSend();
                     response = Response.ofMessage(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
                 }
+                case NumberFormatException ex -> response = Response.ofMessage(new SendMessage(chatId, "Введи число!"));
                 default -> {
                     log.error("Error invoking callback", cause);
                     SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);

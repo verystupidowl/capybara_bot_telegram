@@ -14,6 +14,11 @@ public class ItJobProvider extends AbstractJobProvider {
     }
 
     @Override
+    protected String getSetWorkPhoto() {
+        return "https://vk.com/photo-209917797_457242284";
+    }
+
+    @Override
     protected Duration getWorkCooldown() {
         return Duration.ofMinutes(15);
     }

@@ -1,5 +1,7 @@
 package ru.tggc.capybaratelegrambot;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.CallbackQuery;
@@ -18,10 +20,12 @@ import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -30,6 +34,13 @@ public class Bot extends TelegramBot {
     private final CallbackRegistry callbackRegistry;
     private final UserService userService;
     private final InlineKeyboardCreator creator;
+
+    private static final int MAX_UPDATES = 10;
+
+    Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(10))
+            .maximumSize(1000)
+            .build();
 
     public Bot(@Value("${bot.token}") String botToken,
                MessageHandleRegistry messageHandleRegistry,
@@ -54,9 +65,7 @@ public class Bot extends TelegramBot {
     private void process(Update update) {
         if (update.message() != null) {
             User from = update.message().from();
-            UserDto user = new UserDto(from.id().toString(), from.username());
-            userService.saveOrUpdate(user);
-
+            if (checkUserAndUpdate(from, update.message().chat().id())) return;
             Optional.ofNullable(update.message().text())
                     .ifPresent(s -> serveCommand(update.message()));
 //            Optional.ofNullable(update.message().photo())
@@ -66,11 +75,32 @@ public class Bot extends TelegramBot {
             }
         } else if (update.callbackQuery() != null) {
             User from = update.callbackQuery().from();
-            UserDto user = new UserDto(from.id().toString(), from.username());
-            userService.saveOrUpdate(user);
+            if (checkUserAndUpdate(from, update.callbackQuery().maybeInaccessibleMessage().chat().id())) return;
             serveCallback(update.callbackQuery());
             execute(new AnswerCallbackQuery(update.callbackQuery().id()));
         }
+    }
+
+    private boolean checkUserAndUpdate(User from, long chatId) {
+        Integer count = countOfUpdates.getIfPresent(from.id());
+
+        if (count != null && count > MAX_UPDATES) {
+            log.info("user {} is trying to ddos", from.username());
+            countOfUpdates.policy().expireAfterWrite().get().ageOf(from.id(), TimeUnit.SECONDS).ifPresentOrElse(ex -> {
+                String time = MAX_UPDATES - ex + "c";
+                String text = "Cлишком много запросов, попробуй снова через " + time;
+                execute(new SendMessage(chatId, text));
+            }, () -> {
+                String text = "Cлишком много запросов";
+                execute(new SendMessage(chatId, text));
+            });
+            return true;
+        }
+        int currentCount = count == null ? 0 : count;
+        countOfUpdates.put(from.id(), currentCount + 1);
+        UserDto user = new UserDto(from.id().toString(), from.username());
+        userService.saveOrUpdate(user);
+        return false;
     }
 
     private void greetings(String chatId) {

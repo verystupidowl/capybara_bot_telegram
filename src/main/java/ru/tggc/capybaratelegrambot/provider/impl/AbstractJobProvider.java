@@ -48,7 +48,7 @@ public abstract class AbstractJobProvider implements JobProvider {
     }
 
     @Override
-    public void setJob(Capybara capybara) {
+    public String setJob(Capybara capybara) {
         checkHasNoWork(capybara);
         WorkAction workAction = new WorkAction(getWorkDuration(), getWorkCooldown());
         Work work = Work.builder()
@@ -58,7 +58,10 @@ public abstract class AbstractJobProvider implements JobProvider {
                 .rise(1)
                 .build();
         capybara.setWork(work);
+        return getSetWorkPhoto();
     }
+
+    protected abstract String getSetWorkPhoto();
 
     protected abstract Duration getWorkCooldown();
 
@@ -95,6 +98,6 @@ public abstract class AbstractJobProvider implements JobProvider {
     }
 
     protected boolean checkWork(Capybara capybara) {
-        return WorkType.NONE == capybara.getWork().getWorkType();
+        return WorkType.NONE != capybara.getWork().getWorkType();
     }
 }

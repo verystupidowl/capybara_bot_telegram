@@ -2,10 +2,12 @@ package ru.tggc.capybaratelegrambot.handler.callback;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
+import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.handler.Handler;
 
@@ -36,6 +38,15 @@ public abstract class CallbackHandler extends Handler {
             emc.replyMarkup(markup);
         }
         return Response.ofMessage(emc);
+    }
+
+    public Response editPhoto(String chatId, Integer messageId, String photoUrl, String caption) {
+        DeleteMessage dm = new DeleteMessage(chatId, messageId);
+        return sendSimplePhoto(PhotoDto.builder()
+                .url(photoUrl)
+                .caption(caption)
+                .chatId(chatId)
+                .build()).andThen(bot -> bot.execute(dm));
     }
 
     public Response editSimpleMessage(CallbackQuery query, String text, InlineKeyboardMarkup markup) {

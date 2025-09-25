@@ -119,36 +119,36 @@ public class Text {
         }
 
         if (capybara.hasWork()) {
-            if (!capybara.isOnBigJob()) {
-                if (!capybara.isWorking()) {
-                    sb.append("\n🔨 Отправить на работу ")
-                            .append(capybara.canGoWork()
-                                    ? "уже можно"
-                                    : "через: " + capybara.workTime());
-                } else {
-                    sb.append("\n🔨 Забрать с работы ")
-                            .append(capybara.canTakeFromWork()
-                                    ? "уже можно"
-                                    : "через: " + capybara.takeFromWork());
-                }
+//            if (!capybara.isOnBigJob()) {
+            if (!capybara.isWorking()) {
+                sb.append("\n🔨 Отправить на работу ")
+                        .append(capybara.canGoWork()
+                                ? "уже можно"
+                                : "через: " + capybara.workTime());
+            } else {
+                sb.append("\n🔨 Забрать с работы ")
+                        .append(capybara.canTakeFromWork()
+                                ? "уже можно"
+                                : "через: " + capybara.takeFromWork());
             }
+//            }
 
             sb.append("\n💼 Повышение: ")
                     .append(capybara.rise())
                     .append("/")
                     .append((capybara.index() + 1) * 10);
 
-            if (capybara.isOnBigJob()) {
-                sb.append(capybara.canTakeFromBigJob()
-                        ? "\n😏 Можно забрать с большого дела"
-                        : "\n😏 Можно забрать с большого дела через: "
-                        + timeToString(capybara.takeFromBigJob()));
-            } else if (capybara.level() >= 20 && capybara.isWorking()) {
-                sb.append(capybara.canGoBigJob()
-                        ? "\n😏 Можно отправить на большое дело"
-                        : "\n😏 Можно отправить на большое дело через: "
-                        + timeToString(capybara.bigJobTime()));
-            }
+//            if (capybara.isOnBigJob()) {
+//                sb.append(capybara.canTakeFromBigJob()
+//                        ? "\n😏 Можно забрать с большого дела"
+//                        : "\n😏 Можно забрать с большого дела через: "
+//                        + timeToString(capybara.takeFromBigJob()));
+//            } else if (capybara.level() >= 20 && capybara.isWorking()) {
+//                sb.append(capybara.canGoBigJob()
+//                        ? "\n😏 Можно отправить на большое дело"
+//                        : "\n😏 Можно отправить на большое дело через: "
+//                        + timeToString(capybara.bigJobTime()));
+//            }
         }
 
         sb.append("\n🌽 Покормить/откормить ")
