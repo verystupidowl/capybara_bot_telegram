@@ -3,9 +3,10 @@ package ru.tggc.capybaratelegrambot.handler;
 import com.pengrad.telegrambot.request.SendPhoto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
-import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.util.List;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 
 public abstract class Handler {
 
@@ -13,9 +14,7 @@ public abstract class Handler {
         long chatId = Long.parseLong(photo.getChatId());
         SendPhoto sendPhoto = new SendPhoto(chatId, photo.getUrl());
         sendPhoto.caption(photo.getCaption());
-        if (photo.getMarkup() != null) {
-            sendPhoto.setReplyMarkup(photo.getMarkup());
-        }
+        ifPresent(photo.getMarkup(), sendPhoto::replyMarkup);
         return Response.ofMessage(sendPhoto);
     }
 
@@ -24,8 +23,8 @@ public abstract class Handler {
                 .map(p -> {
                     long chatId = Long.parseLong(p.getChatId());
                     SendPhoto sendPhoto = new SendPhoto(chatId, p.getUrl());
-                    Utils.ifPresent(p.getCaption(), sendPhoto::caption);
-                    Utils.ifPresent(p.getMarkup(), sendPhoto::replyMarkup);
+                    ifPresent(p.getCaption(), sendPhoto::caption);
+                    ifPresent(p.getMarkup(), sendPhoto::replyMarkup);
                     return sendPhoto;
                 })
                 .toList();

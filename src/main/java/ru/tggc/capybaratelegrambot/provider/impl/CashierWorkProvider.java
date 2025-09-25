@@ -6,7 +6,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import java.time.Duration;
 
 @Service
-public class CashierJobProvider extends AbstractJobProvider {
+public class CashierWorkProvider extends AbstractWorkProvider {
 
     @Override
     public WorkType getJobType() {

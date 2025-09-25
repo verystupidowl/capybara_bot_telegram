@@ -5,7 +5,6 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.oldcapybara.capybara.Capybara;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 
@@ -248,18 +247,6 @@ public class InlineKeyboardCreator {
                 {new InlineKeyboardButton("Черное").callbackData("casino_BLACK")},
                 {new InlineKeyboardButton("Зеро").callbackData("casino_ZERO")}
         });
-    }
-
-    public InlineKeyboardMarkup myCapybaraList(List<Capybara> capybaraList) {
-        List<List<InlineKeyboardButton>> capybaraNameRows = new ArrayList<>();
-        for (Capybara capybara : capybaraList) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(new InlineKeyboardButton(capybara.getName()).callbackData(capybara.getUsername().getUserID() + "_" + capybara.getUsername().getPeerID()));
-            capybaraNameRows.add(row);
-        }
-        return new InlineKeyboardMarkup(
-                capybaraNameRows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new)
-        );
     }
 
     public Keyboard takeCapybara() {

@@ -14,14 +14,14 @@ import ru.tggc.capybaratelegrambot.handler.Handler;
 
 import java.util.List;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
+
 @Slf4j
 public abstract class CallbackHandler extends Handler {
 
     public Response sendSimpleMessage(String chatId, String text, InlineKeyboardMarkup markup) {
         SendMessage sendMessage = new SendMessage(chatId, text);
-        if (markup != null) {
-            sendMessage.replyMarkup(markup);
-        }
+        ifPresent(markup, sendMessage::replyMarkup);
         return Response.ofMessages(List.of(sendMessage));
     }
 
@@ -35,9 +35,7 @@ public abstract class CallbackHandler extends Handler {
     public Response editMessageCaption(String chatId, Integer messageId, String caption, InlineKeyboardMarkup markup) {
         EditMessageCaption emc = new EditMessageCaption(chatId, messageId);
         emc.caption(caption);
-        if (markup != null) {
-            emc.replyMarkup(markup);
-        }
+        ifPresent(markup, emc::replyMarkup);
         return Response.ofMessage(emc);
     }
 
@@ -45,9 +43,7 @@ public abstract class CallbackHandler extends Handler {
         PhotoDto first = photos.getFirst();
         EditMessageCaption emc = new EditMessageCaption(first.getChatId(), messageId);
         emc.caption(first.getCaption());
-        if (first.getMarkup() != null) {
-            emc.replyMarkup(first.getMarkup());
-        }
+        ifPresent(first.getMarkup(), emc::replyMarkup);
         Response response = Response.ofMessage(emc);
         List<SendPhoto> sendPhotos = photos.stream().map(p -> {
                     long chatId = Long.parseLong(p.getChatId());
@@ -64,12 +60,8 @@ public abstract class CallbackHandler extends Handler {
                 .map(p -> {
                     long chatId = Long.parseLong(p.getChatId());
                     SendPhoto sendPhoto = new SendPhoto(chatId, p.getUrl());
-                    if (p.getCaption() != null) {
-                        sendPhoto.caption(p.getCaption());
-                    }
-                    if (p.getMarkup() != null) {
-                        sendPhoto.setReplyMarkup(p.getMarkup());
-                    }
+                    ifPresent(p.getCaption(), sendPhoto::caption);
+                    ifPresent(p.getMarkup(), sendPhoto::replyMarkup);
                     return sendPhoto;
                 })
                 .toList();

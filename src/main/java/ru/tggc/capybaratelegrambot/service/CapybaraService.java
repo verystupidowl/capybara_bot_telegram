@@ -32,8 +32,8 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraTeaMapper;
 import ru.tggc.capybaratelegrambot.mapper.MyCapybaraMapper;
-import ru.tggc.capybaratelegrambot.provider.JobProvider;
-import ru.tggc.capybaratelegrambot.provider.JobProviderFactory;
+import ru.tggc.capybaratelegrambot.provider.WorkProvider;
+import ru.tggc.capybaratelegrambot.provider.WorkProviderFactory;
 import ru.tggc.capybaratelegrambot.repository.CapybaraRepository;
 import ru.tggc.capybaratelegrambot.repository.TeaRepository;
 import ru.tggc.capybaratelegrambot.utils.CapybaraBuilder;
@@ -53,7 +53,7 @@ public class CapybaraService {
     private final UserService userService;
     private final TeaRepository teaRepository;
     private final CapybaraTeaMapper capybaraTeaMapper;
-    private final JobProviderFactory jobProviderFactory;
+    private final WorkProviderFactory workProviderFactory;
     private final TimedActionService timedActionService;
     private final MyCapybaraMapper myCapybaraMapper;
     private final CapybaraInfoMapper capybaraInfoMapper;
@@ -244,23 +244,23 @@ public class CapybaraService {
     public String setJob(CapybaraContext ctx, WorkType workType) {
         Capybara capybara = getCapybaraByContext(ctx);
 
-        JobProvider jobProvider = jobProviderFactory.getJobProvider(workType);
-        String photoUrl = jobProvider.setJob(capybara);
+        WorkProvider workProvider = workProviderFactory.getJobProvider(workType);
+        String photoUrl = workProvider.setJob(capybara);
         capybaraRepository.save(capybara);
         return photoUrl;
     }
 
     public void goJob(CapybaraContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
-        JobProvider jobProvider = jobProviderFactory.getJobProvider(capybara.getWork().getWorkType());
-        jobProvider.goWork(capybara);
+        WorkProvider workProvider = workProviderFactory.getJobProvider(capybara.getWork().getWorkType());
+        workProvider.goWork(capybara);
         capybaraRepository.save(capybara);
     }
 
     public List<String> takeFromWork(CapybaraContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
-        JobProvider jobProvider = jobProviderFactory.getJobProvider(capybara.getWork().getWorkType());
-        List<String> messages = jobProvider.takeFromWork(capybara);
+        WorkProvider workProvider = workProviderFactory.getJobProvider(capybara.getWork().getWorkType());
+        List<String> messages = workProvider.takeFromWork(capybara);
         capybaraRepository.save(capybara);
         return messages;
     }
@@ -319,8 +319,8 @@ public class CapybaraService {
 
     public void dismissal(CapybaraContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
-        JobProvider jobProvider = jobProviderFactory.getJobProvider(capybara.getWork().getWorkType());
-        jobProvider.dismissal(capybara);
+        WorkProvider workProvider = workProviderFactory.getJobProvider(capybara.getWork().getWorkType());
+        workProvider.dismissal(capybara);
         capybaraRepository.save(capybara);
     }
 

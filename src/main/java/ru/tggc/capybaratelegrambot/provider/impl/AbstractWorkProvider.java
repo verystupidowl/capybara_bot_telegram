@@ -6,15 +6,14 @@ import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
-import ru.tggc.capybaratelegrambot.provider.JobProvider;
+import ru.tggc.capybaratelegrambot.provider.WorkProvider;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
-public abstract class AbstractJobProvider implements JobProvider {
+public abstract class AbstractWorkProvider implements WorkProvider {
 
     @Override
     public List<String> takeFromWork(Capybara capybara) {

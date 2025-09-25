@@ -3,7 +3,7 @@ package ru.tggc.capybaratelegrambot.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.SendDice;
-import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,10 @@ public class CasinoService {
     private final CapybaraService capybaraService;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
-
     private final Map<CapybaraContext, CasinoCtx> map = new ConcurrentHashMap<>();
+
+    private static final String WIN_PHOTO_URL = "https://vk.com/photo-209917797_457246197";
+    private static final String LOSE_PHOTO_URL = "https://vk.com/photo-209917797_457246192";
 
     public void startCasino(CapybaraContext ctx) {
         historyService.setHistory(ctx, HistoryType.CASINO_SET_BET);
@@ -72,9 +74,10 @@ public class CasinoService {
             map.remove(historyDto);
             throw new CapybaraHasNoMoneyException("", chatId);
         }
-        if (betAmount < (capybara.getLevel().getValue() / 10) * 25L) {
+        long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
+        if (betAmount < minBetAmount) {
             map.remove(historyDto);
-            throw new CapybaraException("ur min bet amount is ");
+            throw new CapybaraException("ur min bet amount is " + minBetAmount);
         }
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         PhotoDto response = PhotoDto.builder()
@@ -85,11 +88,11 @@ public class CasinoService {
             Long winAmount = type.getCalculateWin().apply(betAmount);
             capybara.setCurrency(capybara.getCurrency() + winAmount);
             response.setCaption("Вау! Вот это везение! Выпало " + wonType.getLabel() + "! Твоя капибара выиграла " + winAmount);
-            response.setUrl("https://vk.com/photo-209917797_457246197");
+            response.setUrl(WIN_PHOTO_URL);
         } else {
             capybara.setCurrency(capybara.getCurrency() - betAmount);
             response.setCaption("Твоя капибара была близка Выпало " + wonType.getLabel() + "! она  проиграла " + betAmount);
-            response.setUrl("https://vk.com/photo-209917797_457246192");
+            response.setUrl(LOSE_PHOTO_URL);
         }
 
         map.remove(historyDto);
@@ -117,7 +120,7 @@ public class CasinoService {
             int diceValue = response.dice().value() - 1;
             List<SlotType> result = IntStream.range(0, 3)
                     .mapToObj(i -> {
-                        int index = (diceValue - 1) / (int) Math.pow(4, i) % 4;
+                        int index = (diceValue) / (int) Math.pow(4, i) % 4;
                         return SlotType.fromIndex(index);
                     })
                     .toList();
@@ -129,12 +132,17 @@ public class CasinoService {
             capybaraService.save(capybara);
             map.remove(historyDto);
             scheduler.schedule(() -> {
+                long chatId = Long.parseLong(ctx.chatId());
+                SendPhoto sendPhoto;
                 if (slotResult == SlotResult.LOSE) {
-                    bot.execute(new SendMessage(ctx.chatId(), "Не повезло( Твоя капибара проиграла " + bet));
+                    sendPhoto = new SendPhoto(chatId, LOSE_PHOTO_URL);
+                    sendPhoto.caption("Не повезло( Твоя капибара проиграла " + bet);
                 } else {
-                    bot.execute(new SendMessage(ctx.chatId(), "Твоя капибара выиграла " + win));
+                    sendPhoto = new SendPhoto(chatId, WIN_PHOTO_URL);
+                    sendPhoto.caption("Твоя капибара выиграла " + win);
                 }
-            }, 1500, TimeUnit.MILLISECONDS);
+                bot.execute(sendPhoto);
+            }, 2000, TimeUnit.MILLISECONDS);
         };
     }
 

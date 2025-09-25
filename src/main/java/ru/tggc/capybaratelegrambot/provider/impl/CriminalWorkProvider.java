@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class CriminalJobProvider extends AbstractJobProvider {
+public class CriminalWorkProvider extends AbstractWorkProvider {
 
     @Override
     public List<String> takeFromWork(Capybara capybara) {

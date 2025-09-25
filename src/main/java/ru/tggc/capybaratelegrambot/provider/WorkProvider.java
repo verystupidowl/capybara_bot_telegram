@@ -5,7 +5,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 
 import java.util.List;
 
-public interface JobProvider {
+public interface WorkProvider {
     String setJob(Capybara capybara);
 
     void goWork(Capybara capybara);
