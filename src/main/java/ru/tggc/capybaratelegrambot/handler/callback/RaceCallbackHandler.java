@@ -1,0 +1,75 @@
+package ru.tggc.capybaratelegrambot.handler.callback;
+
+import com.pengrad.telegrambot.model.CallbackQuery;
+import lombok.RequiredArgsConstructor;
+import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.CallbackParam;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
+import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.model.Capybara;
+import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.service.CapybaraService;
+import ru.tggc.capybaratelegrambot.service.RaceService;
+
+@BotHandler
+@RequiredArgsConstructor
+public class RaceCallbackHandler extends CallbackHandler {
+    private final CapybaraService capybaraService;
+    private final InlineKeyboardCreator inlineCreator;
+    private final RaceService raceService;
+
+    @CallbackHandle("improve_pills")
+    public Response improvePills(@MessageId int messageId,
+                                 @Ctx CapybaraContext ctx) {
+        capybaraService.setImprovement(ctx, ImprovementValue.ANTI_LOSE);
+        return editSimpleMessage(ctx.chatId(), messageId, "ur capy taken a pill", null);
+    }
+
+    @CallbackHandle("improve_watermelon")
+    public Response improveWatermelon(@MessageId int messageId,
+                                      @Ctx CapybaraContext ctx) {
+        capybaraService.setImprovement(ctx, ImprovementValue.WATERMELON);
+        return editSimpleMessage(ctx.chatId(), messageId, "ur capy eaten a watermellon", null);
+    }
+
+    @CallbackHandle("improve_boots")
+    public Response improveBoots(@MessageId int messageId,
+                                  @Ctx CapybaraContext ctx) {
+        capybaraService.setImprovement(ctx, ImprovementValue.BOOTS);
+        return editSimpleMessage(ctx.chatId(), messageId, "ur capy wears boots", null);
+    }
+
+    @CallbackHandle("buy_improve")
+    public Response buyImprove(@MessageId int messageId,
+                                @Ctx CapybaraContext ctx) {
+        Capybara capybara = capybaraService.getCapybaraByContext(ctx);
+        if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
+            return editSimpleMessage(ctx.chatId(), messageId, "choose one", inlineCreator.improvements());
+        }
+        return editSimpleMessage(ctx.chatId(), messageId, "u already have an improvement");
+    }
+
+    @CallbackHandle("do_massage")
+    public Response doMassage(@MessageId int messageId,
+                               @Ctx CapybaraContext ctx) {
+        capybaraService.doMassage(ctx);
+        return editSimpleMessage(ctx.chatId(), messageId, "u did a massge", null);
+    }
+
+    @CallbackHandle("refuse_race")
+    public Response refuseRace(@MessageId int messageId,
+                                @Ctx CapybaraContext ctx) {
+        raceService.refuseRace(ctx);
+        return editSimpleMessage(ctx.chatId(), messageId, "u refused a race", null);
+    }
+
+    @CallbackHandle("accept_race")
+    public Response acceptRace(@CallbackParam CallbackQuery query,
+                                @Ctx CapybaraContext ctx) {
+        return Response.ofCustom(raceService.acceptRace(ctx), query);
+    }
+}

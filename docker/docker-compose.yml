@@ -1,0 +1,11 @@
+version: "3.9"
+name: "capybara_tg_bot"
+services:
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "capybara_tg_bot"
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "root"
+    ports:
+      - "5432:5432"
