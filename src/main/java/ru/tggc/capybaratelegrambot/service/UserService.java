@@ -10,6 +10,7 @@ import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -39,5 +40,10 @@ public class UserService {
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User with userId " + id + " not found"));
+    }
+
+    public boolean checkRoles(Long id, UserRole[] requiredRoles) {
+        return userRepository.findById(id).stream()
+                .anyMatch(u -> Arrays.stream(requiredRoles).toList().contains(u.getUserRole()));
     }
 }

@@ -42,16 +42,16 @@ public class CapybaraInfoMapper {
         Boolean canRace = capybara.getCheerfulness().getCheerfulnessLevel().equals(capybara.getCheerfulness().getMaxLevel());
 //        Integer raceTime = capybara.getCheerfulness().getNextTime().compareTo(LocalDateTime.now());
         if (capybara.getImprovement() != null) {
-            improvement = capybara.getImprovement().getImprovement().getLabel();
+            improvement = capybara.getImprovement().getImprovementValue().getLabel();
         }
-        if (Boolean.TRUE.equals(hasWork)) {
+        if (hasWork) {
             WorkAction workAction = work.getWorkAction();
             canGoWork = getOr(workAction, WorkAction::canPerform, false);
             isWorking = getOr(workAction, WorkAction::isInProgress, false);
             rise = work.getRise();
             index = work.getIndex();
             workTime = timedActionService.getStatus(workAction);
-            if (Boolean.TRUE.equals(isWorking)) {
+            if (isWorking) {
                 canTakeFromWork = getOr(workAction, WorkAction::canTakeFrom, false);
                 takeFromWork = timedActionService.getStatus(workAction);
             }

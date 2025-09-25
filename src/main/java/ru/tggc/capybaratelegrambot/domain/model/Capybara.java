@@ -51,7 +51,7 @@ public class Capybara {
     private Level level;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Happiness happiness;
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Race> races;
     @ManyToOne
     private User user;

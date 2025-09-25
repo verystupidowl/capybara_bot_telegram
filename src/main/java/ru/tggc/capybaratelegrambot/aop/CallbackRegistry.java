@@ -7,7 +7,9 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -18,8 +20,15 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
 
-    protected CallbackRegistry(ListableBeanFactory beanFactory, InlineKeyboardCreator inlineKeyboardCreator) {
-        super(beanFactory, inlineKeyboardCreator);
+    protected CallbackRegistry(ListableBeanFactory beanFactory,
+                               InlineKeyboardCreator inlineKeyboardCreator,
+                               UserService userService) {
+        super(beanFactory, inlineKeyboardCreator, userService);
+    }
+
+    @Override
+    protected UserRole[] getRequiredRoles(Method method) {
+        return method.getAnnotation(CallbackHandle.class).requiredRoles();
     }
 
     @Override
@@ -55,6 +64,6 @@ public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;
 
         Object[] args = buildArgs(method, query, chatId, userId, messageId, matcher, query);
-        return invokeWithCatch(method, beans.get(template), args, chatId);
+        return invokeWithCatch(userId, method, beans.get(template), args, chatId);
     }
 }

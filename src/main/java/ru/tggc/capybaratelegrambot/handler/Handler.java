@@ -1,12 +1,11 @@
 package ru.tggc.capybaratelegrambot.handler;
 
-import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendPhoto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.util.List;
-import java.util.Optional;
 
 public abstract class Handler {
 
@@ -25,7 +24,8 @@ public abstract class Handler {
                 .map(p -> {
                     long chatId = Long.parseLong(p.getChatId());
                     SendPhoto sendPhoto = new SendPhoto(chatId, p.getUrl());
-                    Optional.ofNullable(p.getCaption()).ifPresent(sendPhoto::caption);
+                    Utils.ifPresent(p.getCaption(), sendPhoto::caption);
+                    Utils.ifPresent(p.getMarkup(), sendPhoto::replyMarkup);
                     return sendPhoto;
                 })
                 .toList();

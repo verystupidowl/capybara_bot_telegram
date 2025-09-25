@@ -1,6 +1,6 @@
 package ru.tggc.capybaratelegrambot.domain.dto;
 
-import com.pengrad.telegrambot.model.request.Keyboard;
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,5 +14,5 @@ public final class PhotoDto {
     private String url;
     private String caption;
     private String chatId;
-    private Keyboard markup;
+    private InlineKeyboardMarkup markup;
 }

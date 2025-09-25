@@ -47,7 +47,7 @@ public class RaceCallbackHandler extends CallbackHandler {
     public Response buyImprove(@MessageId int messageId,
                                 @Ctx CapybaraContext ctx) {
         Capybara capybara = capybaraService.getCapybaraByContext(ctx);
-        if (capybara.getImprovement().getImprovement() == ImprovementValue.NONE) {
+        if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
             return editSimpleMessage(ctx.chatId(), messageId, "choose one", inlineCreator.improvements());
         }
         return editSimpleMessage(ctx.chatId(), messageId, "u already have an improvement");

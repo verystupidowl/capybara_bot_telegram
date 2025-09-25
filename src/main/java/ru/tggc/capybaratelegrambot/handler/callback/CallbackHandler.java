@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.extern.slf4j.Slf4j;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
@@ -38,6 +39,41 @@ public abstract class CallbackHandler extends Handler {
             emc.replyMarkup(markup);
         }
         return Response.ofMessage(emc);
+    }
+
+    public Response editMessageCaption(List<PhotoDto> photos, Integer messageId) {
+        PhotoDto first = photos.getFirst();
+        EditMessageCaption emc = new EditMessageCaption(first.getChatId(), messageId);
+        emc.caption(first.getCaption());
+        if (first.getMarkup() != null) {
+            emc.replyMarkup(first.getMarkup());
+        }
+        Response response = Response.ofMessage(emc);
+        List<SendPhoto> sendPhotos = photos.stream().map(p -> {
+                    long chatId = Long.parseLong(p.getChatId());
+                    return new SendPhoto(chatId, p.getUrl());
+                })
+                .toList();
+        return response.andThen(Response.ofPhotos(sendPhotos));
+    }
+
+    public Response editPhotos(Integer messageId, List<PhotoDto> photos) {
+        PhotoDto first = photos.getFirst();
+        DeleteMessage dm = new DeleteMessage(first.getChatId(), messageId);
+        List<SendPhoto> photosToSend = photos.stream()
+                .map(p -> {
+                    long chatId = Long.parseLong(p.getChatId());
+                    SendPhoto sendPhoto = new SendPhoto(chatId, p.getUrl());
+                    if (p.getCaption() != null) {
+                        sendPhoto.caption(p.getCaption());
+                    }
+                    if (p.getMarkup() != null) {
+                        sendPhoto.setReplyMarkup(p.getMarkup());
+                    }
+                    return sendPhoto;
+                })
+                .toList();
+        return Response.ofPhotos(photosToSend).andThen(Response.ofMessage(dm));
     }
 
     public Response editPhoto(String chatId, Integer messageId, String photoUrl, String caption) {

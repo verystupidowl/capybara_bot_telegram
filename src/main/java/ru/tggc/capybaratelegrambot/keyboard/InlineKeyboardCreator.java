@@ -268,9 +268,9 @@ public class InlineKeyboardCreator {
         );
     }
 
-    public Keyboard toMainMenu() {
+    public InlineKeyboardMarkup toMainMenu() {
         return new InlineKeyboardMarkup(
-                new InlineKeyboardButton("Моя капибара").callbackData("my_capybara")
+                new InlineKeyboardButton("Моя капибара").callbackData("go_to_main")
         );
     }
 }

@@ -4,10 +4,12 @@ import com.pengrad.telegrambot.model.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.service.UserService;
+import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -19,8 +21,18 @@ import java.util.regex.Pattern;
 @Slf4j
 public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
 
-    protected MessageHandleRegistry(ListableBeanFactory beanFactory, InlineKeyboardCreator inlineKeyboardCreator) {
-        super(beanFactory, inlineKeyboardCreator);
+    protected MessageHandleRegistry(ListableBeanFactory beanFactory,
+                                    InlineKeyboardCreator inlineKeyboardCreator,
+                                    UserService userService) {
+        super(beanFactory, inlineKeyboardCreator, userService);
+    }
+
+    @Override
+    protected UserRole[] getRequiredRoles(Method method) {
+        return Utils.getOr(
+                method.getAnnotation(MessageHandle.class),
+                MessageHandle::requiredRoles,
+                new UserRole[0]);
     }
 
     @Override
@@ -49,7 +61,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
                 log.warn("Unknown message: {}", text);
             } else {
                 Object[] args = buildArgs(defaultMethod, message, chatId, userId, 0, null, message);
-                response = invokeWithCatch(defaultMethod, defaultBean, args, chatId);
+                response = invokeWithCatch(userId, defaultMethod, defaultBean, args, chatId);
             }
             return response;
         }
@@ -59,6 +71,6 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(text) : null;
 
         Object[] args = buildArgs(method, message, chatId, userId, 0, matcher, message);
-        return invokeWithCatch(method, beans.get(template), args, chatId);
+        return invokeWithCatch(userId, method, beans.get(template), args, chatId);
     }
 }

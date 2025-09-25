@@ -27,5 +27,5 @@ public class Improvement {
     private Integer level;
     private LocalDateTime nextTime;
     @Enumerated(EnumType.STRING)
-    private ImprovementValue improvement;
+    private ImprovementValue improvementValue;
 }

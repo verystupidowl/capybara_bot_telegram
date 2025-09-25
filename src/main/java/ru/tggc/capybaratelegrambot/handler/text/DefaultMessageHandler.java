@@ -1,7 +1,6 @@
 package ru.tggc.capybaratelegrambot.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.request.SendDice;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.DefaultMessageHandle;
@@ -39,7 +38,7 @@ public class DefaultMessageHandler extends TextHandler {
             case CHANGE_NAME -> changeName(historyDto, text);
             case CHANGE_PHOTO -> changePhoto(historyDto, message);
             case SLOTS_SET_BET -> slots(historyDto, text);
-            default-> throw new UnsupportedOperationException();
+            default -> throw new UnsupportedOperationException();
         };
 
         historyService.removeFromHistory(historyDto);
@@ -51,8 +50,8 @@ public class DefaultMessageHandler extends TextHandler {
     }
 
     private Response changeName(CapybaraContext historyDto, String text) {
-//        capybaraService.changeName(historyDto, text);
-        return null;
+        capybaraService.changeName(historyDto, text);
+        return sendSimpleMessage(historyDto.chatId(), "Твою капибару теперь зовут " + text + ", отличное имя!", null);
     }
 
     private Response changePhoto(CapybaraContext historyDto, Message message) {

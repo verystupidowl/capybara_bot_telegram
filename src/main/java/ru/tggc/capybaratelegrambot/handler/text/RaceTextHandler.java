@@ -20,7 +20,7 @@ public class RaceTextHandler extends TextHandler {
     private final RequestServiceFactory requestServiceFactory;
     private final InlineKeyboardCreator inlineCreator;
 
-    @MessageHandle("забег @${username}")
+    @MessageHandle("забег")
     public Response challengeToRace(@HandleParam("username") String username,
                                     @Ctx CapybaraContext ctx,
                                     @MessageParam Message message) {

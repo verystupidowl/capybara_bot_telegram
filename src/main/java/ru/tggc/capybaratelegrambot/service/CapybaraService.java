@@ -28,6 +28,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraTeaMapper;
 import ru.tggc.capybaratelegrambot.mapper.MyCapybaraMapper;
@@ -56,6 +57,7 @@ public class CapybaraService {
     private final TimedActionService timedActionService;
     private final MyCapybaraMapper myCapybaraMapper;
     private final CapybaraInfoMapper capybaraInfoMapper;
+    private final InlineKeyboardCreator inlineKeyboardCreator;
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
 
@@ -117,6 +119,7 @@ public class CapybaraService {
                 .caption(happinessThing.getLabel())
                 .chatId(ctx.chatId())
                 .url(happinessThing.getPhotoUrl())
+                .markup(inlineKeyboardCreator.toMainMenu())
                 .build());
         messages.addAll(self.checkNewLevel(capybara));
         capybaraRepository.save(capybara);
@@ -131,6 +134,7 @@ public class CapybaraService {
                 .caption("Твоя капибара успешно покушала, возвращайся через 2 часа!")
                 .chatId(ctx.chatId())
                 .url("https://vk.com/photo-209917797_457245510")
+                .markup(inlineKeyboardCreator.toMainMenu())
                 .build());
         return messages;
     }
@@ -147,6 +151,7 @@ public class CapybaraService {
                         Возвращайся через 2 часа!""")
                 .url("https://vk.com/photo-209917797_457246187")
                 .chatId(ctx.chatId())
+                .markup(inlineKeyboardCreator.toMainMenu())
                 .build());
         return messages;
     }
@@ -183,7 +188,7 @@ public class CapybaraService {
                     .chatId(ctx.chatId())
                     .caption(Text.getTea(myDto, interlocutorDto))
                     .build());
-            photosToReturn.add(                    PhotoDto.builder()
+            photosToReturn.add(PhotoDto.builder()
                     .url(capybara.getPhoto().getUrl())
                     .caption(Text.getTea(interlocutorDto, myDto))
                     .chatId(interlocutor.getChatId())
@@ -195,12 +200,14 @@ public class CapybaraService {
         return List.of(PhotoDto.builder()
                 .url("https://vk.com/photo-209917797_457246193")
                 .chatId(ctx.chatId())
+                .markup(inlineKeyboardCreator.teaKeyboard())
                 .caption("Твоя капибара ждет собеседника для чаепития!")
                 .build());
     }
 
     public void takeFromTea(CapybaraContext ctx) {
-        Capybara capybara = getCapybaraByContext(ctx);
+        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
         capybara.getTea().setWaiting(false);
         capybaraRepository.save(capybara);
     }
@@ -222,6 +229,7 @@ public class CapybaraService {
                 .caption("Теперь у тебя есть капибара!\nПоздравляю!!!" +
                         "\nЕё имя: " + capybara.getName() + ". \nНо ты всегда можешь поменять его!")
                 .url(capybara.getPhoto().getUrl())
+                .markup(inlineKeyboardCreator.toMainMenu())
                 .build();
     }
 
@@ -275,8 +283,8 @@ public class CapybaraService {
             throw new CapybaraHasNoMoneyException();
         }
         Improvement improvement = capybara.getImprovement();
-        if (improvement.getImprovement() == ImprovementValue.NONE) {
-            improvement.setImprovement(improvementValue);
+        if (improvement.getImprovementValue() == ImprovementValue.NONE) {
+            improvement.setImprovementValue(improvementValue);
             capybara.setImprovement(improvement);
             capybara.setCurrency(capybara.getCurrency() - 50);
             capybaraRepository.save(capybara);
@@ -285,6 +293,11 @@ public class CapybaraService {
 
     public void acceptWedding(String userId, String chatId) {
         //todo
+    }
+
+    public Capybara getCapybaraById(Long id) {
+        return capybaraRepository.findById(id)
+                .orElseThrow(CapybaraNotFoundException::new);
     }
 
     @Transactional
@@ -418,5 +431,20 @@ public class CapybaraService {
                     message
             );
         }
+    }
+
+    @Transactional
+    public void changeName(CapybaraContext historyDto, String newName) {
+        if (newName.length() > 25 || newName.isEmpty()) {
+            throw new CapybaraException("Имя капибары должно быть меньше 25 символов!");
+        }
+        Capybara capybara = getCapybaraByContext(historyDto);
+        capybara.setName(newName);
+        capybaraRepository.save(capybara);
+    }
+
+    public Capybara getRaceCapybara(CapybaraContext ctx) {
+        return capybaraRepository.findRaceCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
     }
 }

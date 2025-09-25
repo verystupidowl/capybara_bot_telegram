@@ -1,5 +1,6 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
+import com.pengrad.telegrambot.request.DeleteMessage;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
@@ -13,7 +14,6 @@ import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
-import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
@@ -29,8 +29,13 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     private final HistoryService historyService;
     private final CapybaraService capybaraService;
     private final InlineKeyboardCreator inlineCreator;
-    private final CapybaraInfoMapper capybaraInfoMapper;
     private final CasinoService casinoService;
+
+    @CallbackHandle("set_name")
+    public Response setName(@Ctx CapybaraContext ctx) {
+        historyService.setHistory(ctx, CHANGE_NAME);
+        return sendSimpleMessage(ctx.chatId(), "Введи новое имя своей капибары", null);
+    }
 
     @CallbackHandle("exactly_delete")
     public Response deleteCapybara(@Ctx CapybaraContext ctx) {
@@ -42,7 +47,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     public Response takeFromTea(@MessageId int messageId,
                                 @Ctx CapybaraContext ctx) {
         capybaraService.takeFromTea(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "ok", null);
+        return sendSimpleMessage(ctx.chatId(), "ok", null);
     }
 
     @CallbackHandle("go_tea")
@@ -51,18 +56,18 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("fatten")
-    public Response fatten(@Ctx CapybaraContext ctx) {
-        return sendSimplePhotos(capybaraService.fatten(ctx));
+    public Response fatten(@Ctx CapybaraContext ctx, @MessageId int messageId) {
+        return editPhotos(messageId, capybaraService.fatten(ctx));
     }
 
     @CallbackHandle("feed")
-    public Response feed(@Ctx CapybaraContext ctx) {
-        return sendSimplePhotos(capybaraService.feed(ctx));
+    public Response feed(@Ctx CapybaraContext ctx, @MessageId int messageId) {
+        return editPhotos(messageId, capybaraService.feed(ctx));
     }
 
     @CallbackHandle("make_happy")
-    public Response makeHappy(@Ctx CapybaraContext ctx) {
-        return sendSimplePhotos(capybaraService.makeHappy(ctx));
+    public Response makeHappy(@Ctx CapybaraContext ctx, @MessageId int messageId) {
+        return editPhotos(messageId, capybaraService.makeHappy(ctx));
     }
 
     @CallbackHandle("feed_fatten")
@@ -126,8 +131,9 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("take_capybara")
-    public Response takeCapybara(@Ctx CapybaraContext ctx) {
+    public Response takeCapybara(@Ctx CapybaraContext ctx, @MessageId int messageId) {
         PhotoDto photoDto = capybaraService.saveCapybara(ctx);
-        return sendSimplePhoto(photoDto);
+        return sendSimplePhoto(photoDto)
+                .andThen(bot -> bot.execute(new DeleteMessage(ctx.chatId(), messageId)));
     }
 }

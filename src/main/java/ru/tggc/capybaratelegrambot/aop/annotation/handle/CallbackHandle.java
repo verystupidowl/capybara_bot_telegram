@@ -13,5 +13,5 @@ public @interface CallbackHandle {
 
     String value();
 
-    UserRole[] requiredRoles() default {UserRole.USER, UserRole.ADMIN};
+    UserRole[] requiredRoles() default {};
 }

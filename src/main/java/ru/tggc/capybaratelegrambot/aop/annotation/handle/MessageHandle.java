@@ -1,6 +1,6 @@
 package ru.tggc.capybaratelegrambot.aop.annotation.handle;
 
-import ru.tggc.capybaratelegrambot.aop.annotation.CheckType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,7 +13,5 @@ public @interface MessageHandle {
 
     String value();
 
-    CheckType checkType() default CheckType.CHECK_NOT_EXISTS;
-
-    boolean needSearch() default false;
+    UserRole[] requiredRoles() default {};
 }

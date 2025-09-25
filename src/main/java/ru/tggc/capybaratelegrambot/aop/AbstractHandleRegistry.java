@@ -17,11 +17,13 @@ import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 import ru.tggc.capybaratelegrambot.utils.Text;
 
@@ -45,6 +47,7 @@ public abstract class AbstractHandleRegistry<P> {
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
     protected final ListableBeanFactory beanFactory;
     private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final UserService userService;
     protected Method defaultMethod;
     protected Object defaultBean;
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
@@ -83,9 +86,13 @@ public abstract class AbstractHandleRegistry<P> {
         }
     }
 
-    protected Response invokeWithCatch(Method method, Object bean, Object[] args, long chatId) {
+    protected Response invokeWithCatch(String userId, Method method, Object bean, Object[] args, long chatId) {
         Response response;
         try {
+            UserRole[] requiredRoles = getRequiredRoles(method);
+            if (requiredRoles.length != 0 && !userService.checkRoles(Long.valueOf(userId), requiredRoles)) {
+                return null;
+            }
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
@@ -123,6 +130,8 @@ public abstract class AbstractHandleRegistry<P> {
         }
         return response;
     }
+
+    protected abstract UserRole[] getRequiredRoles(Method method);
 
     protected Object[] buildArgs(Method method,
                                  Object update,

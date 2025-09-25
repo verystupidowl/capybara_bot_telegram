@@ -6,9 +6,14 @@ import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
-import lombok.Builder;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
@@ -25,7 +30,6 @@ import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,8 +41,12 @@ import java.util.function.BiConsumer;
 public class RaceService extends AbstractRequestService<RaceRequest> {
     private static final Random random = new Random();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+
     private final RaceRequestRepository raceRequestRepository;
     private final CapybaraService capybaraService;
+
+    @Setter(onMethod_ = {@Autowired, @Lazy})
+    private RaceService self;
 
     public RaceService(CapybaraService capybaraService, UserService userService,
                        RaceRequestRepository raceRequestRepository) {
@@ -48,9 +56,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public BiConsumer<TelegramBot, CallbackQuery> acceptRace(CapybaraContext ctx) {
-        Capybara capybara = capybaraService.getCapybaraByContext(ctx);
-        return respondRace(capybara, true)
-                .andThen((b, q) -> capybaraService.save(capybara));
+        Capybara capybara = capybaraService.getRaceCapybara(ctx);
+        return respondRace(capybara, true);
     }
 
     public void refuseRace(CapybaraContext ctx) {
@@ -59,192 +66,178 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         capybaraService.save(capybara);
     }
 
-    private BiConsumer<TelegramBot, CallbackQuery> respondRace(Capybara opponent, boolean accept) {
-        return Optional.ofNullable(opponent.getRaceRequest())
+    public BiConsumer<TelegramBot, CallbackQuery> respondRace(Capybara opponent, boolean accept) {
+        return raceRequestRepository.findByOpponentId(opponent.getId())
                 .map(raceRequest -> {
                     BiConsumer<TelegramBot, CallbackQuery> callback;
+                    Capybara challenger = raceRequest.getChallenger();
                     if (accept) {
                         raceRequest.setStatus(RaceStatus.ACCEPTED);
                         callback = acceptRace(
-                                raceRequest.getChallenger(),
+                                challenger,
                                 opponent
-                        );
+                        ).andThen((bot, query) -> {
+                            capybaraService.save(opponent);
+                            capybaraService.save(challenger);
+                        });
                     } else {
                         raceRequest.setStatus(RaceStatus.DECLINED);
                         callback = (bot, query) -> {
                             long chatId = query.maybeInaccessibleMessage().chat().id();
-                            SendMessage sendMessage = new SendMessage(chatId, "ok");
-                            bot.execute(sendMessage);
+                            bot.execute(new SendMessage(chatId, "ok"));
                         };
                     }
 
-                    raceRequest.getChallenger().setRaceRequest(null);
+                    challenger.setRaceRequest(null);
                     opponent.setRaceRequest(null);
 
-                    raceRequestRepository.save(raceRequest);
+                    raceRequestRepository.delete(raceRequest);
                     return callback;
                 })
                 .orElseThrow(() -> new CapybaraException("No incoming challenge to respond to!"));
     }
 
-    private BiConsumer<TelegramBot, CallbackQuery> acceptRace(Capybara challenger, Capybara opponent) {
-        checkStamina(challenger);
-        checkStamina(opponent);
+    public BiConsumer<TelegramBot, CallbackQuery> acceptRace(Capybara challenger, Capybara opponent) {
+        self.checkStamina(challenger);
+        self.checkStamina(opponent);
         log.info("accepting race between {} and {}", challenger.getName(), opponent.getName());
         return race(challenger, opponent);
     }
 
-    private BiConsumer<TelegramBot, CallbackQuery> race(Capybara capybara, Capybara capybaraToRace) {
+    public BiConsumer<TelegramBot, CallbackQuery> race(Capybara c1, Capybara c2) {
         return (bot, query) -> {
             String chatId = query.maybeInaccessibleMessage().chat().id().toString();
-            String text = "🏃Идёт забег капибар!!!\nСоревнуются " +
-                    capybara.getName() + " и " + capybaraToRace.getName();
-            Photo randomPhoto = RandomUtils.getRandomPhoto();
-            SendPhoto request = new SendPhoto(chatId, randomPhoto.getUrl());
-            request.setCaption(text);
-            int messageId = bot.execute(request).message().messageId();
+            Photo photo = RandomUtils.getRandomPhoto();
+            int messageId = bot.execute(new SendPhoto(chatId, photo.getUrl())
+                            .caption("🏃Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName()))
+                    .message().messageId();
 
-            DeleteMessage deleteOldMessage = new DeleteMessage(
-                    chatId,
-                    Integer.parseInt(query.inlineMessageId())
-            );
+            bot.execute(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()));
 
-            bot.execute(deleteOldMessage);
+            int need = 100 + (((c1.getLevel().getValue() + c2.getLevel().getValue()) / 2) / 10) * 10;
+            RaceStepContext ctx = new RaceStepContext(c1.getId(), c2.getId(), need, bot, query, messageId);
 
-            int need = 100 + (((capybara.getLevel().getValue() + capybaraToRace.getLevel().getValue()) / 2) / 10) * 10;
-
-            RaceContext context = new RaceContext(capybara, capybaraToRace, need, bot, query, messageId);
-            scheduler.schedule(() -> raceStep(context), 1500, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> raceStepAsync(ctx), 1500, TimeUnit.MILLISECONDS);
         };
     }
 
-    private void raceStep(RaceContext ctx) {
-        Capybara c1 = ctx.capybara1();
-        Capybara c2 = ctx.capybara2();
+    public void raceStepAsync(RaceStepContext ctx) {
+        Capybara c1 = capybaraService.getCapybaraById(ctx.c1Id);
+        Capybara c2 = capybaraService.getCapybaraById(ctx.c2Id);
 
-        ctx.percent1(random.nextInt(c1.getLevel().getValue() + 50 + c1.getImprovement().getImprovement().getChance()) + ctx.percent1());
-        ctx.percent2(random.nextInt(c2.getLevel().getValue() + 50 + c2.getImprovement().getImprovement().getChance()) + ctx.percent2());
+        ctx.percent1 += random.nextInt(c1.getLevel().getValue() + 50 + c1.getImprovement().getImprovementValue().getChance());
+        ctx.percent2 += random.nextInt(c2.getLevel().getValue() + 50 + c2.getImprovement().getImprovementValue().getChance());
 
-        EditMessageCaption editMessageCaption = new EditMessageCaption(
-                ctx.query.maybeInaccessibleMessage().chat().id(),
-                ctx.messageId
-        );
+        ctx.bot.execute(new EditMessageCaption(ctx.query.maybeInaccessibleMessage().chat().id(),
+                ctx.messageId)
+                .caption("🏃Идёт забег капибар!!!\n\n" +
+                        (ctx.percent1 > ctx.percent2 ? "🥇" : "") + c1.getName() + " пробежала " + ctx.percent1 + "/" + ctx.need + "\n" +
+                        (ctx.percent2 > ctx.percent1 ? "🥇" : "") + c2.getName() + " пробежала " + ctx.percent2 + "/" + ctx.need));
 
-        editMessageCaption.caption("🏃Идёт забег капибар!!!"
-                + "\n\n" + (ctx.percent1() > ctx.percent2() ? "🥇" : "")
-                + c1.getName() + " пробежала " + ctx.percent1() + "/" + ctx.need()
-                + "\n\n" + (ctx.percent2() > ctx.percent1() ? "🥇" : "")
-                + c2.getName() + " пробежала " + ctx.percent2() + "/" + ctx.need());
+        capybaraService.save(c1);
+        capybaraService.save(c2);
 
-        ctx.bot().execute(editMessageCaption);
-
-        if (ctx.percent1() > ctx.need() || ctx.percent2() > ctx.need()) {
-            scheduler.schedule(() -> finishRace(ctx), 2, TimeUnit.SECONDS);
+        if (ctx.percent1 > ctx.need || ctx.percent2 > ctx.need) {
+            scheduler.schedule(() -> self.finishRaceAsync(ctx), 2, TimeUnit.SECONDS);
         } else {
-            scheduler.schedule(() -> raceStep(ctx), 1500, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> raceStepAsync(ctx), 1500, TimeUnit.MILLISECONDS);
         }
     }
 
-    private void finishRace(RaceContext ctx) {
-        Capybara c1 = ctx.capybara1();
-        Capybara c2 = ctx.capybara2();
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    public void finishRaceAsync(RaceStepContext ctx) {
+        Capybara c1 = capybaraService.getCapybaraById(ctx.c1Id);
+        Capybara c2 = capybaraService.getCapybaraById(ctx.c2Id);
 
-        if (ctx.percent1() > ctx.percent2()) {
-            getResults(c1, c2);
+        if (ctx.percent1 > ctx.percent2) {
+            self.getResults(c1, c2);
             sendMessages(c1, c2, ctx);
-        } else if (ctx.percent2() > ctx.percent1()) {
-            getResults(c2, c1);
+        } else if (ctx.percent2 > ctx.percent1) {
+            self.getResults(c2, c1);
             sendMessages(c2, c1, ctx);
         } else {
-            EditMessageCaption editMessageCaption = new EditMessageCaption(
-                    ctx.query.maybeInaccessibleMessage().chat().id(),
-                    ctx.messageId
-            );
-            editMessageCaption.caption(
-                    "😲 ОГО! У нас тут ничья!\nКапибары не получают и не теряют счастья!"
-            );
-            ctx.bot().execute(editMessageCaption);
+            ctx.bot.execute(new EditMessageCaption(ctx.query.maybeInaccessibleMessage().chat().id(), ctx.messageId)
+                    .caption("😲 Ничья! Капибары не получают и не теряют счастья!"));
         }
 
+        capybaraService.save(c1);
+        capybaraService.save(c2);
     }
 
-    private void updateHappiness(Capybara capybara, boolean isWinner) {
-        ImprovementValue improvement = capybara.getImprovement().getImprovement();
+    @Transactional
+    public void updateHappiness(Capybara capybara, boolean isWinner) {
+        ImprovementValue improvement = capybara.getImprovement().getImprovementValue();
         Happiness happiness = capybara.getHappiness();
-
-        if (isWinner) {
-            happiness.setLevel(happiness.getLevel() + improvement.getWinHappiness());
-        } else {
-            happiness.setLevel(Math.max(0, happiness.getLevel() - improvement.getLoseHappiness()));
-        }
-
+        happiness.setLevel(isWinner ?
+                happiness.getLevel() + improvement.getWinHappiness() :
+                Math.max(0, happiness.getLevel() - improvement.getLoseHappiness()));
         capybara.setHappiness(happiness);
     }
 
-    private void sendMessages(Capybara winner, Capybara loser, RaceContext ctx) {
-        EditMessageCaption editMessageCaption = new EditMessageCaption(
-                ctx.query.maybeInaccessibleMessage().chat().id(),
-                ctx.messageId
-        );
-        editMessageCaption.caption("🏆Выиграла капибара " + winner.getName() +
-                "\nЕё счастье увеличилось на " + winner.getImprovement().getImprovement().getWinHappiness() + "!\nСчастье проигравшей уменьшилось на " +
-                (loser.getImprovement().getImprovement().getLoseHappiness()));
-        ctx.bot().execute(editMessageCaption);
+    public void sendMessages(Capybara winner, Capybara loser, RaceStepContext ctx) {
+        ctx.bot.execute(new EditMessageCaption(ctx.query.maybeInaccessibleMessage().chat().id(),
+                ctx.messageId)
+                .caption("🏆Выиграла капибара " + winner.getName() +
+                        "\nСчастье + " + winner.getImprovement().getImprovementValue().getWinHappiness() +
+                        ", проигравшая - " + loser.getImprovement().getImprovementValue().getLoseHappiness()));
     }
 
-    private void getResults(Capybara winner, Capybara loser) {
-        updateStatuses(winner, true);
-        updateStatuses(loser, false);
-        addRace(winner, loser);
+    @Transactional
+    public void getResults(Capybara winner, Capybara loser) {
+        self.updateStatuses(winner, true);
+        self.updateStatuses(loser, false);
+        self.addRace(winner, loser);
+        self.updateWinsAndDefeats(winner, loser);
     }
 
-    private void updateStatuses(Capybara capybara, boolean isWinner) {
-        updateStamina(capybara);
-        afterRaceUpdate(capybara);
-        updateHappiness(capybara, isWinner);
+    @Transactional
+    public void updateWinsAndDefeats(Capybara winner, Capybara loser) {
+        winner.setWins(winner.getWins() + 1);
+        loser.setDefeats(loser.getDefeats() + 1);
     }
 
-    private void updateStamina(Capybara capybara) {
-        if (capybara.getLastRaceAt() == null) {
-            return;
-        }
-
-        long minutesSinceLastRace = Duration.between(capybara.getLastRaceAt(), LocalDateTime.now()).toMinutes();
-
-        if (minutesSinceLastRace >= 15) {
-            capybara.setConsecutiveRaces(0);
-        }
+    @Transactional
+    public void updateStatuses(Capybara c, boolean isWinner) {
+        self.updateStamina(c);
+        self.afterRaceUpdate(c);
+        self.updateHappiness(c, isWinner);
     }
 
-    private void afterRaceUpdate(Capybara capybara) {
-        capybara.setConsecutiveRaces(capybara.getConsecutiveRaces() + 1);
-        capybara.setLastRaceAt(LocalDateTime.now());
+    @Transactional
+    public void updateStamina(Capybara c) {
+        if (c.getLastRaceAt() == null) return;
+        long minutesSinceLastRace = Duration.between(c.getLastRaceAt(), LocalDateTime.now()).toMinutes();
+        if (minutesSinceLastRace >= 15) c.setConsecutiveRaces(0);
     }
 
-    private void addRace(Capybara winner, Capybara loser) {
+    @Transactional
+    public void afterRaceUpdate(Capybara c) {
+        c.setConsecutiveRaces(c.getConsecutiveRaces() + 1);
+        c.setLastRaceAt(LocalDateTime.now());
+    }
+
+    @Transactional
+    public void addRace(Capybara winner, Capybara loser) {
         Race race = Race.builder()
                 .raceDate(LocalDateTime.now())
                 .winner(winner)
                 .loser(loser)
                 .build();
-
         winner.getRaces().add(race);
         loser.getRaces().add(race);
     }
 
-    private void checkStamina(Capybara capybara) {
-        updateStamina(capybara);
-
-        if (capybara.getConsecutiveRaces() >= 5) {
-            throw new CapybaraException("Too tired for a race! Wait a bit.");
-        }
+    @Transactional
+    public void checkStamina(Capybara c) {
+        self.updateStamina(c);
+        if (c.getConsecutiveRaces() >= 5) throw new CapybaraException("Too tired for a race! Wait a bit.");
     }
 
     @Override
     protected void saveRequest(Capybara challenger, Capybara opponent, RaceRequest request) {
         challenger.setRaceRequest(request);
         opponent.setRaceRequest(request);
-
         raceRequestRepository.save(request);
     }
 
@@ -263,35 +256,23 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         return RequestType.RACE;
     }
 
-    @Builder
-    private record RaceContext(
-            Capybara capybara1,
-            Capybara capybara2,
-            int need,
-            TelegramBot bot,
-            CallbackQuery query,
-            int[] p1,
-            int[] p2,
-            int messageId
-    ) {
-        RaceContext(Capybara c1, Capybara c2, int need, TelegramBot bot, CallbackQuery query, int messageId) {
-            this(c1, c2, need, bot, query, new int[]{0}, new int[]{0}, messageId);
-        }
+    public static class RaceStepContext {
+        final Long c1Id;
+        final Long c2Id;
+        final int need;
+        final TelegramBot bot;
+        final CallbackQuery query;
+        final int messageId;
+        int percent1 = 0;
+        int percent2 = 0;
 
-        int percent1() {
-            return p1[0];
-        }
-
-        int percent2() {
-            return p2[0];
-        }
-
-        void percent1(int v) {
-            p1[0] = v;
-        }
-
-        void percent2(int v) {
-            p2[0] = v;
+        public RaceStepContext(Long c1, Long c2, int need, TelegramBot bot, CallbackQuery query, int messageId) {
+            this.c1Id = c1;
+            this.c2Id = c2;
+            this.need = need;
+            this.bot = bot;
+            this.query = query;
+            this.messageId = messageId;
         }
     }
 }

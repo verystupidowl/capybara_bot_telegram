@@ -1,6 +1,7 @@
 package ru.tggc.capybaratelegrambot.domain.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,9 +22,9 @@ public class Race {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Capybara winner;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Capybara loser;
     private LocalDateTime raceDate;
 }

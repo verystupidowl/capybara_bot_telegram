@@ -84,11 +84,11 @@ public class CasinoService {
         if (wonType == type) {
             Long winAmount = type.getCalculateWin().apply(betAmount);
             capybara.setCurrency(capybara.getCurrency() + winAmount);
-            response.setCaption("Вау! Вот это везение! Твоя капибара выиграла " + winAmount);
+            response.setCaption("Вау! Вот это везение! Выпало " + wonType.getLabel() + "! Твоя капибара выиграла " + winAmount);
             response.setUrl("https://vk.com/photo-209917797_457246197");
         } else {
             capybara.setCurrency(capybara.getCurrency() - betAmount);
-            response.setCaption("Твоя капибара была близка, но проиграла " + betAmount);
+            response.setCaption("Твоя капибара была близка Выпало " + wonType.getLabel() + "! она  проиграла " + betAmount);
             response.setUrl("https://vk.com/photo-209917797_457246192");
         }
 

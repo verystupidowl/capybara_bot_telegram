@@ -57,7 +57,11 @@ public class Bot extends TelegramBot {
         setUpdatesListener(updates -> {
             updates.stream()
                     .<Runnable>map(update -> () -> process(update))
-                    .forEach(CompletableFuture::runAsync);
+                    .forEach(runnable -> CompletableFuture.runAsync(runnable)
+                            .exceptionally(e -> {
+                                e.fillInStackTrace();
+                                return null;
+                            }));
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         }, exception -> log.error(exception.getMessage(), exception));
     }
@@ -65,7 +69,7 @@ public class Bot extends TelegramBot {
     private void process(Update update) {
         if (update.message() != null) {
             User from = update.message().from();
-            if (checkUserAndUpdate(from, update.message().chat().id())) return;
+            if (checkUserAndUpdate(from, update.message().chat().id(), null)) return;
             Optional.ofNullable(update.message().text())
                     .ifPresent(s -> serveCommand(update.message()));
 //            Optional.ofNullable(update.message().photo())
@@ -75,25 +79,31 @@ public class Bot extends TelegramBot {
             }
         } else if (update.callbackQuery() != null) {
             User from = update.callbackQuery().from();
-            if (checkUserAndUpdate(from, update.callbackQuery().maybeInaccessibleMessage().chat().id())) return;
+            Long userId = update.callbackQuery().maybeInaccessibleMessage().chat().id();
+            if (checkUserAndUpdate(from, userId, update.callbackQuery())) return;
             serveCallback(update.callbackQuery());
             execute(new AnswerCallbackQuery(update.callbackQuery().id()));
         }
     }
 
-    private boolean checkUserAndUpdate(User from, long chatId) {
+    private boolean checkUserAndUpdate(User from, long chatId, CallbackQuery query) {
         Integer count = countOfUpdates.getIfPresent(from.id());
 
         if (count != null && count > MAX_UPDATES) {
             log.info("user {} is trying to ddos", from.username());
-            countOfUpdates.policy().expireAfterWrite().get().ageOf(from.id(), TimeUnit.SECONDS).ifPresentOrElse(ex -> {
-                String time = MAX_UPDATES - ex + "c";
-                String text = "Cлишком много запросов, попробуй снова через " + time;
-                execute(new SendMessage(chatId, text));
-            }, () -> {
-                String text = "Cлишком много запросов";
-                execute(new SendMessage(chatId, text));
+            countOfUpdates.policy().expireAfterWrite().ifPresent(ex -> {
+                ex.ageOf(from.id(), TimeUnit.SECONDS).ifPresentOrElse(age -> {
+                    String time = MAX_UPDATES - age + "c";
+                    String text = "Cлишком много запросов, попробуй снова через " + time;
+                    execute(new SendMessage(chatId, text));
+                }, () -> {
+                    String text = "Cлишком много запросов";
+                    execute(new SendMessage(chatId, text));
+                });
             });
+            if (query != null) {
+                execute(new AnswerCallbackQuery(query.id()));
+            }
             return true;
         }
         int currentCount = count == null ? 0 : count;

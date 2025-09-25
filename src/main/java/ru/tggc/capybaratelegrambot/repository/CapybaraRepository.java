@@ -1,11 +1,11 @@
 package ru.tggc.capybaratelegrambot.repository;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.User;
 
@@ -14,6 +14,16 @@ import java.util.Optional;
 
 @Repository
 public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
+
+    @NotNull
+    @EntityGraph(attributePaths = {
+            "improvement", "improvement.improvementValue",
+            "level",
+            "happiness",
+            "races"
+    })
+    Optional<Capybara> findById(@NotNull Long id);
+
     @EntityGraph(attributePaths = {
             "level", "level.type",
             "work", "work.workAction",
@@ -67,4 +77,12 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "satiety"
     })
     Optional<Capybara> findTeaCapybaraByUserIdAndChatId(Long userId, String chatId);
+
+    @EntityGraph(attributePaths = {
+            "improvement", "improvement.improvementValue",
+            "level",
+            "happiness",
+            "races"
+    })
+    Optional<Capybara> findRaceCapybaraByUserIdAndChatId(Long userId, String chatId);
 }
