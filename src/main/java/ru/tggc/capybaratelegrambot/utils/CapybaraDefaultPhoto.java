@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.domain.dto;
+package ru.tggc.capybaratelegrambot.utils;
 
 import lombok.experimental.UtilityClass;
 

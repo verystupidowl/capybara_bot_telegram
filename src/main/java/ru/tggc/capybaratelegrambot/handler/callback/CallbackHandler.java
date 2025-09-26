@@ -19,20 +19,24 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 @Slf4j
 public abstract class CallbackHandler extends Handler {
 
-    public Response sendSimpleMessage(String chatId, String text, InlineKeyboardMarkup markup) {
-        SendMessage sendMessage = new SendMessage(chatId, text);
-        ifPresent(markup, sendMessage::replyMarkup);
-        return Response.ofMessages(List.of(sendMessage));
+    public Response sendSimpleMessage(long chatId, String text) {
+        return sendSimpleMessage(chatId, text, null);
     }
 
-    public Response sendSimpleMessages(String chatId, List<String> texts) {
+    public Response sendSimpleMessage(long chatId, String text, InlineKeyboardMarkup markup) {
+        SendMessage sm = new SendMessage(chatId, text);
+        ifPresent(markup, sm::replyMarkup);
+        return Response.ofMessages(sm);
+    }
+
+    public Response sendSimpleMessages(long chatId, List<String> texts) {
         List<SendMessage> responses = texts.stream()
                 .map(text -> new SendMessage(chatId, text))
                 .toList();
         return Response.ofMessages(responses);
     }
 
-    public Response editMessageCaption(String chatId, Integer messageId, String caption, InlineKeyboardMarkup markup) {
+    public Response editMessageCaption(long chatId, Integer messageId, String caption, InlineKeyboardMarkup markup) {
         EditMessageCaption emc = new EditMessageCaption(chatId, messageId);
         emc.caption(caption);
         ifPresent(markup, emc::replyMarkup);
@@ -45,9 +49,12 @@ public abstract class CallbackHandler extends Handler {
         emc.caption(first.getCaption());
         ifPresent(first.getMarkup(), emc::replyMarkup);
         Response response = Response.ofMessage(emc);
-        List<SendPhoto> sendPhotos = photos.stream().map(p -> {
-                    long chatId = Long.parseLong(p.getChatId());
-                    return new SendPhoto(chatId, p.getUrl());
+        List<SendPhoto> sendPhotos = photos.stream()
+                .map(p -> {
+                    SendPhoto sp = new SendPhoto(p.getChatId(), p.getUrl());
+                    ifPresent(p.getMarkup(), sp::replyMarkup);
+                    ifPresent(p.getCaption(), sp::caption);
+                    return sp;
                 })
                 .toList();
         return response.andThen(Response.ofPhotos(sendPhotos));
@@ -58,17 +65,17 @@ public abstract class CallbackHandler extends Handler {
         DeleteMessage dm = new DeleteMessage(first.getChatId(), messageId);
         List<SendPhoto> photosToSend = photos.stream()
                 .map(p -> {
-                    long chatId = Long.parseLong(p.getChatId());
-                    SendPhoto sendPhoto = new SendPhoto(chatId, p.getUrl());
-                    ifPresent(p.getCaption(), sendPhoto::caption);
-                    ifPresent(p.getMarkup(), sendPhoto::replyMarkup);
-                    return sendPhoto;
+                    long chatId = p.getChatId();
+                    SendPhoto sp = new SendPhoto(chatId, p.getUrl());
+                    ifPresent(p.getCaption(), sp::caption);
+                    ifPresent(p.getMarkup(), sp::replyMarkup);
+                    return sp;
                 })
                 .toList();
         return Response.ofPhotos(photosToSend).andThen(Response.ofMessage(dm));
     }
 
-    public Response editPhoto(String chatId, Integer messageId, String photoUrl, String caption) {
+    public Response editPhoto(long chatId, Integer messageId, String photoUrl, String caption) {
         DeleteMessage dm = new DeleteMessage(chatId, messageId);
         return sendSimplePhoto(PhotoDto.builder()
                 .url(photoUrl)
@@ -78,20 +85,18 @@ public abstract class CallbackHandler extends Handler {
     }
 
     public Response editSimpleMessage(CallbackQuery query, String text, InlineKeyboardMarkup markup) {
-        String chatId = query.maybeInaccessibleMessage().chat().id().toString();
+        long chatId = query.maybeInaccessibleMessage().chat().id();
         int messageId = Integer.parseInt(query.inlineMessageId());
         return editSimpleMessage(chatId, messageId, text, markup);
     }
 
-    public Response editSimpleMessage(String chatId, int messageId, String text) {
+    public Response editSimpleMessage(long chatId, int messageId, String text) {
         return editSimpleMessage(chatId, messageId, text, null);
     }
 
-    public Response editSimpleMessage(String chatId, int messageId, String text, InlineKeyboardMarkup markup) {
-        EditMessageText sendMessage = new EditMessageText(chatId, messageId, text);
-        if (markup != null) {
-            sendMessage.replyMarkup(markup);
-        }
-        return Response.ofEditTexts(List.of(sendMessage));
+    public Response editSimpleMessage(long chatId, int messageId, String text, InlineKeyboardMarkup markup) {
+        EditMessageText sm = new EditMessageText(chatId, messageId, text);
+        ifPresent(markup, sm::replyMarkup);
+        return Response.ofEditTexts(List.of(sm));
     }
 }

@@ -26,26 +26,26 @@ public class RaceCallbackHandler extends CallbackHandler {
     public Response improvePills(@MessageId int messageId,
                                  @Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.ANTI_LOSE);
-        return editSimpleMessage(ctx.chatId(), messageId, "ur capy taken a pill", null);
+        return editSimpleMessage(ctx.chatId(), messageId, "ur capy taken a pill");
     }
 
     @CallbackHandle("improve_watermelon")
     public Response improveWatermelon(@MessageId int messageId,
                                       @Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.WATERMELON);
-        return editSimpleMessage(ctx.chatId(), messageId, "ur capy eaten a watermellon", null);
+        return editSimpleMessage(ctx.chatId(), messageId, "ur capy eaten a watermelon");
     }
 
     @CallbackHandle("improve_boots")
     public Response improveBoots(@MessageId int messageId,
-                                  @Ctx CapybaraContext ctx) {
+                                 @Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.BOOTS);
-        return editSimpleMessage(ctx.chatId(), messageId, "ur capy wears boots", null);
+        return editSimpleMessage(ctx.chatId(), messageId, "ur capy wears boots");
     }
 
     @CallbackHandle("buy_improve")
     public Response buyImprove(@MessageId int messageId,
-                                @Ctx CapybaraContext ctx) {
+                               @Ctx CapybaraContext ctx) {
         Capybara capybara = capybaraService.getCapybaraByContext(ctx);
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
             return editSimpleMessage(ctx.chatId(), messageId, "choose one", inlineCreator.improvements());
@@ -55,21 +55,21 @@ public class RaceCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("do_massage")
     public Response doMassage(@MessageId int messageId,
-                               @Ctx CapybaraContext ctx) {
+                              @Ctx CapybaraContext ctx) {
         capybaraService.doMassage(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "u did a massge", null);
+        return editSimpleMessage(ctx.chatId(), messageId, "u did a massage");
     }
 
     @CallbackHandle("refuse_race")
     public Response refuseRace(@MessageId int messageId,
-                                @Ctx CapybaraContext ctx) {
+                               @Ctx CapybaraContext ctx) {
         raceService.refuseRace(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "u refused a race", null);
+        return editSimpleMessage(ctx.chatId(), messageId, "u refused a race");
     }
 
     @CallbackHandle("accept_race")
     public Response acceptRace(@CallbackParam CallbackQuery query,
-                                @Ctx CapybaraContext ctx) {
+                               @Ctx CapybaraContext ctx) {
         return Response.ofCustom(raceService.acceptRace(ctx), query);
     }
 }

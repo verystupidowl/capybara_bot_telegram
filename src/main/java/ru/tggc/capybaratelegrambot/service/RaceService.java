@@ -36,6 +36,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
+
 @Slf4j
 @Service
 public class RaceService extends AbstractRequestService<RaceRequest> {
@@ -231,7 +233,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     @Transactional
     public void checkStamina(Capybara c) {
         self.updateStamina(c);
-        if (c.getConsecutiveRaces() >= 5) throw new CapybaraException("Too tired for a race! Wait a bit.");
+        throwIf(c.getConsecutiveRaces() >= 5, () -> new CapybaraException("Too tired for a race! Wait a bit."));
     }
 
     @Override

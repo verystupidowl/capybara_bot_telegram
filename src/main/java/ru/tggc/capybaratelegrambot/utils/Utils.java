@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @UtilityClass
 public class Utils {
@@ -20,6 +21,18 @@ public class Utils {
 
     public static <T> void ifPresent(T t, Consumer<T> consumer) {
         Optional.ofNullable(t).ifPresent(consumer);
+    }
+
+    public static <T, R extends RuntimeException> void throwIfNull(T t, Supplier<R> e) {
+        if (t == null) {
+            throw e.get();
+        }
+    }
+
+    public static <R extends RuntimeException> void throwIf(boolean condition, Supplier<R> e) {
+        if (condition) {
+            throw e.get();
+        }
     }
 
     public static String formatDuration(Duration duration) {

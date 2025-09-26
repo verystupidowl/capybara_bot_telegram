@@ -39,7 +39,8 @@ public class Capybara {
     private Integer defeats;
     private Long currency;
     private LocalDateTime created;
-    private String chatId;
+    @OneToOne(fetch = FetchType.LAZY)
+    private Chat chat;
     private int consecutiveRaces;
     private LocalDateTime lastRaceAt;
     @OneToOne(fetch = FetchType.LAZY)

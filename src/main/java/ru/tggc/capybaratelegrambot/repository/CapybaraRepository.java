@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.User;
@@ -20,7 +19,8 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "improvement", "improvement.improvementValue",
             "level",
             "happiness",
-            "races"
+            "races",
+            "chat"
     })
     Optional<Capybara> findById(@NotNull Long id);
 
@@ -28,11 +28,12 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "level", "level.type",
             "work", "work.workAction",
             "happiness",
-            "satiety"
+            "satiety",
+            "chat"
     })
-    Optional<Capybara> findByUserIdAndChatId(@Param("userId") Long userId, @Param("chatId") String chatId);
+    Optional<Capybara> findByUserIdAndChatId(Long userId, Long chatId);
 
-    List<Capybara> findByChatId(String chatId);
+    List<Capybara> findByChatId(Long chatId);
 
     String user(User user);
 
@@ -48,7 +49,7 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "spouse",
             "photo"
     })
-    Optional<Capybara> findMyCapybaraByUserIdAndChatId(Long userId, String chatId);
+    Optional<Capybara> findMyCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
     @EntityGraph(attributePaths = {
             "tea",
@@ -58,31 +59,33 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "improvement",
             "satiety"
     })
-    Optional<Capybara> findInfoCapybaraByUserIdAndChatId(Long userId, String chatId);
+    Optional<Capybara> findInfoCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
-    Boolean existsCapybaraByUserIdAndChatId(long userId, String chatId);
+    Boolean existsCapybaraByUserIdAndChatId(long userId, Long chatId);
 
     @EntityGraph(attributePaths = {
             "satiety",
             "level",
             "happiness"
     })
-    Optional<Capybara> findSatietyAndHappinessCapybaraByUserIdAndChatId(Long userId, String chatId);
+    Optional<Capybara> findSatietyAndHappinessCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
     @EntityGraph(attributePaths = {
             "tea",
             "photo",
             "happiness",
             "level",
-            "satiety"
+            "satiety",
+            "chat"
     })
-    Optional<Capybara> findTeaCapybaraByUserIdAndChatId(Long userId, String chatId);
+    Optional<Capybara> findTeaCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
     @EntityGraph(attributePaths = {
             "improvement", "improvement.improvementValue",
             "level",
             "happiness",
-            "races"
+            "races",
+            "chat"
     })
-    Optional<Capybara> findRaceCapybaraByUserIdAndChatId(Long userId, String chatId);
+    Optional<Capybara> findRaceCapybaraByUserIdAndChatId(Long userId, Long chatId);
 }

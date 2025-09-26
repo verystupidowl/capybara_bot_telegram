@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.CallbackQuery;
+import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
+import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
@@ -69,24 +71,26 @@ public class Bot extends TelegramBot {
     private void process(Update update) {
         if (update.message() != null) {
             User from = update.message().from();
-            if (checkUserAndUpdate(from, update.message().chat().id(), null)) return;
+            Chat chat = update.message().chat();
+            if (checkUserAndUpdate(from, chat.id(), null, chat)) return;
             Optional.ofNullable(update.message().text())
                     .ifPresent(s -> serveCommand(update.message()));
 //            Optional.ofNullable(update.message().photo())
 //                    .ifPresent(_ -> servePhoto(update.message()));
             if (!Arrays.stream(update.message().newChatMembers()).filter(member -> member.id() == 6653668731L).toList().isEmpty()) {
-                greetings(update.message().chat().id().toString());
+                greetings(chat.id().toString());
             }
         } else if (update.callbackQuery() != null) {
             User from = update.callbackQuery().from();
-            Long userId = update.callbackQuery().maybeInaccessibleMessage().chat().id();
-            if (checkUserAndUpdate(from, userId, update.callbackQuery())) return;
+            Chat chat = update.callbackQuery().maybeInaccessibleMessage().chat();
+            Long userId = chat.id();
+            if (checkUserAndUpdate(from, userId, update.callbackQuery(), chat)) return;
             serveCallback(update.callbackQuery());
             execute(new AnswerCallbackQuery(update.callbackQuery().id()));
         }
     }
 
-    private boolean checkUserAndUpdate(User from, long chatId, CallbackQuery query) {
+    private boolean checkUserAndUpdate(User from, long chatId, CallbackQuery query, Chat chat) {
         Integer count = countOfUpdates.getIfPresent(from.id());
 
         if (count != null && count > MAX_UPDATES) {
@@ -108,8 +112,9 @@ public class Bot extends TelegramBot {
         }
         int currentCount = count == null ? 0 : count;
         countOfUpdates.put(from.id(), currentCount + 1);
+        ChatDto chatDto = new ChatDto(chat.id(), chat.title());
         UserDto user = new UserDto(from.id().toString(), from.username());
-        userService.saveOrUpdate(user);
+        userService.saveOrUpdate(user, chatDto);
         return false;
     }
 

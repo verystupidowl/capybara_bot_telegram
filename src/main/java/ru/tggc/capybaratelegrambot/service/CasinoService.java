@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
+
 @Service
 @RequiredArgsConstructor
 public class CasinoService {
@@ -58,27 +60,29 @@ public class CasinoService {
     }
 
     public PhotoDto casino(CapybaraContext historyDto, CasinoTargetType type) {
-        String chatId = historyDto.chatId();
+        long chatId = historyDto.chatId();
         Capybara capybara = capybaraService.findCapybara(historyDto)
                 .orElseThrow(() -> {
                     map.remove(historyDto);
                     return new CapybaraNotFoundException();
                 });
-        if (!map.containsKey(historyDto)) {
-            throw new CapybaraException("Ты не играешь!");
-        }
+
+        throwIf(!map.containsKey(historyDto), () -> new CapybaraException("Ты не играешь"));
         CasinoCtx ctx = map.get(historyDto);
         Long betAmount = ctx.getBet();
 
-        if (capybara.getCurrency() < betAmount) {
+        throwIf(capybara.getCurrency() < betAmount, () -> {
             map.remove(historyDto);
-            throw new CapybaraHasNoMoneyException("", chatId);
-        }
+            return new CapybaraHasNoMoneyException();
+        });
+
         long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
-        if (betAmount < minBetAmount) {
+
+        throwIf(betAmount < minBetAmount, () -> {
             map.remove(historyDto);
-            throw new CapybaraException("ur min bet amount is " + minBetAmount);
-        }
+            return new CapybaraException("Минимальная твоя ставка - " + minBetAmount);
+        });
+
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         PhotoDto response = PhotoDto.builder()
                 .chatId(chatId)
@@ -102,19 +106,18 @@ public class CasinoService {
     }
 
     public BiConsumer<TelegramBot, CapybaraContext> slots(CapybaraContext historyDto, long bet) {
-        if (!map.containsKey(historyDto)) {
-            throw new CapybaraException("ты не играешь!");
-        }
+        throwIf(!map.containsKey(historyDto), () -> new CapybaraException("Ты не играешь!"));
+
         Capybara capybara = capybaraService.findCapybara(historyDto)
                 .orElseThrow(() -> {
                     map.remove(historyDto);
                     return new CapybaraNotFoundException();
                 });
         return (bot, ctx) -> {
-            if (capybara.getCurrency() < bet) {
+            throwIf(capybara.getCurrency() < bet, () -> {
                 map.remove(historyDto);
-                throw new CapybaraHasNoMoneyException();
-            }
+                return new CapybaraHasNoMoneyException();
+            });
 
             Message response = bot.execute(new SendDice(ctx.chatId()).slotMachine()).message();
             int diceValue = response.dice().value() - 1;
@@ -132,7 +135,7 @@ public class CasinoService {
             capybaraService.save(capybara);
             map.remove(historyDto);
             scheduler.schedule(() -> {
-                long chatId = Long.parseLong(ctx.chatId());
+                long chatId = ctx.chatId();
                 SendPhoto sendPhoto;
                 if (slotResult == SlotResult.LOSE) {
                     sendPhoto = new SendPhoto(chatId, LOSE_PHOTO_URL);

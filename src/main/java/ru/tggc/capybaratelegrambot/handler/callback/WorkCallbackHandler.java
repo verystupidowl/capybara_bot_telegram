@@ -28,7 +28,7 @@ public class WorkCallbackHandler extends CallbackHandler {
     @CallbackHandle("go_job")
     public Response goJob(@Ctx CapybaraContext ctx) {
         capybaraService.goJob(ctx);
-        return sendSimpleMessage(ctx.chatId(), "ur capy has gone to work", null);
+        return sendSimpleMessage(ctx.chatId(), "ur capy has gone to work");
     }
 
     @CallbackHandle("set_job_${jobType}")

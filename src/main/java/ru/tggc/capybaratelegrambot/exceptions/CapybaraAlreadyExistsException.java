@@ -1,13 +1,16 @@
 package ru.tggc.capybaratelegrambot.exceptions;
 
 import lombok.Getter;
+import ru.tggc.capybaratelegrambot.utils.Text;
 
 @Getter
-public class CapybaraAlreadyExistsException extends RuntimeException {
-    private final String chatId;
+public class CapybaraAlreadyExistsException extends CapybaraException {
 
-    public CapybaraAlreadyExistsException(String message, String chatId) {
+    public CapybaraAlreadyExistsException(String message) {
         super(message);
-        this.chatId = chatId;
+    }
+
+    public CapybaraAlreadyExistsException() {
+        super(Text.ALREADY_HAVE_CAPYBARA);
     }
 }

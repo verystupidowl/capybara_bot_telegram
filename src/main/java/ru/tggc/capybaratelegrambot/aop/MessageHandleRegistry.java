@@ -1,6 +1,8 @@
 package ru.tggc.capybaratelegrambot.aop;
 
+import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
@@ -32,7 +34,8 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         return Utils.getOr(
                 method.getAnnotation(MessageHandle.class),
                 MessageHandle::requiredRoles,
-                new UserRole[0]);
+                new UserRole[0]
+        );
     }
 
     @Override
@@ -52,16 +55,16 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
                 .findFirst()
                 .orElse(null);
 
-        long chatId = message.chat().id();
-        String userId = message.from().id().toString();
+        Chat chat = message.chat();
+        User from = message.from();
         Response response = null;
 
         if (method == null) {
             if (defaultMethod == null) {
                 log.warn("Unknown message: {}", text);
             } else {
-                Object[] args = buildArgs(defaultMethod, message, chatId, userId, 0, null, message);
-                response = invokeWithCatch(userId, defaultMethod, defaultBean, args, chatId);
+                Object[] args = buildArgs(defaultMethod, message, chat.id(), from.id(), 0, null, message);
+                response = invokeWithCatch(from, defaultMethod, defaultBean, args, chat);
             }
             return response;
         }
@@ -70,7 +73,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         String template = method.getAnnotation(MessageHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(text) : null;
 
-        Object[] args = buildArgs(method, message, chatId, userId, 0, matcher, message);
-        return invokeWithCatch(userId, method, beans.get(template), args, chatId);
+        Object[] args = buildArgs(method, message, chat.id(), from.id(), 0, matcher, message);
+        return invokeWithCatch(from, method, beans.get(template), args, chat);
     }
 }

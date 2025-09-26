@@ -15,16 +15,16 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 @Slf4j
 public abstract class TextHandler extends Handler {
 
-    protected Response sendSimpleMessage(@NotNull String chatId,
+    protected Response sendSimpleMessage(long chatId,
                                          @NotNull String text,
                                          @Nullable Keyboard markup) {
-        SendMessage sendMessage = new SendMessage(chatId, text);
-        ifPresent(markup, sendMessage::replyMarkup);
-        return Response.ofMessage(sendMessage);
+        SendMessage sm = new SendMessage(chatId, text);
+        ifPresent(markup, sm::replyMarkup);
+        return Response.ofMessage(sm);
     }
 
-    protected void sendSimpleMessage(@NotNull String chatId, @NotNull String text) {
-        sendSimpleMessage(chatId, text, null);
+    protected Response sendSimpleMessage(long chatId, @NotNull String text) {
+        return sendSimpleMessage(chatId, text, null);
     }
 
     protected String getTargetUsername(String username, Message message) {

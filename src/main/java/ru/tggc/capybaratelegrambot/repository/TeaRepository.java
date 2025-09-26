@@ -15,7 +15,8 @@ public interface TeaRepository extends JpaRepository<Tea, String> {
             "capybara.user",
             "capybara.happiness",
             "capybara.level",
-            "capybara.satiety"
+            "capybara.satiety",
+            "capybara.chat"
     })
     List<Tea> findByIsWaiting(boolean isWaiting);
 }

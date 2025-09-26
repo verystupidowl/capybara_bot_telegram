@@ -3,32 +3,48 @@ package ru.tggc.capybaratelegrambot.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
+import ru.tggc.capybaratelegrambot.domain.model.Chat;
 import ru.tggc.capybaratelegrambot.domain.model.User;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
+import ru.tggc.capybaratelegrambot.repository.ChatRepository;
 import ru.tggc.capybaratelegrambot.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final ChatRepository chatRepository;
 
     @Transactional
-    public User saveOrUpdate(UserDto dto) {
+    public void saveOrUpdate(UserDto dto, ChatDto chatDto) {
+        Chat chat = chatRepository.findById(chatDto.id())
+                .orElseGet(() -> chatRepository.save(Chat.builder()
+                        .name(chatDto.title())
+                        .id(chatDto.id())
+                        .users(new HashSet<>())
+                        .build()));
         User user = userRepository.findById(Long.parseLong(dto.userId()))
-                .orElseGet(() -> User.builder()
+                .orElseGet(() -> userRepository.save(User.builder()
                         .username(dto.username())
                         .id(Long.parseLong(dto.userId()))
                         .createdAt(LocalDateTime.now())
                         .lastTimeUpdatedAt(LocalDateTime.now())
                         .userRole(UserRole.USER)
-                        .build());
+                        .chats(new HashSet<>())
+                        .build()));
+        user.getChats().add(chat);
+        chat.getUsers().add(user);
+
         user.setLastTimeUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
+
+        userRepository.save(user);
     }
 
     public User getUserByUsername(String username) {

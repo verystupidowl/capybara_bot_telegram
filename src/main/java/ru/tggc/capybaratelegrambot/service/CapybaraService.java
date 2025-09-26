@@ -14,6 +14,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.TopCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
+import ru.tggc.capybaratelegrambot.domain.model.Chat;
 import ru.tggc.capybaratelegrambot.domain.model.Improvement;
 import ru.tggc.capybaratelegrambot.domain.model.Level;
 import ru.tggc.capybaratelegrambot.domain.model.User;
@@ -35,6 +36,7 @@ import ru.tggc.capybaratelegrambot.mapper.MyCapybaraMapper;
 import ru.tggc.capybaratelegrambot.provider.WorkProvider;
 import ru.tggc.capybaratelegrambot.provider.WorkProviderFactory;
 import ru.tggc.capybaratelegrambot.repository.CapybaraRepository;
+import ru.tggc.capybaratelegrambot.repository.ChatRepository;
 import ru.tggc.capybaratelegrambot.repository.TeaRepository;
 import ru.tggc.capybaratelegrambot.utils.CapybaraBuilder;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
@@ -45,6 +47,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Service
 @RequiredArgsConstructor
@@ -58,19 +62,21 @@ public class CapybaraService {
     private final MyCapybaraMapper myCapybaraMapper;
     private final CapybaraInfoMapper capybaraInfoMapper;
     private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final ChatRepository chatRepository;
+
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
 
     public Optional<Capybara> findCapybara(CapybaraContext ctx) {
-        return capybaraRepository.findMyCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId());
+        return capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
     }
 
-    public Capybara getCapybara(Long id, String chatId) {
+    public Capybara getCapybara(Long id) {
         return capybaraRepository.findById(id)
-                .orElseThrow(() -> new CapybaraNotFoundException("Capy didnt found", chatId));
+                .orElseThrow(() -> new CapybaraNotFoundException("Capy didnt found"));
     }
 
-    public Capybara getCapybaraByUserId(String userId, String chatId) {
+    public Capybara getCapybaraByUserId(long userId, long chatId) {
         return getCapybara(userId, chatId);
     }
 
@@ -79,14 +85,14 @@ public class CapybaraService {
     }
 
     public MyCapybaraDto getMyCapybara(CapybaraContext ctx) {
-        Capybara capybara = capybaraRepository.findMyCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("U have no capy", ctx.chatId()));
+        Capybara capybara = capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(() -> new CapybaraNotFoundException("U have no capy"));
         return myCapybaraMapper.toDto(capybara);
     }
 
     public CapybaraInfoDto getInfo(CapybaraContext ctx) {
-        Capybara capybara = capybaraRepository.findInfoCapybaraByUserIdAndChatId(Long.parseLong(ctx.userId()), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("u have no capy", ctx.chatId()));
+        Capybara capybara = capybaraRepository.findInfoCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(() -> new CapybaraNotFoundException("u have no capy"));
         return capybaraInfoMapper.toDto(capybara);
     }
 
@@ -103,15 +109,16 @@ public class CapybaraService {
     @Transactional
     public List<PhotoDto> makeHappy(CapybaraContext ctx) {
         List<PhotoDto> messages = new ArrayList<>();
-        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("ur capy didint found", ctx.chatId()));
+        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
         Happiness happiness = capybara.getHappiness();
 
-        if (!happiness.canPerform()) {
+        throwIf(!happiness.canPerform(), () -> {
             String message = "Ты сможешь сделать хорошие дела для вашей капибары только " +
                     timedActionService.getStatus(happiness);
-            throw new CapybaraException(message);
-        }
+            return new CapybaraException(message);
+        });
+
         HappinessThings happinessThing = RandomUtils.getRandomHappinessThing();
         happiness.setLevel(happiness.getLevel() + happinessThing.getLevel());
         happiness.setLastHappy(LocalDateTime.now());
@@ -127,8 +134,8 @@ public class CapybaraService {
     }
 
     public List<PhotoDto> feed(CapybaraContext ctx) {
-        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("ur capy didint found", ctx.chatId()));
+        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
         List<PhotoDto> messages = self.feed(capybara, 5);
         messages.add(PhotoDto.builder()
                 .caption("Твоя капибара успешно покушала, возвращайся через 2 часа!")
@@ -140,10 +147,11 @@ public class CapybaraService {
     }
 
     public List<PhotoDto> fatten(CapybaraContext ctx) {
-        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("ur capy didint found", ctx.chatId()));
+        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(() -> new CapybaraNotFoundException("ur capy didint found"));
         checkCurrency(capybara, 50);
         List<PhotoDto> messages = self.feed(capybara, 50);
+        capybara.setCurrency(capybara.getCurrency() - 50);
         messages.add(PhotoDto.builder()
                 .caption("""
                         Твоя капибара съела целый арбуз!
@@ -157,17 +165,18 @@ public class CapybaraService {
     }
 
     public List<PhotoDto> goTea(CapybaraContext ctx) {
-        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
+        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         Tea tea = capybara.getTea();
-        if (!tea.canPerform()) {
+
+        throwIf(!tea.canPerform(), () -> {
             String message = "Твоя капибара сможет пойти на чаепитие только через " +
                     timedActionService.getStatus(tea);
-            throw new CapybaraException(message);
-        }
-        if (tea.isWaiting()) {
-            throw new CapybaraException("Твоя капибара и так ждет собеседника!");
-        }
+            return new CapybaraException(message);
+        });
+
+        throwIf(tea.isWaiting(), () -> new CapybaraException("Твоя капибара и так ждет собеседника!"));
+
         List<Tea> byIsWaiting = teaRepository.findByIsWaiting(true);
         if (!byIsWaiting.isEmpty()) {
             Tea incerlocutorTea = byIsWaiting.getFirst();
@@ -191,7 +200,7 @@ public class CapybaraService {
             photosToReturn.add(PhotoDto.builder()
                     .url(capybara.getPhoto().getUrl())
                     .caption(Text.getTea(interlocutorDto, myDto))
-                    .chatId(interlocutor.getChatId())
+                    .chatId(interlocutor.getChat().getId())
                     .build());
             return photosToReturn;
         }
@@ -206,7 +215,7 @@ public class CapybaraService {
     }
 
     public void takeFromTea(CapybaraContext ctx) {
-        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
+        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         capybara.getTea().setWaiting(false);
         capybaraRepository.save(capybara);
@@ -214,15 +223,16 @@ public class CapybaraService {
 
     @Transactional
     public PhotoDto saveCapybara(CapybaraContext ctx) {
-        String chatId = ctx.chatId();
-        long userId = Long.parseLong(ctx.userId());
+        long chatId = ctx.chatId();
+        long userId = ctx.userId();
         Boolean capybaraExists = capybaraRepository.existsCapybaraByUserIdAndChatId(userId, chatId);
-        if (Boolean.TRUE.equals(capybaraExists)) {
-            throw new CapybaraAlreadyExistsException("U already have a capy", chatId);
-        }
+        throwIf(capybaraExists, CapybaraAlreadyExistsException::new);
+
         User user = userService.getUserById(userId);
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(IllegalArgumentException::new);
         int size = capybaraRepository.findByChatId(chatId).size();
-        Capybara capybara = CapybaraBuilder.buildCapybara(size, chatId, user);
+        Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
         capybaraRepository.save(capybara);
         return PhotoDto.builder()
                 .chatId(chatId)
@@ -234,7 +244,7 @@ public class CapybaraService {
     }
 
     public boolean hasWork(CapybaraContext ctx) {
-        return capybaraRepository.findByUserIdAndChatId(Long.parseLong(ctx.userId()), ctx.chatId())
+        return capybaraRepository.findByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .map(Capybara::getWork)
                 .map(Work::getWorkType)
                 .map(jt -> jt != WorkType.NONE)
@@ -279,9 +289,8 @@ public class CapybaraService {
     @Transactional
     public void setImprovement(CapybaraContext ctx, ImprovementValue improvementValue) {
         Capybara capybara = getCapybaraByContext(ctx);
-        if (capybara.getCurrency() <= 50) {
-            throw new CapybaraHasNoMoneyException();
-        }
+        throwIf(capybara.getCurrency() <= 50, CapybaraHasNoMoneyException::new);
+
         Improvement improvement = capybara.getImprovement();
         if (improvement.getImprovementValue() == ImprovementValue.NONE) {
             improvement.setImprovementValue(improvementValue);
@@ -289,10 +298,6 @@ public class CapybaraService {
             capybara.setCurrency(capybara.getCurrency() - 50);
             capybaraRepository.save(capybara);
         }
-    }
-
-    public void acceptWedding(String userId, String chatId) {
-        //todo
     }
 
     public Capybara getCapybaraById(Long id) {
@@ -326,11 +331,10 @@ public class CapybaraService {
 
     public void transferMoney(CapybaraContext ctx, String targetUsername, Long amount) {
         Capybara sourcecapybara = getCapybaraByContext(ctx);
-        if (sourcecapybara.getCurrency() < amount) {
-            throw new CapybaraHasNoMoneyException("ur capy has no money", ctx.chatId());
-        }
+        throwIf(sourcecapybara.getCurrency() < amount, CapybaraHasNoMoneyException::new);
+
         User user = userService.getUserByUsername(targetUsername);
-        Capybara targetCapybara = getCapybara(user.getId(), ctx.chatId());
+        Capybara targetCapybara = getCapybara(user.getId());
 
         targetCapybara.setCurrency(targetCapybara.getCurrency() + amount);
         sourcecapybara.setCurrency(sourcecapybara.getCurrency() - amount);
@@ -342,9 +346,9 @@ public class CapybaraService {
         capybaraRepository.save(capybara);
     }
 
-    private Capybara getCapybara(String userId, String chatId) {
-        return capybaraRepository.findMyCapybaraByUserIdAndChatId(Long.parseLong(userId), chatId)
-                .orElseThrow(() -> new CapybaraNotFoundException("User" + userId + "doesnt have capybara", chatId));
+    private Capybara getCapybara(long userId, long chatId) {
+        return capybaraRepository.findMyCapybaraByUserIdAndChatId(userId, chatId)
+                .orElseThrow(() -> new CapybaraNotFoundException("User" + userId + "doesnt have capybara"));
     }
 
     @Transactional
@@ -354,7 +358,7 @@ public class CapybaraService {
             capybara.getHappiness().setLevel(0);
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
             messages.add(PhotoDto.builder()
-                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChatId()))
+                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
                     .url("https://vk.com/photo-209917797_457246194")
                     .build());
             self.checkNewType(capybara).ifPresent(messages::add);
@@ -365,7 +369,7 @@ public class CapybaraService {
             capybara.getSatiety().setLevel(0);
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
             messages.add(PhotoDto.builder()
-                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChatId()))
+                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
                     .url("https://vk.com/photo-209917797_457246194")
                     .build());
             self.checkNewType(capybara).ifPresent(messages::add);
@@ -378,11 +382,11 @@ public class CapybaraService {
     @Transactional
     public List<PhotoDto> feed(Capybara capybara, Integer feed) {
         Satiety satiety = capybara.getSatiety();
-        if (!satiety.canPerform()) {
+        throwIf(!satiety.canPerform(), () -> {
             String message = "Ты сможешь покормить капибару только через " +
                     timedActionService.getStatus(satiety);
-            throw new CapybaraException("Capybara cant be fed(", capybara.getChatId(), message);
-        }
+            return new CapybaraException(message);
+        });
         satiety.setLevel(satiety.getLevel() + feed);
         satiety.setLastFed(LocalDateTime.now());
         List<PhotoDto> messages = new ArrayList<>(self.checkNewLevel(capybara));
@@ -425,12 +429,7 @@ public class CapybaraService {
     }
 
     private void checkCurrency(Capybara capybara, Integer currency) {
-        if (capybara.getCurrency() <= currency) {
-            String message = Text.NO_MONEY;
-            throw new CapybaraException(
-                    message
-            );
-        }
+        throwIf(capybara.getCurrency() <= currency, CapybaraHasNoMoneyException::new);
     }
 
     @Transactional
@@ -444,7 +443,7 @@ public class CapybaraService {
     }
 
     public Capybara getRaceCapybara(CapybaraContext ctx) {
-        return capybaraRepository.findRaceCapybaraByUserIdAndChatId(Long.valueOf(ctx.userId()), ctx.chatId())
+        return capybaraRepository.findRaceCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
     }
 }

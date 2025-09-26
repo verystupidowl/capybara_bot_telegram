@@ -12,6 +12,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
+
 @RequiredArgsConstructor
 public abstract class AbstractWorkProvider implements WorkProvider {
 
@@ -19,9 +21,7 @@ public abstract class AbstractWorkProvider implements WorkProvider {
     public List<String> takeFromWork(Capybara capybara) {
         checkHasWork(capybara);
         Work work = capybara.getWork();
-        if (work.getWorkAction().canTakeFrom()) {
-            throw new CapybaraException("u cant take ur capy");
-        }
+        throwIf(!work.getWorkAction().canTakeFrom(), () -> new CapybaraException("u cant take ur capy"));
 
         int salary = getJobType().getCalculateSalary().apply(work.getIndex());
         capybara.setCurrency(capybara.getCurrency() + salary);
@@ -85,15 +85,11 @@ public abstract class AbstractWorkProvider implements WorkProvider {
     }
 
     protected void checkHasWork(Capybara capybara) {
-        if (!checkWork(capybara)) {
-            throw new CapybaraException("Capybara has no work!");
-        }
+        throwIf(!checkWork(capybara), () -> new CapybaraException("Capybara has no work!"));
     }
 
     protected void checkHasNoWork(Capybara capybara) {
-        if (checkWork(capybara)) {
-            throw new CapybaraException("Capybara already has work!");
-        }
+        throwIf(checkWork(capybara), () -> new CapybaraException("Capybara has no work!"));
     }
 
     protected boolean checkWork(Capybara capybara) {

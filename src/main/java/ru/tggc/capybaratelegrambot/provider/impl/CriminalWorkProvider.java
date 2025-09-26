@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
+
 @Service
 public class CriminalWorkProvider extends AbstractWorkProvider {
 
@@ -17,9 +19,7 @@ public class CriminalWorkProvider extends AbstractWorkProvider {
     public List<String> takeFromWork(Capybara capybara) {
         checkHasWork(capybara);
         Work work = capybara.getWork();
-        if (work.getWorkAction().canTakeFrom()) {
-            throw new CapybaraException("u cant take ur capy from the work");
-        }
+        throwIf(!work.getWorkAction().canTakeFrom(), () -> new CapybaraException("u cant take ur capy from the work"));
 
         int salary = getJobType().getCalculateSalary().apply(work.getIndex());
         List<String> messages = new ArrayList<>();

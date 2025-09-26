@@ -36,7 +36,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), ctx.chatId());
+        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId());
 
         String caption;
         if (accept) {
@@ -66,7 +66,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), ctx.chatId());
+        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId());
 
         String message;
         if (accept) {

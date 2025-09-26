@@ -24,8 +24,8 @@ public class DefaultMessageHandler extends TextHandler {
 
     @DefaultMessageHandle
     public Response handleDefaultMessages(@MessageParam Message message) {
-        String chatId = message.chat().id().toString();
-        String userId = message.from().id().toString();
+        long chatId = message.chat().id();
+        long userId = message.from().id();
         String text = message.text();
         CapybaraContext historyDto = new CapybaraContext(chatId, userId);
         HistoryType historyType = historyService.getFromHistory(historyDto);
@@ -36,9 +36,8 @@ public class DefaultMessageHandler extends TextHandler {
         Response response = switch (historyType) {
             case CASINO_SET_BET -> casinoSetBet(historyDto, text);
             case CHANGE_NAME -> changeName(historyDto, text);
-            case CHANGE_PHOTO -> changePhoto(historyDto, message);
             case SLOTS_SET_BET -> slots(historyDto, text);
-            default -> throw new UnsupportedOperationException();
+            default -> null;
         };
 
         historyService.removeFromHistory(historyDto);
@@ -51,11 +50,7 @@ public class DefaultMessageHandler extends TextHandler {
 
     private Response changeName(CapybaraContext historyDto, String text) {
         capybaraService.changeName(historyDto, text);
-        return sendSimpleMessage(historyDto.chatId(), "Твою капибару теперь зовут " + text + ", отличное имя!", null);
-    }
-
-    private Response changePhoto(CapybaraContext historyDto, Message message) {
-        return null;
+        return sendSimpleMessage(historyDto.chatId(), "Твою капибару теперь зовут " + text + ", отличное имя!");
     }
 
     private Response casinoSetBet(CapybaraContext historyDto, String text) {

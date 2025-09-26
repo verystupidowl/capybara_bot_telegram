@@ -1,5 +1,7 @@
 package ru.tggc.capybaratelegrambot.aop;
 
+import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +38,12 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -45,11 +51,14 @@ public abstract class AbstractHandleRegistry<P> {
     protected final Map<String, Method> methods = new ConcurrentHashMap<>();
     protected final Map<String, Object> beans = new ConcurrentHashMap<>();
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
+
     protected final ListableBeanFactory beanFactory;
     private final InlineKeyboardCreator inlineKeyboardCreator;
     private final UserService userService;
+
     protected Method defaultMethod;
     protected Object defaultBean;
+
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
     protected static final String NOT_IMPLEMENTED_MESSAGE = "Пока не реализовано, следите за новостями!";
     protected static final long ADMIN_ID = 428873987;
@@ -74,9 +83,7 @@ public abstract class AbstractHandleRegistry<P> {
                     log.info("Registered handler '{}' -> {}.{}",
                             key, bean.getClass().getSimpleName(), method.getName());
                 } else if (method.isAnnotationPresent(DefaultMessageHandle.class)) {
-                    if (defaultMethod != null) {
-                        throw new IllegalStateException("Должен быть только один @DefaultMessageHandle");
-                    }
+                    throwIf(defaultMethod != null, () -> new IllegalStateException("Должен быть только один @DefaultMessageHandle"));
                     defaultMethod = method;
                     defaultBean = bean;
                     log.info("Registered default message handler: {}.{}",
@@ -86,41 +93,42 @@ public abstract class AbstractHandleRegistry<P> {
         }
     }
 
-    protected Response invokeWithCatch(String userId, Method method, Object bean, Object[] args, long chatId) {
+    protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
         Response response;
+        long chatId = chat.id();
+        String userId = from.id().toString();
         try {
             UserRole[] requiredRoles = getRequiredRoles(method);
-            if (requiredRoles.length != 0 && !userService.checkRoles(Long.valueOf(userId), requiredRoles)) {
-                return null;
-            }
+            if (requiredRoles.length != 0 && !userService.checkRoles(Long.valueOf(userId), requiredRoles)) return null;
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             switch (cause) {
                 case CapybaraNotFoundException ex -> {
-                    log.info(ex.getMessage(), ex.getChatId());
+                    log.info(ex.getMessage(), chatId);
                     SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
                     message.replyMarkup(inlineKeyboardCreator.takeCapybara());
                     response = Response.ofMessage(message);
                 }
                 case CapybaraAlreadyExistsException ex -> {
-                    log.info(ex.getMessage(), ex.getChatId());
+                    log.info(ex.getMessage(), chatId);
                     response = Response.ofMessage(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
                 }
-                case CapybaraHasNoMoneyException ex -> {
+                case CapybaraHasNoMoneyException ignored -> {
                     String messageToSend = "ur capy has no money(";
                     response = Response.ofMessage(new SendMessage(chatId, messageToSend));
                 }
                 case CapybaraException ex -> {
-                    log.info(ex.getMessage(), ex.getChatId());
+                    log.info(ex.getMessage(), chatId);
                     String messageToSend = ex.getMessageToSend();
                     response = Response.ofMessage(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
                 }
-                case NumberFormatException ex -> response = Response.ofMessage(new SendMessage(chatId, "Введи число!"));
+                case NumberFormatException ignored ->
+                        response = Response.ofMessage(new SendMessage(chatId, "Введи число!"));
                 default -> {
                     log.error("Error invoking callback", cause);
                     SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);
-                    SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage()));
+                    SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage(), chat, from));
                     response = Response.ofMessages(sendMessageToAdmin, sendMessageToUser);
                 }
             }
@@ -135,18 +143,17 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected Object[] buildArgs(Method method,
                                  Object update,
-                                 Long chatId,
-                                 String userId,
+                                 long chatId,
+                                 long userId,
                                  int messageId,
                                  Matcher matcher,
                                  P param) {
         return Arrays.stream(method.getParameters())
                 .map(parameter -> switch (parameter) {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
-                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId.toString();
+                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
                     case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) ->
-                            new CapybaraContext(chatId.toString(), userId);
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;
@@ -163,7 +170,7 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
 
-    protected String buildMessageToAdmin(String message) {
-        return LocalDateTime.now() + "\n" + message;
+    protected String buildMessageToAdmin(String message, Chat chat, User from) {
+        return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
     }
 }

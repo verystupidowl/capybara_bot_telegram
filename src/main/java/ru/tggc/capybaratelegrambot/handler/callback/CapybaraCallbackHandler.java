@@ -34,20 +34,20 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     @CallbackHandle("set_name")
     public Response setName(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_NAME);
-        return sendSimpleMessage(ctx.chatId(), "Введи новое имя своей капибары", null);
+        return sendSimpleMessage(ctx.chatId(), "Введи новое имя своей капибары", inlineCreator.notChange());
     }
 
     @CallbackHandle("exactly_delete")
     public Response deleteCapybara(@Ctx CapybaraContext ctx) {
         capybaraService.deleteCapybara(ctx);
-        return sendSimpleMessage(ctx.chatId(), "Ты выкинул капибару! Надеюсь ты доволен!", null);
+        return sendSimpleMessage(ctx.chatId(), "Ты выкинул капибару! Надеюсь ты доволен!");
     }
 
     @CallbackHandle("take_from_tea")
     public Response takeFromTea(@MessageId int messageId,
                                 @Ctx CapybaraContext ctx) {
         capybaraService.takeFromTea(ctx);
-        return sendSimpleMessage(ctx.chatId(), "ok", null);
+        return sendSimpleMessage(ctx.chatId(), "ok");
     }
 
     @CallbackHandle("go_tea")
@@ -71,7 +71,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("feed_fatten")
-    public Response feedFatten(@MessageId int messageId, @ChatId String chatId) {
+    public Response feedFatten(@MessageId int messageId, @ChatId long chatId) {
         return editMessageCaption(chatId, messageId, Text.FEED_FATTEN, inlineCreator.feedKeyboard());
     }
 
@@ -79,14 +79,14 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     public Response setDefaultPhoto(@MessageId int messageId,
                                     @Ctx CapybaraContext ctx) {
         String response = capybaraService.setDefaultPhoto(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, response, null);
+        return editSimpleMessage(ctx.chatId(), messageId, response);
     }
 
     @CallbackHandle("not_change")
     public Response notChange(@MessageId int messageId,
                               @Ctx CapybaraContext ctx) {
         historyService.removeFromHistory(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "Ok", null);
+        return editSimpleMessage(ctx.chatId(), messageId, "Ok");
     }
 
     @CallbackHandle("start_change_photo")
@@ -134,6 +134,6 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     public Response takeCapybara(@Ctx CapybaraContext ctx, @MessageId int messageId) {
         PhotoDto photoDto = capybaraService.saveCapybara(ctx);
         return sendSimplePhoto(photoDto)
-                .andThen(bot -> bot.execute(new DeleteMessage(ctx.chatId(), messageId)));
+                .andThen(Response.ofMessage(new DeleteMessage(ctx.chatId(), messageId)));
     }
 }

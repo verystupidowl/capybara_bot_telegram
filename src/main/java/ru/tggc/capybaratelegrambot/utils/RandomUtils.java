@@ -1,7 +1,6 @@
 package ru.tggc.capybaratelegrambot.utils;
 
 import lombok.experimental.UtilityClass;
-import ru.tggc.capybaratelegrambot.domain.dto.CapybaraDefaultPhoto;
 import ru.tggc.capybaratelegrambot.domain.dto.HappinessThings;
 import ru.tggc.capybaratelegrambot.domain.model.Photo;
 

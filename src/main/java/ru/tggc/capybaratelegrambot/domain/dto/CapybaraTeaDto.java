@@ -4,7 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record CapybaraTeaDto(
-        String userId,
+        long userId,
         String name
 ) {
 }
