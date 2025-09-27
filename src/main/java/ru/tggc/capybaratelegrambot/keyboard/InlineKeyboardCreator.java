@@ -100,6 +100,7 @@ public class InlineKeyboardCreator {
         List<InlineKeyboardButton> tea;
         List<InlineKeyboardButton> job;
         List<InlineKeyboardButton> improve;
+        List<InlineKeyboardButton> race;
 
         InlineKeyboardButton main = new InlineKeyboardButton("Моя капибара").callbackData("go_to_main");
         mainRow.add(main);
@@ -126,7 +127,16 @@ public class InlineKeyboardCreator {
             rows.add(improve);
         }
 
-        InlineKeyboardButton[][] newRows = rows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new);
+        if (Boolean.TRUE.equals(capybara.canRace())) {
+            InlineKeyboardButton raceBtn = new InlineKeyboardButton("Забег").callbackData("start_race");
+            race = new ArrayList<>();
+            race.add(raceBtn);
+            rows.add(race);
+        }
+
+        InlineKeyboardButton[][] newRows = rows.stream()
+                .map(row -> row.toArray(InlineKeyboardButton[]::new))
+                .toArray(InlineKeyboardButton[][]::new);
 
         return new InlineKeyboardMarkup(newRows);
     }

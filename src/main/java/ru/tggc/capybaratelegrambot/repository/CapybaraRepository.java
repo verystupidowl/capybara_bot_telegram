@@ -19,7 +19,6 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "improvement", "improvement.improvementValue",
             "level",
             "happiness",
-            "races",
             "chat"
     })
     Optional<Capybara> findById(@NotNull Long id);
@@ -42,7 +41,6 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
 
     @EntityGraph(attributePaths = {
             "level", "level.type",
-            "cheerfulness",
             "work", "work.workType", "work.workAction",
             "happiness",
             "satiety",
@@ -55,7 +53,6 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "tea",
             "happiness",
             "work", "work.workType", "work.workAction",
-            "cheerfulness",
             "improvement",
             "satiety"
     })
@@ -84,7 +81,6 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "improvement", "improvement.improvementValue",
             "level",
             "happiness",
-            "races",
             "chat"
     })
     Optional<Capybara> findRaceCapybaraByUserIdAndChatId(Long userId, Long chatId);

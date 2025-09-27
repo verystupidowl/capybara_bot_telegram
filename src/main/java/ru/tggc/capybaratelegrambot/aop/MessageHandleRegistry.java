@@ -44,7 +44,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
     }
 
     public Response dispatch(Message message) {
-        String text = message.text();
+        String text = message.text().toLowerCase();
         Method method = methods.values().stream()
                 .filter(m -> {
                     String template = m.getAnnotation(MessageHandle.class).value();

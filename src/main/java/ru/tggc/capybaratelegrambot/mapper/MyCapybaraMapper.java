@@ -23,7 +23,7 @@ public class MyCapybaraMapper {
                 .name(capybara.getName())
                 .level(capybara.getLevel().getValue())
                 .type(capybara.getLevel().getType().getLabel())
-                .cheerfulness(capybara.getCheerfulness().getCheerfulnessLevel())
+                .stamina(capybara.getRaceAction().getStaminaPercent())
                 .job(capybara.getWork().getWorkType().getLabel())
                 .currency(capybara.getCurrency())
                 .wedding(weddingName)
@@ -38,7 +38,7 @@ public class MyCapybaraMapper {
                 .canHappy(capybara.getHappiness().canPerform())
                 .canSatiety(capybara.getSatiety().canPerform())
                 .hasWork(capybara.getWork().getWorkType() != WorkType.NONE)
-                .photo(getOr(capybara.getPhoto().getUrl(), Function.identity(), capybara.getPhoto().getFileId()))
+                .photo(getOr(capybara.getPhoto().getFileId(), Function.identity(), capybara.getPhoto().getUrl()))
                 .build();
     }
 }

@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.Math.max;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Service
@@ -122,7 +123,7 @@ public class CapybaraService {
         });
 
         HappinessThings happinessThing = RandomUtils.getRandomHappinessThing();
-        happiness.setLevel(happiness.getLevel() + happinessThing.getLevel());
+        happiness.setLevel(max(0, happiness.getLevel() + happinessThing.getLevel()));
         happiness.setLastHappy(LocalDateTime.now());
         messages.add(PhotoDto.builder()
                 .caption(happinessThing.getLabel())
@@ -283,7 +284,7 @@ public class CapybaraService {
             throw new CapybaraHasNoMoneyException();
         }
         capybara.setCurrency(capybara.getCurrency() - 50);
-        capybara.setConsecutiveRaces(0);
+        capybara.getRaceAction().setCharges(capybara.getRaceAction().getMaxCharges());
 
         capybaraRepository.save(capybara);
     }
@@ -454,7 +455,6 @@ public class CapybaraService {
         Capybara capybara = getCapybaraByContext(ctx);
         Photo photo = capybara.getPhoto();
         photo.setFileId(photoSize.fileId());
-        photo.setUrl(null);
         photo.setFileSize(photoSize.fileSize());
         photo.setFileUniqueId(photo.getFileUniqueId());
         capybaraRepository.save(capybara);

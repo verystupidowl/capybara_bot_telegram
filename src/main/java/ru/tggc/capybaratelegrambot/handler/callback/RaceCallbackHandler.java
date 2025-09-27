@@ -22,6 +22,12 @@ public class RaceCallbackHandler extends CallbackHandler {
     private final InlineKeyboardCreator inlineCreator;
     private final RaceService raceService;
 
+    @CallbackHandle("start_race")
+    public Response startRace(@Ctx CapybaraContext ctx) {
+        raceService.startRace(ctx);
+        return sendSimpleMessage(ctx.chatId(), "Напиши ник пользователя, чью капибару ты хочешь вызвать на забег через @");
+    }
+
     @CallbackHandle("improve_pills")
     public Response improvePills(@MessageId int messageId,
                                  @Ctx CapybaraContext ctx) {

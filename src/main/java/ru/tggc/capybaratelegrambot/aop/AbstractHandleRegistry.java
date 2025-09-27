@@ -24,6 +24,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
+import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
@@ -110,11 +111,18 @@ public abstract class AbstractHandleRegistry<P> {
                     message.replyMarkup(inlineKeyboardCreator.takeCapybara());
                     response = Response.of(message);
                 }
+                case UserNotFoundException ex -> {
+                    log.info(ex.getMessage(), chatId);
+                    SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
+                    message.replyMarkup(inlineKeyboardCreator.takeCapybara());
+                    response = Response.of(message);
+                }
                 case CapybaraAlreadyExistsException ex -> {
                     log.info(ex.getMessage(), chatId);
                     response = Response.of(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
                 }
-                case CapybaraHasNoMoneyException ignored -> {
+                case CapybaraHasNoMoneyException ex -> {
+                    log.info(ex.getMessage());
                     String messageToSend = "ur capy has no money(";
                     response = Response.of(new SendMessage(chatId, messageToSend));
                 }

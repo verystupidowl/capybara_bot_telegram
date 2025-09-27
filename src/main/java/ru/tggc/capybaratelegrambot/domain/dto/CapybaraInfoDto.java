@@ -27,7 +27,7 @@ public record CapybaraInfoDto(
         Boolean canSatiety,
         String satietyTime,
         Boolean canRace,
-        Integer raceTime,
+        String raceTime,
         String improvement
 ) {
 }

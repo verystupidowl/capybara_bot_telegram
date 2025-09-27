@@ -20,7 +20,7 @@ public class WeddingTextHandler extends TextHandler {
     private final RequestServiceFactory requestServiceFactory;
     private final InlineKeyboardCreator inlineCreator;
 
-    @MessageHandle("пожениться @${username}")
+    @MessageHandle("пожениться")
     public Response challengeToWedding(@HandleParam("username") String username,
                                        @Ctx CapybaraContext ctx,
                                        @MessageParam Message message) {

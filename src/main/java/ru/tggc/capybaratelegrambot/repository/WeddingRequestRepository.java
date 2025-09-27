@@ -1,8 +1,8 @@
 package ru.tggc.capybaratelegrambot.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.WeddingRequest;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WeddingRequestType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WeddingStatus;
@@ -11,8 +11,9 @@ import java.util.Optional;
 
 public interface WeddingRequestRepository extends JpaRepository<WeddingRequest, Long> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM wedding_requests WHERE target_id = :targetId and status = :status and type = :type")
     Optional<WeddingRequest> findByTargetIdAndStatusAndType(@Param("targetId") Long targetId, @Param("status") WeddingStatus status, WeddingRequestType type);
 
     Optional<WeddingRequest> findByProposerIdAndStatus(Long proposerId, WeddingStatus status);
+
+    boolean existsByProposerOrTarget(Capybara proposer, Capybara target);
 }

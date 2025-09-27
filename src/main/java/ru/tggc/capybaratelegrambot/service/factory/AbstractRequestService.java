@@ -9,7 +9,7 @@ import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.RequestService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.throwIfNull;
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @RequiredArgsConstructor
 public abstract class AbstractRequestService<Rq> implements RequestService {
@@ -21,16 +21,12 @@ public abstract class AbstractRequestService<Rq> implements RequestService {
         Capybara challenger = capybaraService.getCapybaraByContext(ctx);
         User user = userService.getUserByUsername(opponentUsername);
         Capybara opponent = capybaraService.getCapybaraByUserId(user.getId(), ctx.chatId());
-
-        if (challenger.equals(opponent)) throw new CapybaraException("u cant challenge urself!");
+        throwIf(challenger.equals(opponent), () -> new CapybaraException("u cant challenge urself!"));
 
         challenge(challenger, opponent);
     }
 
     protected void challenge(Capybara challenger, Capybara opponent) {
-        throwIfNull(challenger.getRaceRequest(), () -> new CapybaraException("You already have an active challenge!"));
-        throwIfNull(opponent.getRaceRequest(), () -> new CapybaraException("Opponent is busy with another challenge!"));
-
         Rq request = getRequest(challenger, opponent);
 
         saveRequest(challenger, opponent, request);
