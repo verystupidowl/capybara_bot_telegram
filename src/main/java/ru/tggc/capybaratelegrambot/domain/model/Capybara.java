@@ -19,6 +19,7 @@ import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.WeddingGift;
 
 import java.time.LocalDateTime;
 import java.util.Objects;

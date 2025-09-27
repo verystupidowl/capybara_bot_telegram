@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.domain.model;
+package ru.tggc.capybaratelegrambot.domain.model.timedaction;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,11 +17,21 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class WeddingGift {
+public class WeddingGift implements TimedAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime lastTime;
     private Integer level;
     private LocalDateTime nextTime;
+
+    @Override
+    public boolean canPerform() {
+        return false;
+    }
+
+    @Override
+    public Duration timeUntilNext() {
+        return null;
+    }
 }

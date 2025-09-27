@@ -43,7 +43,7 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
     }
 
     public Response dispatch(Message message) {
-        if (message.photo() == null || message.photo().length == 0) {
+        if (message.photo() == null || message.photo().length == 0 || message.animation() == null) {
             log.warn("PhotoHandleRegistry.dispatch called, but no photo in message");
             return null;
         }

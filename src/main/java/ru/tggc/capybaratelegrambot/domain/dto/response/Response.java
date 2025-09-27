@@ -34,6 +34,11 @@ public interface Response extends Consumer<TelegramBot> {
         return consumer::accept;
     }
 
+    static Response empty() {
+        return bot -> {
+        };
+    }
+
     @NotNull
     @Override
     default Response andThen(@NotNull Consumer<? super TelegramBot> after) {

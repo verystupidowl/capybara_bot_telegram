@@ -5,10 +5,12 @@ import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.formatDuration;
 
 @Embeddable
 @NoArgsConstructor
@@ -47,7 +49,7 @@ public class RaceAction implements TimedAction {
     public void recordRace() {
         refresh();
         if (charges <= 0) {
-            throw new CapybaraException("No stamina left");
+            throw new CapybaraTiredException(formatDuration(timeUntilNext()));
         }
         charges--;
         lastSpent = LocalDateTime.now();

@@ -65,7 +65,7 @@ public class CapybaraBuilder {
                 .satiety(satiety)
                 .user(user)
                 .tea(tea)
-                .photo(RandomUtils.getRandomPhoto())
+                .photo(RandomUtils.getRandomDefaultPhoto())
                 .raceAction(new RaceAction(5))
                 .chat(chat)
                 .work(work)

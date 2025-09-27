@@ -1,7 +1,6 @@
 package ru.tggc.capybaratelegrambot.handler.photo;
 
 import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.model.PhotoSize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
@@ -25,9 +24,8 @@ public class PhotoHandler extends Handler {
     @PhotoHandle("update_photo")
     public Response updatePhoto(@Ctx CapybaraContext ctx, @MessageParam Message message) {
         if (historyService.isInHistory(ctx, HistoryType.CHANGE_PHOTO)) {
-            PhotoSize photoSize = message.photo()[0];
             historyService.removeFromHistory(ctx);
-            capybaraService.setPhoto(ctx, photoSize);
+            capybaraService.setPhoto(ctx, message);
             return sendSimpleMessage(ctx.chatId(), "Ты поменял фото своей капибары");
         }
         return null;

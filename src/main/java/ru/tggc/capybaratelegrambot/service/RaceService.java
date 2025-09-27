@@ -2,8 +2,10 @@ package ru.tggc.capybaratelegrambot.service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
+import com.pengrad.telegrambot.request.SendAnimation;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.Setter;
@@ -15,15 +17,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
+import ru.tggc.capybaratelegrambot.domain.dto.FileDto;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.FileType;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
-import ru.tggc.capybaratelegrambot.domain.model.Photo;
 import ru.tggc.capybaratelegrambot.domain.model.RaceRequest;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
 import ru.tggc.capybaratelegrambot.domain.model.enums.RaceStatus;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.repository.RaceRequestRepository;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
@@ -52,17 +57,20 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private RaceService self;
     private final HistoryService historyService;
+    private final InlineKeyboardCreator inlineKeyboardCreator;
 
     public RaceService(CapybaraService capybaraService,
                        UserService userService,
                        RaceRequestRepository raceRequestRepository,
                        TimedActionService timedActionService,
-                       HistoryService historyService) {
+                       HistoryService historyService,
+                       InlineKeyboardCreator inlineKeyboardCreator) {
         super(capybaraService, userService);
         this.raceRequestRepository = raceRequestRepository;
         this.capybaraService = capybaraService;
         this.timedActionService = timedActionService;
         this.historyService = historyService;
+        this.inlineKeyboardCreator = inlineKeyboardCreator;
     }
 
     public BiConsumer<TelegramBot, CallbackQuery> acceptRace(CapybaraContext ctx) {
@@ -113,13 +121,21 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
 
     public BiConsumer<TelegramBot, CallbackQuery> race(Capybara c1, Capybara c2) {
         return (bot, query) -> {
-            String chatId = query.maybeInaccessibleMessage().chat().id().toString();
-            Photo photo = RandomUtils.getRandomPhoto();
-            int messageId = bot.execute(new SendPhoto(chatId, photo.getUrl())
-                            .caption("🏃Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName()))
-                    .message().messageId();
+            long chatId = query.maybeInaccessibleMessage().chat().id();
+            FileDto fileDto = RandomUtils.getRandomRacePhoto();
+            int messageId;
+            String caption = "\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName();
+            if (fileDto.getType() == FileType.PHOTO) {
+                messageId = bot.execute(new SendPhoto(chatId, fileDto.getUrl())
+                                .caption(caption))
+                        .message().messageId();
+            } else {
+                messageId = bot.execute(new SendAnimation(chatId, fileDto.getUrl()).caption(caption))
+                        .message().messageId();
+            }
 
             bot.execute(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()));
+
 
             int need = 100 + (((c1.getLevel().getValue() + c2.getLevel().getValue()) / 2) / 10) * 10;
             RaceStepContext ctx = new RaceStepContext(c1.getId(), c2.getId(), need, bot, query, messageId);
@@ -217,7 +233,15 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     @Transactional
     public void checkStamina(Capybara c) {
         RaceAction raceAction = c.getRaceAction();
-        throwIf(!raceAction.canPerform(), () -> new CapybaraException("Too tired, wait " + timedActionService.getStatus(raceAction)));
+        throwIf(!raceAction.canPerform(), () -> {
+            String status = getStatus(raceAction);
+            InlineKeyboardMarkup markup = inlineKeyboardCreator.raceMassage();
+            return new CapybaraTiredException(status, markup);
+        });
+    }
+
+    private String getStatus(RaceAction raceAction) {
+        return timedActionService.getStatus(raceAction);
     }
 
     @Override
@@ -230,7 +254,11 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     @Override
     protected RaceRequest getRequest(Capybara challenger, Capybara opponent) {
         boolean requestsAlreadyExists = raceRequestRepository.existsByChallengerOrOpponent(challenger, opponent);
-        throwIf(requestsAlreadyExists, () -> new CapybaraException("u or ur opponent already has a challenge"));
+        throwIf(requestsAlreadyExists, () -> {
+            String messageToSend = "u or ur opponent already has a challenge";
+            InlineKeyboardMarkup markup = inlineKeyboardCreator.raceKeyboard();
+            return new CapybaraException(messageToSend, markup);
+        });
         return RaceRequest.builder()
                 .challenger(challenger)
                 .opponent(opponent)
@@ -246,7 +274,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
 
     public void startRace(CapybaraContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
-        throwIf(!capybara.getRaceAction().canPerform(), () -> new CapybaraException("U cant care yet"));
+        self.checkStamina(capybara);
         historyService.setHistory(ctx, HistoryType.START_RACE);
     }
 

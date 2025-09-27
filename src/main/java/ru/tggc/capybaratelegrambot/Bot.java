@@ -1,7 +1,5 @@
 package ru.tggc.capybaratelegrambot;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.CallbackQuery;
@@ -18,17 +16,15 @@ import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
 import ru.tggc.capybaratelegrambot.aop.PhotoHandleRegistry;
-import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
+import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -37,14 +33,7 @@ public class Bot extends TelegramBot {
     private final CallbackRegistry callbackRegistry;
     private final UserService userService;
     private final InlineKeyboardCreator creator;
-
-    private static final int MAX_UPDATES = 10;
     private final PhotoHandleRegistry photoHandleRegistry;
-
-    Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(10))
-            .maximumSize(1000)
-            .build();
 
     public Bot(@Value("${bot.token}") String botToken,
                MessageHandleRegistry messageHandleRegistry,
@@ -75,7 +64,7 @@ public class Bot extends TelegramBot {
         if (update.message() != null) {
             User from = update.message().from();
             Chat chat = update.message().chat();
-            if (checkUserAndUpdate(from, chat.id(), null, chat)) return;
+            saveOrUpdateUser(from, chat);
             Optional.ofNullable(update.message().text())
                     .ifPresent(s -> serveCommand(update.message()));
             Optional.ofNullable(update.message().photo())
@@ -86,39 +75,16 @@ public class Bot extends TelegramBot {
         } else if (update.callbackQuery() != null) {
             User from = update.callbackQuery().from();
             Chat chat = update.callbackQuery().maybeInaccessibleMessage().chat();
-            Long userId = chat.id();
-            if (checkUserAndUpdate(from, userId, update.callbackQuery(), chat)) return;
+            saveOrUpdateUser(from, chat);
             serveCallback(update.callbackQuery());
             execute(new AnswerCallbackQuery(update.callbackQuery().id()));
         }
     }
 
-    private boolean checkUserAndUpdate(User from, long chatId, CallbackQuery query, Chat chat) {
-        Integer count = countOfUpdates.getIfPresent(from.id());
-
-        if (count != null && count > MAX_UPDATES) {
-            log.info("user {} is trying to ddos", from.username());
-            countOfUpdates.policy().expireAfterWrite().ifPresent(ex -> {
-                ex.ageOf(from.id(), TimeUnit.SECONDS).ifPresentOrElse(age -> {
-                    String time = MAX_UPDATES - age + "c";
-                    String text = "Cлишком много запросов, попробуй снова через " + time;
-                    execute(new SendMessage(chatId, text));
-                }, () -> {
-                    String text = "Cлишком много запросов";
-                    execute(new SendMessage(chatId, text));
-                });
-            });
-            if (query != null) {
-                execute(new AnswerCallbackQuery(query.id()));
-            }
-            return true;
-        }
-        int currentCount = count == null ? 0 : count;
-        countOfUpdates.put(from.id(), currentCount + 1);
+    private void saveOrUpdateUser(User from, Chat chat) {
         ChatDto chatDto = new ChatDto(chat.id(), chat.title());
         UserDto user = new UserDto(from.id().toString(), from.username());
         userService.saveOrUpdate(user, chatDto);
-        return false;
     }
 
     private void greetings(String chatId) {

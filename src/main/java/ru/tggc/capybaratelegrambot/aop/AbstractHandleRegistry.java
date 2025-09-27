@@ -1,5 +1,7 @@
 package ru.tggc.capybaratelegrambot.aop;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -24,6 +26,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
 import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
@@ -34,16 +37,19 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
@@ -63,6 +69,13 @@ public abstract class AbstractHandleRegistry<P> {
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
     protected static final String NOT_IMPLEMENTED_MESSAGE = "Пока не реализовано, следите за новостями!";
     protected static final long ADMIN_ID = 428873987;
+
+    protected static final int MAX_UPDATES = 10;
+
+    protected final Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(10))
+            .maximumSize(1000)
+            .build();
 
     @PostConstruct
     @SneakyThrows
@@ -97,10 +110,9 @@ public abstract class AbstractHandleRegistry<P> {
     protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
         Response response;
         long chatId = chat.id();
-        String userId = from.id().toString();
         try {
-            UserRole[] requiredRoles = getRequiredRoles(method);
-            if (requiredRoles.length != 0 && !userService.checkRoles(Long.valueOf(userId), requiredRoles)) return null;
+            Response ddosResponse = checkUser(from, chat, getRequiredRoles(method));
+            if (ddosResponse != null) return ddosResponse;
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
@@ -126,13 +138,19 @@ public abstract class AbstractHandleRegistry<P> {
                     String messageToSend = "ur capy has no money(";
                     response = Response.of(new SendMessage(chatId, messageToSend));
                 }
+                case CapybaraTiredException ex -> {
+                    SendMessage sm = new SendMessage(chatId, ex.getMessage());
+                    ifPresent(ex.getMarkup(), sm::replyMarkup);
+                    response = Response.of(sm);
+                }
                 case CapybaraException ex -> {
                     log.info(ex.getMessage(), chatId);
                     String messageToSend = ex.getMessageToSend();
-                    response = Response.of(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
+                    SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE));
+                    ifPresent(ex.getMarkup(), sm::replyMarkup);
+                    response = Response.of(sm);
                 }
-                case NumberFormatException ignored ->
-                        response = Response.of(new SendMessage(chatId, "Введи число!"));
+                case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "Введи число!"));
                 default -> {
                     log.error("Error invoking callback", cause);
                     SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);
@@ -180,5 +198,31 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected String buildMessageToAdmin(String message, Chat chat, User from) {
         return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
+    }
+
+    private Response checkUser(User from,
+                               Chat chat,
+                               UserRole[] requiredRoles) {
+        if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
+            return Response.empty();
+        }
+        Integer count = countOfUpdates.getIfPresent(from.id());
+        if (count != null && count > MAX_UPDATES) {
+            log.info("user {} is trying to ddos", from.username());
+            return countOfUpdates.policy().expireAfterWrite().map(ex -> {
+                long chatId = chat.id();
+                return ex.ageOf(from.id(), TimeUnit.SECONDS).stream().mapToObj(age -> {
+                    String time = MAX_UPDATES - age + "c";
+                    String text = "Cлишком много запросов, попробуй снова через " + time;
+                    return Response.of(new SendMessage(chatId, text));
+                }).findFirst().orElseGet(() -> {
+                    String text = "Cлишком много запросов";
+                    return Response.of(new SendMessage(chatId, text));
+                });
+            }).orElse(null);
+        }
+        int currentCount = count == null ? 0 : count;
+        countOfUpdates.put(from.id(), currentCount + 1);
+        return null;
     }
 }

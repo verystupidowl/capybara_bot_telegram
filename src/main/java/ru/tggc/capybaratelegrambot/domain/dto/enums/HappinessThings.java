@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.domain.dto;
+package ru.tggc.capybaratelegrambot.domain.dto.enums;
 
 import lombok.Getter;
 

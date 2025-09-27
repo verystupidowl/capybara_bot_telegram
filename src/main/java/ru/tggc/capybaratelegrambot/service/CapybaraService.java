@@ -1,5 +1,7 @@
 package ru.tggc.capybaratelegrambot.service;
 
+import com.pengrad.telegrambot.model.Animation;
+import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.PhotoSize;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -10,10 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraTeaDto;
-import ru.tggc.capybaratelegrambot.domain.dto.HappinessThings;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.TopCapybaraDto;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.FileType;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.HappinessThings;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Chat;
 import ru.tggc.capybaratelegrambot.domain.model.Improvement;
@@ -103,7 +106,7 @@ public class CapybaraService {
     public String setDefaultPhoto(CapybaraContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
         checkCurrency(capybara, 25);
-        capybara.setPhoto(RandomUtils.getRandomPhoto());
+        capybara.setPhoto(RandomUtils.getRandomDefaultPhoto());
         capybara.setCurrency(capybara.getCurrency() - 25);
         capybaraRepository.save(capybara);
         return "Выбрано случайное фото. Со счета капибры списано 25 арбузных долек";
@@ -451,12 +454,23 @@ public class CapybaraService {
     }
 
     @Transactional
-    public void setPhoto(CapybaraContext ctx, PhotoSize photoSize) {
+    public void setPhoto(CapybaraContext ctx, Message message) {
         Capybara capybara = getCapybaraByContext(ctx);
-        Photo photo = capybara.getPhoto();
-        photo.setFileId(photoSize.fileId());
-        photo.setFileSize(photoSize.fileSize());
-        photo.setFileUniqueId(photo.getFileUniqueId());
+        if (message.photo() != null && message.photo().length != 0) {
+            PhotoSize photoSize = message.photo()[0];
+            Photo photo = capybara.getPhoto();
+            photo.setFileId(photoSize.fileId());
+            photo.setFileSize(photoSize.fileSize());
+            photo.setFileUniqueId(photo.getFileUniqueId());
+            photo.setType(FileType.PHOTO);
+        } else if (message.animation() != null) {
+            Animation animation = message.animation();
+            Photo photo = capybara.getPhoto();
+            photo.setFileId(animation.fileId());
+            photo.setFileSize(animation.fileSize());
+            photo.setFileUniqueId(photo.getFileUniqueId());
+            photo.setType(FileType.DOC);
+        }
         capybaraRepository.save(capybara);
     }
 }
