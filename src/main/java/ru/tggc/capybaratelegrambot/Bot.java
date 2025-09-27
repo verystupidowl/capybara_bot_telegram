@@ -1,10 +1,9 @@
 package ru.tggc.capybaratelegrambot;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.CallbackQuery;
+import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
@@ -16,16 +15,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
+import ru.tggc.capybaratelegrambot.aop.PhotoHandleRegistry;
+import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -34,23 +33,18 @@ public class Bot extends TelegramBot {
     private final CallbackRegistry callbackRegistry;
     private final UserService userService;
     private final InlineKeyboardCreator creator;
-
-    private static final int MAX_UPDATES = 10;
-
-    Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(10))
-            .maximumSize(1000)
-            .build();
+    private final PhotoHandleRegistry photoHandleRegistry;
 
     public Bot(@Value("${bot.token}") String botToken,
                MessageHandleRegistry messageHandleRegistry,
                CallbackRegistry callbackRegistry,
-               UserService userService, InlineKeyboardCreator creator) {
+               UserService userService, InlineKeyboardCreator creator, PhotoHandleRegistry photoHandleRegistry) {
         super(botToken);
         this.messageHandleRegistry = messageHandleRegistry;
         this.callbackRegistry = callbackRegistry;
         this.userService = userService;
         this.creator = creator;
+        this.photoHandleRegistry = photoHandleRegistry;
     }
 
     public void run() {
@@ -69,48 +63,28 @@ public class Bot extends TelegramBot {
     private void process(Update update) {
         if (update.message() != null) {
             User from = update.message().from();
-            if (checkUserAndUpdate(from, update.message().chat().id(), null)) return;
+            Chat chat = update.message().chat();
+            saveOrUpdateUser(from, chat);
             Optional.ofNullable(update.message().text())
                     .ifPresent(s -> serveCommand(update.message()));
-//            Optional.ofNullable(update.message().photo())
-//                    .ifPresent(_ -> servePhoto(update.message()));
+            Optional.ofNullable(update.message().photo())
+                    .ifPresent(p -> servePhoto(update.message()));
             if (!Arrays.stream(update.message().newChatMembers()).filter(member -> member.id() == 6653668731L).toList().isEmpty()) {
-                greetings(update.message().chat().id().toString());
+                greetings(chat.id().toString());
             }
         } else if (update.callbackQuery() != null) {
             User from = update.callbackQuery().from();
-            Long userId = update.callbackQuery().maybeInaccessibleMessage().chat().id();
-            if (checkUserAndUpdate(from, userId, update.callbackQuery())) return;
+            Chat chat = update.callbackQuery().maybeInaccessibleMessage().chat();
+            saveOrUpdateUser(from, chat);
             serveCallback(update.callbackQuery());
             execute(new AnswerCallbackQuery(update.callbackQuery().id()));
         }
     }
 
-    private boolean checkUserAndUpdate(User from, long chatId, CallbackQuery query) {
-        Integer count = countOfUpdates.getIfPresent(from.id());
-
-        if (count != null && count > MAX_UPDATES) {
-            log.info("user {} is trying to ddos", from.username());
-            countOfUpdates.policy().expireAfterWrite().ifPresent(ex -> {
-                ex.ageOf(from.id(), TimeUnit.SECONDS).ifPresentOrElse(age -> {
-                    String time = MAX_UPDATES - age + "c";
-                    String text = "Cлишком много запросов, попробуй снова через " + time;
-                    execute(new SendMessage(chatId, text));
-                }, () -> {
-                    String text = "Cлишком много запросов";
-                    execute(new SendMessage(chatId, text));
-                });
-            });
-            if (query != null) {
-                execute(new AnswerCallbackQuery(query.id()));
-            }
-            return true;
-        }
-        int currentCount = count == null ? 0 : count;
-        countOfUpdates.put(from.id(), currentCount + 1);
+    private void saveOrUpdateUser(User from, Chat chat) {
+        ChatDto chatDto = new ChatDto(chat.id(), chat.title());
         UserDto user = new UserDto(from.id().toString(), from.username());
-        userService.saveOrUpdate(user);
-        return false;
+        userService.saveOrUpdate(user, chatDto);
     }
 
     private void greetings(String chatId) {
@@ -137,8 +111,8 @@ public class Bot extends TelegramBot {
     private void serveCallback(CallbackQuery callbackQuery) {
         callbackRegistry.dispatch(callbackQuery).accept(this);
     }
-//
-//    private void servePhoto(Message message) {
-//        messageHandleRegistry.servePhoto(message);
-//    }
+
+    private void servePhoto(Message message) {
+        photoHandleRegistry.dispatch(message).accept(this);
+    }
 }

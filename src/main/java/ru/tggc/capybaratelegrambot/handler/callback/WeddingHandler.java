@@ -25,7 +25,7 @@ public class WeddingHandler extends CallbackHandler {
     public Response unwedding(@Ctx CapybaraContext ctx,
                           @MessageId int messageId) {
         String message = weddingService.respondUnWedding(ctx, true);
-        return editSimpleMessage(ctx.chatId(), messageId, message, null);
+        return editSimpleMessage(ctx.chatId(), messageId, message);
     }
 
     @CallbackHandle("refuse_wedding")
@@ -38,6 +38,6 @@ public class WeddingHandler extends CallbackHandler {
     public Response refuseUnwedding(@Ctx CapybaraContext ctx,
                                 @MessageId int messageId) {
         String message = weddingService.respondUnWedding(ctx, false);
-        return editSimpleMessage(ctx.chatId(), messageId, message, null);
+        return editSimpleMessage(ctx.chatId(), messageId, message);
     }
 }

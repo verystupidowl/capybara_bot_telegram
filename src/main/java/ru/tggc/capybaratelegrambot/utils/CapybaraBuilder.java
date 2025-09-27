@@ -3,7 +3,7 @@ package ru.tggc.capybaratelegrambot.utils;
 import lombok.experimental.UtilityClass;
 import ru.tggc.capybaratelegrambot.domain.model.BigJob;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
-import ru.tggc.capybaratelegrambot.domain.model.Cheerfulness;
+import ru.tggc.capybaratelegrambot.domain.model.Chat;
 import ru.tggc.capybaratelegrambot.domain.model.Improvement;
 import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.Level;
@@ -12,6 +12,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
@@ -21,7 +22,7 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class CapybaraBuilder {
 
-    public static Capybara buildCapybara(int size, String chatId, User user) {
+    public static Capybara buildCapybara(int size, Chat chat, User user) {
         String name = "Моя капибара" + (size == 0 ? "" : " (" + size + ")");
         Improvement improvement = Improvement.builder()
                 .improvementValue(ImprovementValue.NONE)
@@ -42,10 +43,6 @@ public class CapybaraBuilder {
         Tea tea = Tea.builder()
                 .capybara(null)
                 .isWaiting(false)
-                .build();
-        Cheerfulness cheerfulness = Cheerfulness.builder()
-                .cheerfulnessLevel(100)
-                .maxLevel(100)
                 .build();
         BigJob bigJob = BigJob.builder()
                 .active(false)
@@ -68,9 +65,9 @@ public class CapybaraBuilder {
                 .satiety(satiety)
                 .user(user)
                 .tea(tea)
-                .photo(RandomUtils.getRandomPhoto())
-                .cheerfulness(cheerfulness)
-                .chatId(chatId)
+                .photo(RandomUtils.getRandomDefaultPhoto())
+                .raceAction(new RaceAction(5))
+                .chat(chat)
                 .work(work)
                 .improvement(improvement)
                 .build();

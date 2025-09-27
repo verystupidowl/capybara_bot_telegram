@@ -1,5 +1,9 @@
 package ru.tggc.capybaratelegrambot.aop;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,8 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
+import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
@@ -31,13 +37,20 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -45,14 +58,24 @@ public abstract class AbstractHandleRegistry<P> {
     protected final Map<String, Method> methods = new ConcurrentHashMap<>();
     protected final Map<String, Object> beans = new ConcurrentHashMap<>();
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
+
     protected final ListableBeanFactory beanFactory;
     private final InlineKeyboardCreator inlineKeyboardCreator;
     private final UserService userService;
+
     protected Method defaultMethod;
     protected Object defaultBean;
+
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
     protected static final String NOT_IMPLEMENTED_MESSAGE = "Пока не реализовано, следите за новостями!";
     protected static final long ADMIN_ID = 428873987;
+
+    protected static final int MAX_UPDATES = 10;
+
+    protected final Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(10))
+            .maximumSize(1000)
+            .build();
 
     @PostConstruct
     @SneakyThrows
@@ -74,9 +97,7 @@ public abstract class AbstractHandleRegistry<P> {
                     log.info("Registered handler '{}' -> {}.{}",
                             key, bean.getClass().getSimpleName(), method.getName());
                 } else if (method.isAnnotationPresent(DefaultMessageHandle.class)) {
-                    if (defaultMethod != null) {
-                        throw new IllegalStateException("Должен быть только один @DefaultMessageHandle");
-                    }
+                    throwIf(defaultMethod != null, () -> new IllegalStateException("Должен быть только один @DefaultMessageHandle"));
                     defaultMethod = method;
                     defaultBean = bean;
                     log.info("Registered default message handler: {}.{}",
@@ -86,47 +107,60 @@ public abstract class AbstractHandleRegistry<P> {
         }
     }
 
-    protected Response invokeWithCatch(String userId, Method method, Object bean, Object[] args, long chatId) {
+    protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
         Response response;
+        long chatId = chat.id();
         try {
-            UserRole[] requiredRoles = getRequiredRoles(method);
-            if (requiredRoles.length != 0 && !userService.checkRoles(Long.valueOf(userId), requiredRoles)) {
-                return null;
-            }
+            Response ddosResponse = checkUser(from, chat, getRequiredRoles(method));
+            if (ddosResponse != null) return ddosResponse;
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             switch (cause) {
                 case CapybaraNotFoundException ex -> {
-                    log.info(ex.getMessage(), ex.getChatId());
+                    log.info(ex.getMessage(), chatId);
                     SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
                     message.replyMarkup(inlineKeyboardCreator.takeCapybara());
-                    response = Response.ofMessage(message);
+                    response = Response.of(message);
+                }
+                case UserNotFoundException ex -> {
+                    log.info(ex.getMessage(), chatId);
+                    SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
+                    message.replyMarkup(inlineKeyboardCreator.takeCapybara());
+                    response = Response.of(message);
                 }
                 case CapybaraAlreadyExistsException ex -> {
-                    log.info(ex.getMessage(), ex.getChatId());
-                    response = Response.ofMessage(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
+                    log.info(ex.getMessage(), chatId);
+                    response = Response.of(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
                 }
                 case CapybaraHasNoMoneyException ex -> {
+                    log.info(ex.getMessage());
                     String messageToSend = "ur capy has no money(";
-                    response = Response.ofMessage(new SendMessage(chatId, messageToSend));
+                    response = Response.of(new SendMessage(chatId, messageToSend));
+                }
+                case CapybaraTiredException ex -> {
+                    SendMessage sm = new SendMessage(chatId, ex.getMessage());
+                    ifPresent(ex.getMarkup(), sm::replyMarkup);
+                    response = Response.of(sm);
                 }
                 case CapybaraException ex -> {
-                    log.info(ex.getMessage(), ex.getChatId());
+                    log.info(ex.getMessage(), chatId);
                     String messageToSend = ex.getMessageToSend();
-                    response = Response.ofMessage(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
+                    SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE));
+                    ifPresent(ex.getMarkup(), sm::replyMarkup);
+                    response = Response.of(sm);
                 }
-                case NumberFormatException ex -> response = Response.ofMessage(new SendMessage(chatId, "Введи число!"));
+                case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "Введи число!"));
                 default -> {
                     log.error("Error invoking callback", cause);
                     SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);
-                    SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage()));
-                    response = Response.ofMessages(sendMessageToAdmin, sendMessageToUser);
+                    SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage(), chat, from));
+                    response = Response.ofAll(sendMessageToAdmin, sendMessageToUser);
                 }
             }
         } catch (Exception e) {
             log.error("Error invoking callback", e);
-            response = Response.ofMessage(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
+            response = Response.of(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
         }
         return response;
     }
@@ -135,18 +169,17 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected Object[] buildArgs(Method method,
                                  Object update,
-                                 Long chatId,
-                                 String userId,
+                                 long chatId,
+                                 long userId,
                                  int messageId,
                                  Matcher matcher,
                                  P param) {
         return Arrays.stream(method.getParameters())
                 .map(parameter -> switch (parameter) {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
-                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId.toString();
+                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
                     case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) ->
-                            new CapybaraContext(chatId.toString(), userId);
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;
@@ -163,7 +196,33 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
 
-    protected String buildMessageToAdmin(String message) {
-        return LocalDateTime.now() + "\n" + message;
+    protected String buildMessageToAdmin(String message, Chat chat, User from) {
+        return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
+    }
+
+    private Response checkUser(User from,
+                               Chat chat,
+                               UserRole[] requiredRoles) {
+        if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
+            return Response.empty();
+        }
+        Integer count = countOfUpdates.getIfPresent(from.id());
+        if (count != null && count > MAX_UPDATES) {
+            log.info("user {} is trying to ddos", from.username());
+            return countOfUpdates.policy().expireAfterWrite().map(ex -> {
+                long chatId = chat.id();
+                return ex.ageOf(from.id(), TimeUnit.SECONDS).stream().mapToObj(age -> {
+                    String time = MAX_UPDATES - age + "c";
+                    String text = "Cлишком много запросов, попробуй снова через " + time;
+                    return Response.of(new SendMessage(chatId, text));
+                }).findFirst().orElseGet(() -> {
+                    String text = "Cлишком много запросов";
+                    return Response.of(new SendMessage(chatId, text));
+                });
+            }).orElse(null);
+        }
+        int currentCount = count == null ? 0 : count;
+        countOfUpdates.put(from.id(), currentCount + 1);
+        return null;
     }
 }

@@ -9,8 +9,8 @@ public record MyCapybaraDto(
         Integer defeats,
         Integer level,
         String type,
-        Integer cheerfulness,
         String job,
+        double stamina,
         Long currency,
         String wedding,
         Integer satietyLevel,
@@ -22,6 +22,6 @@ public record MyCapybaraDto(
         Boolean canSatiety,
         Boolean canHappy,
         Boolean hasWork,
-        String photoUrl
+        String photo
 ) {
 }

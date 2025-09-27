@@ -3,7 +3,7 @@ package ru.tggc.capybaratelegrambot.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.SendDice;
-import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
+
 @Service
 @RequiredArgsConstructor
 public class CasinoService {
@@ -37,8 +39,10 @@ public class CasinoService {
     private final CapybaraService capybaraService;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
-
     private final Map<CapybaraContext, CasinoCtx> map = new ConcurrentHashMap<>();
+
+    private static final String WIN_PHOTO_URL = "https://vk.com/photo-209917797_457246197";
+    private static final String LOSE_PHOTO_URL = "https://vk.com/photo-209917797_457246192";
 
     public void startCasino(CapybaraContext ctx) {
         historyService.setHistory(ctx, HistoryType.CASINO_SET_BET);
@@ -56,26 +60,29 @@ public class CasinoService {
     }
 
     public PhotoDto casino(CapybaraContext historyDto, CasinoTargetType type) {
-        String chatId = historyDto.chatId();
+        long chatId = historyDto.chatId();
         Capybara capybara = capybaraService.findCapybara(historyDto)
                 .orElseThrow(() -> {
                     map.remove(historyDto);
                     return new CapybaraNotFoundException();
                 });
-        if (!map.containsKey(historyDto)) {
-            throw new CapybaraException("Ты не играешь!");
-        }
+
+        throwIf(!map.containsKey(historyDto), () -> new CapybaraException("Ты не играешь"));
         CasinoCtx ctx = map.get(historyDto);
         Long betAmount = ctx.getBet();
 
-        if (capybara.getCurrency() < betAmount) {
+        throwIf(capybara.getCurrency() < betAmount, () -> {
             map.remove(historyDto);
-            throw new CapybaraHasNoMoneyException("", chatId);
-        }
-        if (betAmount < (capybara.getLevel().getValue() / 10) * 25L) {
+            return new CapybaraHasNoMoneyException();
+        });
+
+        long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
+
+        throwIf(betAmount < minBetAmount, () -> {
             map.remove(historyDto);
-            throw new CapybaraException("ur min bet amount is ");
-        }
+            return new CapybaraException("Минимальная твоя ставка - " + minBetAmount);
+        });
+
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         PhotoDto response = PhotoDto.builder()
                 .chatId(chatId)
@@ -85,11 +92,11 @@ public class CasinoService {
             Long winAmount = type.getCalculateWin().apply(betAmount);
             capybara.setCurrency(capybara.getCurrency() + winAmount);
             response.setCaption("Вау! Вот это везение! Выпало " + wonType.getLabel() + "! Твоя капибара выиграла " + winAmount);
-            response.setUrl("https://vk.com/photo-209917797_457246197");
+            response.setUrl(WIN_PHOTO_URL);
         } else {
             capybara.setCurrency(capybara.getCurrency() - betAmount);
             response.setCaption("Твоя капибара была близка Выпало " + wonType.getLabel() + "! она  проиграла " + betAmount);
-            response.setUrl("https://vk.com/photo-209917797_457246192");
+            response.setUrl(LOSE_PHOTO_URL);
         }
 
         map.remove(historyDto);
@@ -99,25 +106,24 @@ public class CasinoService {
     }
 
     public BiConsumer<TelegramBot, CapybaraContext> slots(CapybaraContext historyDto, long bet) {
-        if (!map.containsKey(historyDto)) {
-            throw new CapybaraException("ты не играешь!");
-        }
+        throwIf(!map.containsKey(historyDto), () -> new CapybaraException("Ты не играешь!"));
+
         Capybara capybara = capybaraService.findCapybara(historyDto)
                 .orElseThrow(() -> {
                     map.remove(historyDto);
                     return new CapybaraNotFoundException();
                 });
         return (bot, ctx) -> {
-            if (capybara.getCurrency() < bet) {
+            throwIf(capybara.getCurrency() < bet, () -> {
                 map.remove(historyDto);
-                throw new CapybaraHasNoMoneyException();
-            }
+                return new CapybaraHasNoMoneyException();
+            });
 
             Message response = bot.execute(new SendDice(ctx.chatId()).slotMachine()).message();
             int diceValue = response.dice().value() - 1;
             List<SlotType> result = IntStream.range(0, 3)
                     .mapToObj(i -> {
-                        int index = (diceValue - 1) / (int) Math.pow(4, i) % 4;
+                        int index = (diceValue) / (int) Math.pow(4, i) % 4;
                         return SlotType.fromIndex(index);
                     })
                     .toList();
@@ -129,12 +135,17 @@ public class CasinoService {
             capybaraService.save(capybara);
             map.remove(historyDto);
             scheduler.schedule(() -> {
+                long chatId = ctx.chatId();
+                SendPhoto sendPhoto;
                 if (slotResult == SlotResult.LOSE) {
-                    bot.execute(new SendMessage(ctx.chatId(), "Не повезло( Твоя капибара проиграла " + bet));
+                    sendPhoto = new SendPhoto(chatId, LOSE_PHOTO_URL);
+                    sendPhoto.caption("Не повезло( Твоя капибара проиграла " + bet);
                 } else {
-                    bot.execute(new SendMessage(ctx.chatId(), "Твоя капибара выиграла " + win));
+                    sendPhoto = new SendPhoto(chatId, WIN_PHOTO_URL);
+                    sendPhoto.caption("Твоя капибара выиграла " + win);
                 }
-            }, 1500, TimeUnit.MILLISECONDS);
+                bot.execute(sendPhoto);
+            }, 2000, TimeUnit.MILLISECONDS);
         };
     }
 

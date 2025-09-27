@@ -1,8 +1,8 @@
 package ru.tggc.capybaratelegrambot.utils;
 
 import lombok.experimental.UtilityClass;
-import ru.tggc.capybaratelegrambot.domain.dto.CapybaraDefaultPhoto;
-import ru.tggc.capybaratelegrambot.domain.dto.HappinessThings;
+import ru.tggc.capybaratelegrambot.domain.dto.FileDto;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.HappinessThings;
 import ru.tggc.capybaratelegrambot.domain.model.Photo;
 
 import java.util.List;
@@ -22,13 +22,17 @@ public class RandomUtils {
         return values[RANDOM.nextInt(values.length)];
     }
 
-    public Photo getRandomPhoto() {
-        List<String> values = CapybaraDefaultPhoto.DEFAULT_PHOTOS;
+    public Photo getRandomDefaultPhoto() {
+        List<String> values = CapybaraPhotos.DEFAULT_PHOTOS;
         String id = values.get(RANDOM.nextInt(values.size()));
         String url = "https://vk.com/photo-206143282_" + id;
         return Photo.builder()
                 .url(url)
                 .build();
+    }
+
+    public FileDto getRandomRacePhoto() {
+        return CapybaraPhotos.RACE_PHOTOS.get(RANDOM.nextInt(CapybaraPhotos.RACE_PHOTOS.size()));
     }
 
     public int getRandomInt() {

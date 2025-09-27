@@ -1,9 +1,10 @@
 package ru.tggc.capybaratelegrambot.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
-import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.WeddingRequest;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WeddingRequestType;
@@ -13,6 +14,8 @@ import ru.tggc.capybaratelegrambot.repository.WeddingRequestRepository;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 
 import java.time.LocalDateTime;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Service
 public class WeddingService extends AbstractRequestService<WeddingRequest> {
@@ -27,6 +30,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
         this.capybaraService = capybaraService;
     }
 
+    @Transactional
     public PhotoDto respondWedding(CapybaraContext ctx, boolean accept) {
         Capybara accepter = capybaraService.getCapybaraByContext(ctx);
         WeddingRequest request = weddingRequestRepository.findByTargetIdAndStatusAndType(
@@ -36,7 +40,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), ctx.chatId());
+        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId());
 
         String caption;
         if (accept) {
@@ -50,6 +54,8 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
         }
 
         weddingRequestRepository.save(request);
+        capybaraService.save(proposer);
+        capybaraService.save(accepter);
         return PhotoDto.builder()
                 .url("https://vk.com/photo-209917797_457245520")
                 .caption(caption)
@@ -66,7 +72,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId(), ctx.chatId());
+        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId());
 
         String message;
         if (accept) {
@@ -91,12 +97,14 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
 
     @Override
     protected WeddingRequest getRequest(Capybara challenger, Capybara opponent) {
+        boolean alreadyHasRequest = weddingRequestRepository.existsByProposerOrTarget(challenger, opponent);
+        throwIf(alreadyHasRequest, () -> new CapybaraException("already has a challenge"));
         return WeddingRequest.builder()
                 .type(WeddingRequestType.WEDDING)
                 .createdAt(LocalDateTime.now())
                 .status(WeddingStatus.PENDING)
                 .target(opponent)
-                .proposer(opponent)
+                .proposer(challenger)
                 .build();
     }
 

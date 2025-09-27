@@ -1,7 +1,7 @@
 package ru.tggc.capybaratelegrambot.service;
 
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
 
 public interface RequestService {
 

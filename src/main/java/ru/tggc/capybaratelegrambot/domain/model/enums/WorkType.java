@@ -9,8 +9,8 @@ import java.util.function.UnaryOperator;
 public enum WorkType {
     NONE("Безработный", null),
     PROGRAMMING("Программист", index -> index != 0 ? RandomUtils.getRandomInt(index * 100) + 100 : 0),
-    CRIMINAL("Бандит", index -> RandomUtils.getRandomInt(index + 1) * 200 + 1),
-    CASHIER("Кассир", index -> {
+    CASHIER("Кассир", index -> RandomUtils.getRandomInt(index + 1) * 200 + 1),
+    CRIMINAL("Бандит>", index -> {
         int randomSalary = RandomUtils.getRandomInt(index + 1) * 10 + 30;
         if (randomSalary < 100) {
             return -1;

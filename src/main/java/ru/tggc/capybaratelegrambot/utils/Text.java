@@ -82,7 +82,7 @@ public class Text {
         return "Твоя капибара:\n✨Имя: " + capybara.name() +
                 "\n\uD83C\uDF1FУровень капибары: " + capybara.level() +
                 "\n\uD83D\uDC51Тип капибары: " + capybara.type() +
-                "\n\uD83E\uDD71Бодрость капибары: " + capybara.cheerfulness() +
+                "\n\uD83E\uDD71Бодрость капибары: " + renderStaminaBar(capybara.stamina()) +
                 "\n\uD83D\uDCBCРабота: " + capybara.job() +
                 "\n\uD83C\uDF49Дольки арбуза: " + capybara.currency() +
                 (capybara.wedding() != null ? "\n\uD83D\uDC8DБрак: " + capybara.wedding() : "") +
@@ -111,23 +111,23 @@ public class Text {
 
         sb.append("\n ☕ Чаепитие ");
         if (Boolean.FALSE.equals(capybara.isTeaWaiting())) {
-            sb.append(capybara.canTea()
+            sb.append(Boolean.TRUE.equals(capybara.canTea())
                     ? "уже можно"
                     : "через: " + capybara.teaTime());
         } else {
             sb.append("в ожидании собеседника");
         }
 
-        if (capybara.hasWork()) {
+        if (Boolean.TRUE.equals(capybara.hasWork())) {
 //            if (!capybara.isOnBigJob()) {
-            if (!capybara.isWorking()) {
+            if (Boolean.FALSE.equals(capybara.isWorking())) {
                 sb.append("\n🔨 Отправить на работу ")
-                        .append(capybara.canGoWork()
+                        .append(Boolean.TRUE.equals(capybara.canGoWork())
                                 ? "уже можно"
                                 : "через: " + capybara.workTime());
             } else {
                 sb.append("\n🔨 Забрать с работы ")
-                        .append(capybara.canTakeFromWork()
+                        .append(Boolean.TRUE.equals(capybara.canTakeFromWork())
                                 ? "уже можно"
                                 : "через: " + capybara.takeFromWork());
             }
@@ -152,18 +152,18 @@ public class Text {
         }
 
         sb.append("\n🌽 Покормить/откормить ")
-                .append(capybara.canSatiety()
+                .append(Boolean.TRUE.equals(capybara.canSatiety())
                         ? "уже можно"
                         : "через: " + capybara.satietyTime());
 
         sb.append("\n🥳 Осчастливить ")
-                .append(capybara.canHappiness()
+                .append(Boolean.TRUE.equals(capybara.canHappiness())
                         ? "уже можно"
                         : "через: " + capybara.happinessTime());
 
-        if (!capybara.canRace()) {
-            sb.append("\n🩱 Времени до полного восстановления бодрости: ")
-                    .append(timeToString(capybara.raceTime()));
+        if (Boolean.FALSE.equals(capybara.canRace())) {
+            sb.append("\n🩱 Времени до восстановления бодрости: ")
+                    .append(capybara.raceTime());
         }
 
         sb.append("\n⬆ Улучшения для гонок: ").append(capybara.improvement());
@@ -230,5 +230,16 @@ public class Text {
         long min = secs / 60 % 60;
         long sec = secs % 60;
         return String.format("%02d:%02d:%02d", hour, min, sec);
+    }
+
+    private static String renderStaminaBar(double percent) {
+        int totalBlocks = 5;
+        int filledBlocks = (int) Math.round(percent / (100.0 / totalBlocks));
+
+        return "["
+                + "█".repeat(filledBlocks)
+                + "░".repeat(totalBlocks - filledBlocks)
+                + "] "
+                + (int) percent + "%";
     }
 }

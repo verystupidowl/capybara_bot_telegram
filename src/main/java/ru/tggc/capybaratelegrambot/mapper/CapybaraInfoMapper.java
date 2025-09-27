@@ -22,7 +22,7 @@ public class CapybaraInfoMapper {
         String happinessTime = timedActionService.getStatus(capybara.getHappiness());
         String teaTime = timedActionService.getStatus(capybara.getTea());
         Work work = capybara.getWork();
-        Boolean hasWork = work.getWorkType() != WorkType.NONE;
+        boolean hasWork = work.getWorkType() != WorkType.NONE;
         Boolean hasBigJob = work != null;
         Boolean canGoWork = null;
         Boolean isWorking = null;
@@ -39,8 +39,8 @@ public class CapybaraInfoMapper {
         String improvement = null;
         Boolean canSatiety = capybara.getSatiety().canPerform();
         String satietyTime = timedActionService.getStatus(capybara.getSatiety());
-        Boolean canRace = capybara.getCheerfulness().getCheerfulnessLevel().equals(capybara.getCheerfulness().getMaxLevel());
-//        Integer raceTime = capybara.getCheerfulness().getNextTime().compareTo(LocalDateTime.now());
+        Boolean canRace = capybara.getRaceAction().canPerform();
+        String raceTime = timedActionService.getStatus(capybara.getRaceAction());
         if (capybara.getImprovement() != null) {
             improvement = capybara.getImprovement().getImprovementValue().getLabel();
         }
@@ -82,6 +82,7 @@ public class CapybaraInfoMapper {
                 .takeFromWork(takeFromWork)
                 .rise(rise)
                 .index(index)
+                .raceTime(raceTime)
                 .canTakeFromBigJob(canTakeFromBigJob)
                 .takeFromBigJob(takeFromBigJob)
                 .bigJobTime(bigJobTime)
@@ -89,7 +90,6 @@ public class CapybaraInfoMapper {
                 .canSatiety(canSatiety)
                 .happinessTime(happinessTime)
                 .canRace(canRace)
-//                .raceTime(raceTime)
                 .improvement(improvement)
                 .build();
     }

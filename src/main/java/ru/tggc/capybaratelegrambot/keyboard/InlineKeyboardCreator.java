@@ -5,7 +5,6 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.oldcapybara.capybara.Capybara;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 
@@ -101,6 +100,7 @@ public class InlineKeyboardCreator {
         List<InlineKeyboardButton> tea;
         List<InlineKeyboardButton> job;
         List<InlineKeyboardButton> improve;
+        List<InlineKeyboardButton> race;
 
         InlineKeyboardButton main = new InlineKeyboardButton("Моя капибара").callbackData("go_to_main");
         mainRow.add(main);
@@ -127,17 +127,29 @@ public class InlineKeyboardCreator {
             rows.add(improve);
         }
 
-        InlineKeyboardButton[][] newRows = rows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new);
+        if (Boolean.TRUE.equals(capybara.canRace())) {
+            InlineKeyboardButton raceBtn = new InlineKeyboardButton("Забег").callbackData("start_race");
+            race = new ArrayList<>();
+            race.add(raceBtn);
+            rows.add(race);
+        }
+
+        InlineKeyboardButton[][] newRows = rows.stream()
+                .map(row -> row.toArray(InlineKeyboardButton[]::new))
+                .toArray(InlineKeyboardButton[][]::new);
 
         return new InlineKeyboardMarkup(newRows);
     }
 
     public InlineKeyboardMarkup improvements() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Удобные ботиночки").callbackData("improve_boots")},
-                {new InlineKeyboardButton("Вкусный арбуз").callbackData("improve_watermelon")},
-                {new InlineKeyboardButton("Антипроигрыш").callbackData("improve_pill")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Удобные ботиночки").callbackData("improve_boots")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Вкусный арбуз").callbackData("improve_watermelon")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Антипроигрыш").callbackData("improve_pill")}
+        );
     }
 
     public InlineKeyboardMarkup teaKeyboard() {
@@ -153,24 +165,30 @@ public class InlineKeyboardCreator {
     }
 
     public InlineKeyboardMarkup weddingKeyboard() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Принять брак").callbackData("accept_wedding")},
-                {new InlineKeyboardButton("Отказаться").callbackData("refuse_wedding")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Принять брак").callbackData("accept_wedding")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Отказаться").callbackData("refuse_wedding")}
+        );
     }
 
     public InlineKeyboardMarkup unWeddingKeyboard() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Забрать свои слова назад").callbackData("refuse_wedding")},
-                {new InlineKeyboardButton("Подтвердить расторжение").callbackData("un_wedding")},
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Забрать свои слова назад").callbackData("refuse_wedding")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Подтвердить расторжение").callbackData("un_wedding")}
+        );
     }
 
     public InlineKeyboardMarkup raceKeyboard() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Принять забег").callbackData("accept_race")},
-                {new InlineKeyboardButton("Отказаться от забега").callbackData("refuse_race")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Принять забег").callbackData("accept_race")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Отказаться от забега").callbackData("refuse_race")}
+        );
     }
 
     public InlineKeyboardMarkup raceMassage() {
@@ -186,46 +204,64 @@ public class InlineKeyboardCreator {
     }
 
     public InlineKeyboardMarkup defaultPhoto() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Не менять ничего").callbackData("not_change")},
-                {new InlineKeyboardButton("Выбрать случайное фото").callbackData("set_default_photo")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Не менять ничего").callbackData("not_change")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Выбрать случайное фото").callbackData("set_default_photo")}
+        );
     }
 
     public InlineKeyboardMarkup newJob() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Программист\uD83D\uDC68\u200D\uD83D\uDCBB").callbackData("set_job_PROGRAMMING")},
-                {new InlineKeyboardButton("Грабитель\uD83E\uDD77").callbackData("set_job_CRIMINAL")},
-                {new InlineKeyboardButton("Кассир\uD83D\uDCB5").callbackData("set_job_CASHIER")},
-                {new InlineKeyboardButton("Моя капибара").callbackData("go_to_main")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Программист\uD83D\uDC68\u200D\uD83D\uDCBB").callbackData("set_job_PROGRAMMING")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Грабитель\uD83E\uDD77").callbackData("set_job_CRIMINAL")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Кассир\uD83D\uDCB5").callbackData("set_job_CASHIER")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Моя капибара").callbackData("go_to_main")}
+        );
     }
 
     public InlineKeyboardMarkup robberyImprovement() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("\uD83E\uDD7EУдобные ботиночки").callbackData("big_job_boots")},
-                {new InlineKeyboardButton("\uD83D\uDE97Быстрая машина").callbackData("big_job_car")},
-                {new InlineKeyboardButton("💰Мешок для денег").callbackData("big_job_bag")},
-                {new InlineKeyboardButton("\uD83D\uDC4C\uD83C\uDFFBНичего").callbackData("big_job_nothing")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83E\uDD7EУдобные ботиночки").callbackData("big_job_boots")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83D\uDE97Быстрая машина").callbackData("big_job_car")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("💰Мешок для денег").callbackData("big_job_bag")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83D\uDC4C\uD83C\uDFFBНичего").callbackData("big_job_nothing")}
+        );
     }
 
     public InlineKeyboardMarkup cashReportImprovement() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("☕Банка кофе").callbackData("big_job_coffee")},
-                {new InlineKeyboardButton("\uD83D\uDDA8Принтер").callbackData("big_job_printer")},
-                {new InlineKeyboardButton("💰Мешок для денег").callbackData("big_job_bag")},
-                {new InlineKeyboardButton("\uD83D\uDC4C\uD83C\uDFFBНичего").callbackData("big_job_nothing")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("☕Банка кофе").callbackData("big_job_coffee")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83D\uDDA8Принтер").callbackData("big_job_printer")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("💰Мешок для денег").callbackData("big_job_bag")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83D\uDC4C\uD83C\uDFFBНичего").callbackData("big_job_nothing")}
+        );
     }
 
     public InlineKeyboardMarkup bigItProject() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("☕Банка кофе").callbackData("big_job_coffee")},
-                {new InlineKeyboardButton("\uD83D\uDCDAКурсы по программированию").callbackData("big_job_courses")},
-                {new InlineKeyboardButton("💰Мешок для денег").callbackData("big_job_bag")},
-                {new InlineKeyboardButton("\uD83D\uDC4C\uD83C\uDFFBНичего").callbackData("big_job_nothing")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("☕Банка кофе").callbackData("big_job_coffee")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83D\uDCDAКурсы по программированию").callbackData("big_job_courses")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("💰Мешок для денег").callbackData("big_job_bag")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("\uD83D\uDC4C\uD83C\uDFFBНичего").callbackData("big_job_nothing")}
+        );
     }
 
     public InlineKeyboardMarkup bigJobKeyboard() {
@@ -235,30 +271,24 @@ public class InlineKeyboardCreator {
     }
 
     public InlineKeyboardMarkup feedKeyboard() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Покормить капибару").callbackData("feed")},
-                {new InlineKeyboardButton("Откормить капибару").callbackData("fatten")},
-                {new InlineKeyboardButton("Не делать ничего").callbackData("go_to_main")}
-        });
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Покормить капибару").callbackData("feed")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Откормить капибару").callbackData("fatten")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Не делать ничего").callbackData("go_to_main")}
+        );
     }
 
     public InlineKeyboardMarkup casinoTargetKeyboard() {
-        return new InlineKeyboardMarkup(new InlineKeyboardButton[][]{
-                {new InlineKeyboardButton("Красное").callbackData("casino_RED")},
-                {new InlineKeyboardButton("Черное").callbackData("casino_BLACK")},
-                {new InlineKeyboardButton("Зеро").callbackData("casino_ZERO")}
-        });
-    }
-
-    public InlineKeyboardMarkup myCapybaraList(List<Capybara> capybaraList) {
-        List<List<InlineKeyboardButton>> capybaraNameRows = new ArrayList<>();
-        for (Capybara capybara : capybaraList) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(new InlineKeyboardButton(capybara.getName()).callbackData(capybara.getUsername().getUserID() + "_" + capybara.getUsername().getPeerID()));
-            capybaraNameRows.add(row);
-        }
         return new InlineKeyboardMarkup(
-                capybaraNameRows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new)
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Красное").callbackData("casino_RED")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Черное").callbackData("casino_BLACK")},
+                new InlineKeyboardButton[]
+                        {new InlineKeyboardButton("Зеро").callbackData("casino_ZERO")}
         );
     }
 

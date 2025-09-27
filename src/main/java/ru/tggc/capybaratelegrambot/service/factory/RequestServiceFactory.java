@@ -1,7 +1,7 @@
 package ru.tggc.capybaratelegrambot.service.factory;
 
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.domain.dto.RequestType;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
 import ru.tggc.capybaratelegrambot.service.RequestService;
 
 import java.util.List;

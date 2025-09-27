@@ -6,7 +6,7 @@ public class CapybaraHasNoMoneyException extends CapybaraException {
         super("ur capy has no money(");
     }
 
-    public CapybaraHasNoMoneyException(String message, String chatId) {
-        super(message, chatId);
+    public CapybaraHasNoMoneyException(String message) {
+        super(message);
     }
 }

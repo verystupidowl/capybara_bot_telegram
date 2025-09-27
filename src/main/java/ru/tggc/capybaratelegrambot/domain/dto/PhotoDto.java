@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 public final class PhotoDto {
     private String url;
     private String caption;
-    private String chatId;
+    private long chatId;
     private InlineKeyboardMarkup markup;
 }

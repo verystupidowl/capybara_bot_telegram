@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.tggc.capybaratelegrambot.domain.dto.enums.FileType;
 
 @Entity
 @Data
@@ -18,10 +19,9 @@ public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private int ownerID;
-    private int mediaID;
-    private String accessKey;
-    private String type;
-
+    private String fileId;
+    private Long fileSize;
+    private String fileUniqueId;
+    private FileType type;
     private String url;
 }

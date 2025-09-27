@@ -1,13 +1,13 @@
 package ru.tggc.capybaratelegrambot.domain.model;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,11 +16,12 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.WeddingGift;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Data
@@ -39,20 +40,19 @@ public class Capybara {
     private Integer defeats;
     private Long currency;
     private LocalDateTime created;
-    private String chatId;
-    private int consecutiveRaces;
-    private LocalDateTime lastRaceAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Chat chat;
     @OneToOne(fetch = FetchType.LAZY)
     private Capybara spouse;
     boolean deleted = false;
     @OneToOne
     private RaceRequest raceRequest;
+    @Embedded
+    private RaceAction raceAction;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Level level;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Happiness happiness;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Race> races;
     @ManyToOne
     private User user;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -69,8 +69,6 @@ public class Capybara {
     private Satiety satiety;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private WeddingGift weddingGift;
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Cheerfulness cheerfulness;
 
     @Override
     public boolean equals(Object o) {

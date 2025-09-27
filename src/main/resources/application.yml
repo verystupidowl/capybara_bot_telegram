@@ -9,20 +9,13 @@ spring:
   jpa:
     show-sql: false
     hibernate:
-      ddl-auto: create
+#      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
-  kafka:
-    bootstrap-servers: localhost:9092
-
-database:
-  url: jdbc:postgresql://localhost:5432/capybara_tg_bot
-  user: root
-  password: root
 
 bot:
   token: 6653668731:AAEP6-0Bd3H-Y8sUgo-9o9tAX8XkAq_mZ2Q
