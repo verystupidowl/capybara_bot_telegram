@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.CallbackRegistry;
 import ru.tggc.capybaratelegrambot.aop.MessageHandleRegistry;
+import ru.tggc.capybaratelegrambot.aop.PhotoHandleRegistry;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
@@ -38,6 +39,7 @@ public class Bot extends TelegramBot {
     private final InlineKeyboardCreator creator;
 
     private static final int MAX_UPDATES = 10;
+    private final PhotoHandleRegistry photoHandleRegistry;
 
     Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofSeconds(10))
@@ -47,12 +49,13 @@ public class Bot extends TelegramBot {
     public Bot(@Value("${bot.token}") String botToken,
                MessageHandleRegistry messageHandleRegistry,
                CallbackRegistry callbackRegistry,
-               UserService userService, InlineKeyboardCreator creator) {
+               UserService userService, InlineKeyboardCreator creator, PhotoHandleRegistry photoHandleRegistry) {
         super(botToken);
         this.messageHandleRegistry = messageHandleRegistry;
         this.callbackRegistry = callbackRegistry;
         this.userService = userService;
         this.creator = creator;
+        this.photoHandleRegistry = photoHandleRegistry;
     }
 
     public void run() {
@@ -75,8 +78,8 @@ public class Bot extends TelegramBot {
             if (checkUserAndUpdate(from, chat.id(), null, chat)) return;
             Optional.ofNullable(update.message().text())
                     .ifPresent(s -> serveCommand(update.message()));
-//            Optional.ofNullable(update.message().photo())
-//                    .ifPresent(_ -> servePhoto(update.message()));
+            Optional.ofNullable(update.message().photo())
+                    .ifPresent(p -> servePhoto(update.message()));
             if (!Arrays.stream(update.message().newChatMembers()).filter(member -> member.id() == 6653668731L).toList().isEmpty()) {
                 greetings(chat.id().toString());
             }
@@ -142,8 +145,8 @@ public class Bot extends TelegramBot {
     private void serveCallback(CallbackQuery callbackQuery) {
         callbackRegistry.dispatch(callbackQuery).accept(this);
     }
-//
-//    private void servePhoto(Message message) {
-//        messageHandleRegistry.servePhoto(message);
-//    }
+
+    private void servePhoto(Message message) {
+        photoHandleRegistry.dispatch(message).accept(this);
+    }
 }

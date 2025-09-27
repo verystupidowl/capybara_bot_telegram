@@ -19,8 +19,9 @@ public class HistoryService {
         capybaraHistory.putIfAbsent(dto, type);
     }
 
-    public Boolean isInHistory(CapybaraContext dto) {
-        return capybaraHistory.containsKey(dto);
+    public boolean isInHistory(CapybaraContext dto, HistoryType type) {
+        HistoryType historyType = capybaraHistory.get(dto);
+        return historyType != null && historyType == type;
     }
 
     public void removeFromHistory(CapybaraContext dto) {

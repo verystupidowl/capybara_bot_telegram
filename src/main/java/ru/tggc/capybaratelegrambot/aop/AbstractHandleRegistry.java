@@ -108,33 +108,33 @@ public abstract class AbstractHandleRegistry<P> {
                     log.info(ex.getMessage(), chatId);
                     SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
                     message.replyMarkup(inlineKeyboardCreator.takeCapybara());
-                    response = Response.ofMessage(message);
+                    response = Response.of(message);
                 }
                 case CapybaraAlreadyExistsException ex -> {
                     log.info(ex.getMessage(), chatId);
-                    response = Response.ofMessage(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
+                    response = Response.of(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
                 }
                 case CapybaraHasNoMoneyException ignored -> {
                     String messageToSend = "ur capy has no money(";
-                    response = Response.ofMessage(new SendMessage(chatId, messageToSend));
+                    response = Response.of(new SendMessage(chatId, messageToSend));
                 }
                 case CapybaraException ex -> {
                     log.info(ex.getMessage(), chatId);
                     String messageToSend = ex.getMessageToSend();
-                    response = Response.ofMessage(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
+                    response = Response.of(new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)));
                 }
                 case NumberFormatException ignored ->
-                        response = Response.ofMessage(new SendMessage(chatId, "Введи число!"));
+                        response = Response.of(new SendMessage(chatId, "Введи число!"));
                 default -> {
                     log.error("Error invoking callback", cause);
                     SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);
                     SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage(), chat, from));
-                    response = Response.ofMessages(sendMessageToAdmin, sendMessageToUser);
+                    response = Response.ofAll(sendMessageToAdmin, sendMessageToUser);
                 }
             }
         } catch (Exception e) {
             log.error("Error invoking callback", e);
-            response = Response.ofMessage(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
+            response = Response.of(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
         }
         return response;
     }

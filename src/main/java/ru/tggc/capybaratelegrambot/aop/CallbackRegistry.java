@@ -59,7 +59,7 @@ public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
             String message = buildMessageToAdmin("Unknown callback: " + data, chat, from);
             SendMessage sendMessageToUser = new SendMessage(chatId, NOT_IMPLEMENTED_MESSAGE);
             SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, message);
-            return Response.ofMessages(sendMessageToAdmin, sendMessageToUser);
+            return Response.ofAll(sendMessageToAdmin, sendMessageToUser);
         }
 
 

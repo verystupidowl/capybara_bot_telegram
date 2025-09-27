@@ -45,7 +45,7 @@ public class DefaultMessageHandler extends TextHandler {
     }
 
     private Response slots(CapybaraContext historyDto, String bet) {
-        return Response.ofCustom(casinoService.slots(historyDto, Long.parseLong(bet)), historyDto);
+        return Response.of(casinoService.slots(historyDto, Long.parseLong(bet)), historyDto);
     }
 
     private Response changeName(CapybaraContext historyDto, String text) {

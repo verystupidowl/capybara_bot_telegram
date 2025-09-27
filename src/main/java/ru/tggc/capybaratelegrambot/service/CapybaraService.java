@@ -1,5 +1,6 @@
 package ru.tggc.capybaratelegrambot.service;
 
+import com.pengrad.telegrambot.model.PhotoSize;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Chat;
 import ru.tggc.capybaratelegrambot.domain.model.Improvement;
 import ru.tggc.capybaratelegrambot.domain.model.Level;
+import ru.tggc.capybaratelegrambot.domain.model.Photo;
 import ru.tggc.capybaratelegrambot.domain.model.User;
 import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
@@ -445,5 +447,16 @@ public class CapybaraService {
     public Capybara getRaceCapybara(CapybaraContext ctx) {
         return capybaraRepository.findRaceCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    @Transactional
+    public void setPhoto(CapybaraContext ctx, PhotoSize photoSize) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        Photo photo = capybara.getPhoto();
+        photo.setFileId(photoSize.fileId());
+        photo.setUrl(null);
+        photo.setFileSize(photoSize.fileSize());
+        photo.setFileUniqueId(photo.getFileUniqueId());
+        capybaraRepository.save(capybara);
     }
 }

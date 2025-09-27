@@ -31,7 +31,7 @@ public class CommandHandler extends TextHandler {
     public Response myCapybara(@Ctx CapybaraContext ctx) {
         MyCapybaraDto dto = capybaraService.getMyCapybara(ctx);
         PhotoDto photoDto = PhotoDto.builder()
-                .url(dto.photoUrl())
+                .url(dto.photo())
                 .caption(Text.getMyCapybara(dto))
                 .markup(inlineCreator.myCapybaraKeyboard(dto))
                 .chatId(ctx.chatId())

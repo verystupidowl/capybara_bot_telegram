@@ -70,6 +70,6 @@ public class RaceCallbackHandler extends CallbackHandler {
     @CallbackHandle("accept_race")
     public Response acceptRace(@CallbackParam CallbackQuery query,
                                @Ctx CapybaraContext ctx) {
-        return Response.ofCustom(raceService.acceptRace(ctx), query);
+        return Response.of(raceService.acceptRace(ctx), query);
     }
 }

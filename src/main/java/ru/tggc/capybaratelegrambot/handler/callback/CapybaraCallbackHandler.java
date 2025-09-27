@@ -37,6 +37,12 @@ public class CapybaraCallbackHandler extends CallbackHandler {
         return sendSimpleMessage(ctx.chatId(), "Введи новое имя своей капибары", inlineCreator.notChange());
     }
 
+    @CallbackHandle("set_photo")
+    public Response setPhoto(@Ctx CapybaraContext ctx) {
+        historyService.setHistory(ctx, CHANGE_PHOTO);
+        return sendSimpleMessage(ctx.chatId(), "Пришли новое фото своей капибары", inlineCreator.notChange());
+    }
+
     @CallbackHandle("exactly_delete")
     public Response deleteCapybara(@Ctx CapybaraContext ctx) {
         capybaraService.deleteCapybara(ctx);
@@ -134,6 +140,6 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     public Response takeCapybara(@Ctx CapybaraContext ctx, @MessageId int messageId) {
         PhotoDto photoDto = capybaraService.saveCapybara(ctx);
         return sendSimplePhoto(photoDto)
-                .andThen(Response.ofMessage(new DeleteMessage(ctx.chatId(), messageId)));
+                .andThen(Response.of(new DeleteMessage(ctx.chatId(), messageId)));
     }
 }

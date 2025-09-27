@@ -22,6 +22,6 @@ public record MyCapybaraDto(
         Boolean canSatiety,
         Boolean canHappy,
         Boolean hasWork,
-        String photoUrl
+        String photo
 ) {
 }

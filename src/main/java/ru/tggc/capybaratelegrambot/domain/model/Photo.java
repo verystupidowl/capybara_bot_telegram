@@ -18,10 +18,9 @@ public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private int ownerID;
-    private int mediaID;
-    private String accessKey;
+    private String fileId;
+    private Long fileSize;
+    private String fileUniqueId;
     private String type;
-
     private String url;
 }
