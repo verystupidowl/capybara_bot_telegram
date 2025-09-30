@@ -14,4 +14,6 @@ public @interface MessageHandle {
     String value();
 
     UserRole[] requiredRoles() default {};
+
+    boolean handlePublic() default false;
 }

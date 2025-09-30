@@ -7,44 +7,37 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 @FunctionalInterface
-public interface Response extends Consumer<TelegramBot> {
+public interface Response {
+
+    CompletableFuture<Void> send(TelegramBot bot);
 
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(List<Rq> requests) {
-        return bot -> requests.forEach(bot::execute);
+        return bot -> CompletableFuture.runAsync(() -> requests.forEach(bot::execute));
     }
 
     @SafeVarargs
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(Rq... requests) {
-        return bot -> Arrays.stream(requests).forEach(bot::execute);
+        return bot -> CompletableFuture.runAsync(() -> Arrays.stream(requests).forEach(bot::execute));
     }
 
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response of(BaseRequest<Rq, Rs> message) {
-        return bot -> bot.execute(message);
+        return bot -> CompletableFuture.runAsync(() -> bot.execute(message));
     }
 
     static <T> Response of(BiConsumer<TelegramBot, T> consumer, T request) {
-        return bot -> consumer.accept(bot, request);
-    }
-
-    static Response of(Consumer<TelegramBot> consumer) {
-        return consumer::accept;
+        return bot -> CompletableFuture.runAsync(() -> consumer.accept(bot, request));
     }
 
     static Response empty() {
-        return bot -> {
-        };
+        return bot -> CompletableFuture.completedFuture(null);
     }
 
     @NotNull
-    @Override
-    default Response andThen(@NotNull Consumer<? super TelegramBot> after) {
-        return t -> {
-            accept(t);
-            after.accept(t);
-        };
+    default Response andThen(@NotNull Response after) {
+        return bot -> this.send(bot).thenCompose(v -> after.send(bot));
     }
 }

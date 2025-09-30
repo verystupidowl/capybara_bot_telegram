@@ -1,7 +1,5 @@
-package ru.tggc.capybaratelegrambot.aop;
+package ru.tggc.capybaratelegrambot.registry;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -32,18 +30,18 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 import ru.tggc.capybaratelegrambot.utils.Text;
+import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,7 +52,7 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class AbstractHandleRegistry<P> {
+public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
     protected final Map<String, Method> methods = new ConcurrentHashMap<>();
     protected final Map<String, Object> beans = new ConcurrentHashMap<>();
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
@@ -62,6 +60,7 @@ public abstract class AbstractHandleRegistry<P> {
     protected final ListableBeanFactory beanFactory;
     private final InlineKeyboardCreator inlineKeyboardCreator;
     private final UserService userService;
+    private final UserRateLimiterService rateLimiter;
 
     protected Method defaultMethod;
     protected Object defaultBean;
@@ -69,13 +68,6 @@ public abstract class AbstractHandleRegistry<P> {
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
     protected static final String NOT_IMPLEMENTED_MESSAGE = "Пока не реализовано, следите за новостями!";
     protected static final long ADMIN_ID = 428873987;
-
-    protected static final int MAX_UPDATES = 10;
-
-    protected final Cache<Long, Integer> countOfUpdates = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(10))
-            .maximumSize(1000)
-            .build();
 
     @PostConstruct
     @SneakyThrows
@@ -111,8 +103,15 @@ public abstract class AbstractHandleRegistry<P> {
         Response response;
         long chatId = chat.id();
         try {
-            Response ddosResponse = checkUser(from, chat, getRequiredRoles(method));
-            if (ddosResponse != null) return ddosResponse;
+            UserRole[] requiredRoles = getRequiredRoles(method);
+            if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
+                return Response.empty();
+            }
+            Response ddosResponse = rateLimiter.checkUser(from, chat);
+            if (ddosResponse != null) {
+                return ddosResponse;
+            }
+            rateLimiter.lock(from.id());
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
@@ -162,7 +161,10 @@ public abstract class AbstractHandleRegistry<P> {
             log.error("Error invoking callback", e);
             response = Response.of(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
         }
-        return response;
+        return response.andThen(bot -> {
+            rateLimiter.unlock(from.id());
+            return CompletableFuture.completedFuture(null);
+        });
     }
 
     protected abstract UserRole[] getRequiredRoles(Method method);
@@ -173,13 +175,13 @@ public abstract class AbstractHandleRegistry<P> {
                                  long userId,
                                  int messageId,
                                  Matcher matcher,
-                                 P param) {
+                                 U param) {
         return Arrays.stream(method.getParameters())
                 .map(parameter -> switch (parameter) {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
                     case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
                     case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId);
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId, messageId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;
@@ -198,31 +200,5 @@ public abstract class AbstractHandleRegistry<P> {
 
     protected String buildMessageToAdmin(String message, Chat chat, User from) {
         return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
-    }
-
-    private Response checkUser(User from,
-                               Chat chat,
-                               UserRole[] requiredRoles) {
-        if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
-            return Response.empty();
-        }
-        Integer count = countOfUpdates.getIfPresent(from.id());
-        if (count != null && count > MAX_UPDATES) {
-            log.info("user {} is trying to ddos", from.username());
-            return countOfUpdates.policy().expireAfterWrite().map(ex -> {
-                long chatId = chat.id();
-                return ex.ageOf(from.id(), TimeUnit.SECONDS).stream().mapToObj(age -> {
-                    String time = MAX_UPDATES - age + "c";
-                    String text = "Cлишком много запросов, попробуй снова через " + time;
-                    return Response.of(new SendMessage(chatId, text));
-                }).findFirst().orElseGet(() -> {
-                    String text = "Cлишком много запросов";
-                    return Response.of(new SendMessage(chatId, text));
-                });
-            }).orElse(null);
-        }
-        int currentCount = count == null ? 0 : count;
-        countOfUpdates.put(from.id(), currentCount + 1);
-        return null;
     }
 }

@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.aop;
+package ru.tggc.capybaratelegrambot.registry;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Chat;
@@ -12,6 +12,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
+import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -20,12 +21,13 @@ import java.util.regex.Pattern;
 
 @Component
 @Slf4j
-public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
+public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery> {
 
-    protected CallbackRegistry(ListableBeanFactory beanFactory,
-                               InlineKeyboardCreator inlineKeyboardCreator,
-                               UserService userService) {
-        super(beanFactory, inlineKeyboardCreator, userService);
+    protected CallbackHandleRegistry(ListableBeanFactory beanFactory,
+                                     InlineKeyboardCreator inlineKeyboardCreator,
+                                     UserService userService,
+                                     UserRateLimiterService rateLimiterService) {
+        super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
     }
 
     @Override
@@ -38,6 +40,7 @@ public class CallbackRegistry extends AbstractHandleRegistry<CallbackQuery> {
         return CallbackHandle.class;
     }
 
+    @Override
     public Response dispatch(CallbackQuery query) {
         String data = query.data();
         Method method = methods.values().stream()
