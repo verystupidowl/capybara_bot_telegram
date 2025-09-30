@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.aop;
+package ru.tggc.capybaratelegrambot.registry;
 
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
@@ -7,10 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
+import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.service.HistoryService;
 import ru.tggc.capybaratelegrambot.service.UserService;
+import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.lang.annotation.Annotation;
@@ -22,11 +25,15 @@ import java.util.regex.Pattern;
 @Component
 @Slf4j
 public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
+    private final HistoryService historyService;
 
     protected MessageHandleRegistry(ListableBeanFactory beanFactory,
                                     InlineKeyboardCreator inlineKeyboardCreator,
-                                    UserService userService) {
-        super(beanFactory, inlineKeyboardCreator, userService);
+                                    UserService userService,
+                                    HistoryService historyService,
+                                    UserRateLimiterService rateLimiterService) {
+        super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+        this.historyService = historyService;
     }
 
     @Override
@@ -43,6 +50,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         return MessageHandle.class;
     }
 
+    @Override
     public Response dispatch(Message message) {
         String text = message.text().toLowerCase();
         Method method = methods.values().stream()
@@ -57,14 +65,17 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
 
         Chat chat = message.chat();
         User from = message.from();
-        Response response = null;
+        Response response = Response.empty();
 
         if (method == null) {
             if (defaultMethod == null) {
                 log.warn("Unknown message: {}", text);
             } else {
-                Object[] args = buildArgs(defaultMethod, message, chat.id(), from.id(), 0, null, message);
-                response = invokeWithCatch(from, defaultMethod, defaultBean, args, chat);
+                CapybaraContext ctx = new CapybaraContext(chat.id(), from.id(), message.messageId());
+                if (historyService.contains(ctx)) {
+                    Object[] args = buildArgs(defaultMethod, message, chat.id(), from.id(), 0, null, message);
+                    response = invokeWithCatch(from, defaultMethod, defaultBean, args, chat);
+                }
             }
             return response;
         }

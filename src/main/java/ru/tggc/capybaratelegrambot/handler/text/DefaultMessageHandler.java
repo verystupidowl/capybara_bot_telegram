@@ -29,7 +29,7 @@ public class DefaultMessageHandler extends TextHandler {
         long chatId = message.chat().id();
         long userId = message.from().id();
         String text = message.text();
-        CapybaraContext historyDto = new CapybaraContext(chatId, userId);
+        CapybaraContext historyDto = new CapybaraContext(chatId, userId, message.messageId());
         HistoryType historyType = historyService.getFromHistory(historyDto);
         if (historyType == null) {
             return null;

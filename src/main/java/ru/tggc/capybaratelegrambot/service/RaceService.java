@@ -1,7 +1,6 @@
 package ru.tggc.capybaratelegrambot.service;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
@@ -20,6 +19,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.FileDto;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.FileType;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
+import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.RaceRequest;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
@@ -33,13 +33,14 @@ import ru.tggc.capybaratelegrambot.repository.RaceRequestRepository;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
+import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 import static java.lang.Math.max;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
@@ -53,75 +54,84 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     private final RaceRequestRepository raceRequestRepository;
     private final CapybaraService capybaraService;
     private final TimedActionService timedActionService;
+    private final HistoryService historyService;
+    private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final UserRateLimiterService rateLimiterService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private RaceService self;
-    private final HistoryService historyService;
-    private final InlineKeyboardCreator inlineKeyboardCreator;
 
     public RaceService(CapybaraService capybaraService,
                        UserService userService,
                        RaceRequestRepository raceRequestRepository,
                        TimedActionService timedActionService,
                        HistoryService historyService,
-                       InlineKeyboardCreator inlineKeyboardCreator) {
+                       InlineKeyboardCreator inlineKeyboardCreator,
+                       UserRateLimiterService rateLimiterService) {
         super(capybaraService, userService);
         this.raceRequestRepository = raceRequestRepository;
         this.capybaraService = capybaraService;
         this.timedActionService = timedActionService;
         this.historyService = historyService;
         this.inlineKeyboardCreator = inlineKeyboardCreator;
+        this.rateLimiterService = rateLimiterService;
     }
 
-    public BiConsumer<TelegramBot, CallbackQuery> acceptRace(CapybaraContext ctx) {
+    public Response acceptRace(CapybaraContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
-        return respondRace(capybara, true);
+        return respondRace(capybara, ctx, true);
     }
 
-    public void refuseRace(CapybaraContext ctx) {
+    public Response refuseRace(CapybaraContext ctx) {
         Capybara capybara = capybaraService.getCapybaraByContext(ctx);
-        respondRace(capybara, false);
+        Response response = respondRace(capybara, ctx, false);
         capybaraService.save(capybara);
+        return response;
     }
 
-    public BiConsumer<TelegramBot, CallbackQuery> respondRace(Capybara opponent, boolean accept) {
+    public Response respondRace(Capybara opponent, CapybaraContext ctx, boolean accept) {
         return raceRequestRepository.findByOpponentId(opponent.getId())
                 .map(raceRequest -> {
-                    BiConsumer<TelegramBot, CallbackQuery> callback;
+                    Response response = Response.of(new DeleteMessage(ctx.chatId(), ctx.messageId()));
                     Capybara challenger = raceRequest.getChallenger();
+
+                    Long challengerOwnerId = challenger.getUser().getId();
+                    rateLimiterService.lock(challengerOwnerId);
+
                     if (accept) {
                         raceRequest.setStatus(RaceStatus.ACCEPTED);
-                        callback = acceptRace(
+                        response = response.andThen(acceptRace(
                                 challenger,
                                 opponent
-                        );
+                        ));
                     } else {
                         raceRequest.setStatus(RaceStatus.DECLINED);
-                        callback = (bot, query) -> {
-                            long chatId = query.maybeInaccessibleMessage().chat().id();
-                            bot.execute(new SendMessage(chatId, "ok"));
-                        };
+                        response = response.andThen(Response.of(new SendMessage(ctx.chatId(), "ok")));
                     }
 
                     challenger.setRaceRequest(null);
                     opponent.setRaceRequest(null);
 
                     raceRequestRepository.delete(raceRequest);
-                    return callback;
+
+                    return response.andThen(bot -> {
+                        rateLimiterService.unlock(challengerOwnerId);
+                        return CompletableFuture.completedFuture(null);
+                    });
                 })
                 .orElseThrow(() -> new CapybaraException("No incoming challenge to respond to!"));
     }
 
-    public BiConsumer<TelegramBot, CallbackQuery> acceptRace(Capybara challenger, Capybara opponent) {
+    public Response acceptRace(Capybara challenger, Capybara opponent) {
         self.checkStamina(challenger);
         self.checkStamina(opponent);
         log.info("accepting race between {} and {}", challenger.getName(), opponent.getName());
         return race(challenger, opponent);
     }
 
-    public BiConsumer<TelegramBot, CallbackQuery> race(Capybara c1, Capybara c2) {
-        return (bot, query) -> {
-            long chatId = query.maybeInaccessibleMessage().chat().id();
+    public Response race(Capybara c1, Capybara c2) {
+        return bot -> {
+            long chatId = c1.getChat().getId();
             FileDto fileDto = RandomUtils.getRandomRacePhoto();
             int messageId;
             String caption = "\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName();
@@ -134,24 +144,23 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                         .message().messageId();
             }
 
-            bot.execute(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()));
-
-
             int need = 100 + (((c1.getLevel().getValue() + c2.getLevel().getValue()) / 2) / 10) * 10;
-            RaceStepContext ctx = new RaceStepContext(c1.getId(), c2.getId(), need, bot, query, messageId);
+            RaceStepContext ctx = new RaceStepContext(c1.getId(), c2.getId(), need, bot, chatId, messageId);
 
-            scheduler.schedule(() -> raceStepAsync(ctx), 1500, TimeUnit.MILLISECONDS);
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            scheduler.schedule(() -> raceStepAsync(ctx, future), 1500, TimeUnit.MILLISECONDS);
+            return future;
         };
     }
 
-    public void raceStepAsync(RaceStepContext ctx) {
+    public void raceStepAsync(RaceStepContext ctx, CompletableFuture<Void> future) {
         Capybara c1 = capybaraService.getCapybaraById(ctx.c1Id);
         Capybara c2 = capybaraService.getCapybaraById(ctx.c2Id);
 
         ctx.percent1 += random.nextInt(c1.getLevel().getValue() + 50 + c1.getImprovement().getImprovementValue().getChance());
         ctx.percent2 += random.nextInt(c2.getLevel().getValue() + 50 + c2.getImprovement().getImprovementValue().getChance());
 
-        ctx.bot.execute(new EditMessageCaption(ctx.query.maybeInaccessibleMessage().chat().id(),
+        ctx.bot.execute(new EditMessageCaption(ctx.chatId,
                 ctx.messageId)
                 .caption("🏃Идёт забег капибар!!!\n\n" +
                         (ctx.percent1 > ctx.percent2 ? "🥇" : "") + c1.getName() + " пробежала " + ctx.percent1 + "/" + ctx.need + "\n" +
@@ -162,8 +171,9 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
 
         if (ctx.percent1 > ctx.need || ctx.percent2 > ctx.need) {
             scheduler.schedule(() -> self.finishRaceAsync(ctx), 2, TimeUnit.SECONDS);
+            future.complete(null);
         } else {
-            scheduler.schedule(() -> raceStepAsync(ctx), 1500, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> raceStepAsync(ctx, future), 1500, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -180,7 +190,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
             self.getResults(c2, c1);
             sendMessages(c2, c1, ctx);
         } else {
-            ctx.bot.execute(new EditMessageCaption(ctx.query.maybeInaccessibleMessage().chat().id(), ctx.messageId)
+            ctx.bot.execute(new EditMessageCaption(ctx.chatId, ctx.messageId)
                     .caption("😲 Ничья! Капибары не получают и не теряют счастья!"));
         }
 
@@ -199,7 +209,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public void sendMessages(Capybara winner, Capybara loser, RaceStepContext ctx) {
-        ctx.bot.execute(new EditMessageCaption(ctx.query.maybeInaccessibleMessage().chat().id(),
+        ctx.bot.execute(new EditMessageCaption(ctx.chatId,
                 ctx.messageId)
                 .caption("🏆Выиграла капибара " + winner.getName() +
                         "\nСчастье + " + winner.getImprovement().getImprovementValue().getWinHappiness() +
@@ -283,17 +293,17 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         final Long c2Id;
         final int need;
         final TelegramBot bot;
-        final CallbackQuery query;
+        final long chatId;
         final int messageId;
         int percent1 = 0;
         int percent2 = 0;
 
-        public RaceStepContext(Long c1, Long c2, int need, TelegramBot bot, CallbackQuery query, int messageId) {
+        public RaceStepContext(Long c1, Long c2, int need, TelegramBot bot, long chatId, int messageId) {
             this.c1Id = c1;
             this.c2Id = c2;
             this.need = need;
             this.bot = bot;
-            this.query = query;
+            this.chatId = chatId;
             this.messageId = messageId;
         }
     }

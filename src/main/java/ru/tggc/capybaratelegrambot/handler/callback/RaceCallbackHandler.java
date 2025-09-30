@@ -69,13 +69,12 @@ public class RaceCallbackHandler extends CallbackHandler {
     @CallbackHandle("refuse_race")
     public Response refuseRace(@MessageId int messageId,
                                @Ctx CapybaraContext ctx) {
-        raceService.refuseRace(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "u refused a race");
+        return raceService.refuseRace(ctx);
     }
 
     @CallbackHandle("accept_race")
     public Response acceptRace(@CallbackParam CallbackQuery query,
                                @Ctx CapybaraContext ctx) {
-        return Response.of(raceService.acceptRace(ctx), query);
+        return raceService.acceptRace(ctx);
     }
 }

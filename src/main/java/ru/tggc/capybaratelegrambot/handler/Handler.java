@@ -96,7 +96,7 @@ public abstract class Handler {
                 .url(photoUrl)
                 .caption(caption)
                 .chatId(chatId)
-                .build()).andThen(bot -> bot.execute(dm));
+                .build()).andThen(Response.of(dm));
     }
 
     public Response editSimpleMessage(long chatId, int messageId, String text) {

@@ -24,6 +24,10 @@ public class HistoryService {
         return historyType != null && historyType == type;
     }
 
+    public boolean contains(CapybaraContext ctx) {
+        return capybaraHistory.containsKey(ctx);
+    }
+
     public void removeFromHistory(CapybaraContext dto) {
         capybaraHistory.remove(dto);
     }

@@ -7,8 +7,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +33,13 @@ import java.util.Objects;
 @Builder
 @SQLDelete(sql = "UPDATE capybara SET deleted = true WHERE id = ?")
 @SQLRestriction("deleted = false")
+@Table(
+        indexes = {
+                @Index(name = "idx_capybara_chat", columnList = "chat_id"),
+                @Index(name = "idx_capybara_user", columnList = "user_id"),
+                @Index(name = "idx_capybara_chat_user", columnList = "chat_id, user_id")
+        }
+)
 public class Capybara {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
