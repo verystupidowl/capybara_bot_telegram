@@ -1,10 +1,10 @@
 package ru.tggc.capybaratelegrambot.handler.text;
 
 import lombok.RequiredArgsConstructor;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
@@ -15,6 +15,7 @@ import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.utils.Text;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @BotHandler
 @RequiredArgsConstructor
@@ -44,8 +45,8 @@ public class CommandHandler extends TextHandler {
         List<TopCapybaraDto> topCapybaras = capybaraService.getTopCapybaras();
         PhotoDto photo = topCapybaras.getFirst().photoDto();
         String caption = topCapybaras.stream()
-                .map(TopCapybaraDto::name)
-                .reduce("", (c1, c2) -> c1 + c2);
+                .map(c -> c.name() + " - " + c.level())
+                .collect(Collectors.joining("\n"));
         return sendSimplePhoto(new PhotoDto(photo.getUrl(), caption, chatId, null));
     }
 

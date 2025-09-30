@@ -1,11 +1,14 @@
-package ru.tggc.capybaratelegrambot.aop.annotation.params;
+package ru.tggc.capybaratelegrambot.annotation.handle;
+
+import org.springframework.stereotype.Component;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CallbackParam {
+@Target(ElementType.TYPE)
+@Component
+public @interface BotHandler {
 }

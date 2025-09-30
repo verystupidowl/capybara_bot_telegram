@@ -2,11 +2,11 @@ package ru.tggc.capybaratelegrambot.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
+import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
+import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;

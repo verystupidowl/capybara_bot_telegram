@@ -3,7 +3,6 @@ package ru.tggc.capybaratelegrambot.repository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.User;
@@ -36,8 +35,11 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
 
     String user(User user);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM capybara ORDER BY level LIMIT 10")
-    List<Capybara> getTopCapybaras();
+    @EntityGraph(attributePaths = {
+            "photo",
+            "level"
+    })
+    List<Capybara> findTop10ByOrderByLevelValueDesc();
 
     @EntityGraph(attributePaths = {
             "level", "level.type",

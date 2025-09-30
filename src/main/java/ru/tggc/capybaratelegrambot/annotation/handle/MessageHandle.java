@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.aop.annotation.handle;
+package ru.tggc.capybaratelegrambot.annotation.handle;
 
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 
@@ -14,6 +14,4 @@ public @interface MessageHandle {
     String value();
 
     UserRole[] requiredRoles() default {};
-
-    boolean handlePublic() default false;
 }

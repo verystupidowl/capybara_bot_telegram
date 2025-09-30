@@ -318,12 +318,12 @@ public class CapybaraService {
     }
 
     public List<TopCapybaraDto> getTopCapybaras() {
-        return capybaraRepository.getTopCapybaras().stream()
+        return capybaraRepository.findTop10ByOrderByLevelValueDesc().stream()
                 .map(c -> {
                     PhotoDto photo = PhotoDto.builder()
                             .url(c.getPhoto().getUrl())
                             .build();
-                    return new TopCapybaraDto(c.getName(), photo);
+                    return new TopCapybaraDto(c.getName(), photo, c.getLevel().getValue());
                 })
                 .toList();
     }

@@ -2,9 +2,9 @@ package ru.tggc.capybaratelegrambot.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.DefaultMessageHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
@@ -58,7 +58,7 @@ public class DefaultMessageHandler extends TextHandler {
     }
 
     private Response slots(CapybaraContext historyDto, String bet) {
-        return Response.of(casinoService.slots(historyDto, Long.parseLong(bet)), historyDto);
+        return casinoService.slots(historyDto, Long.parseLong(bet));
     }
 
     private Response changeName(CapybaraContext historyDto, String text) {
