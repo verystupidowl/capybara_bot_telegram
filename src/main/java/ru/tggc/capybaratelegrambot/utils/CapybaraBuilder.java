@@ -5,12 +5,13 @@ import ru.tggc.capybaratelegrambot.domain.model.BigJob;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Chat;
 import ru.tggc.capybaratelegrambot.domain.model.Improvement;
-import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.Level;
+import ru.tggc.capybaratelegrambot.domain.model.Race;
 import ru.tggc.capybaratelegrambot.domain.model.User;
+import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
-import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
+import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
@@ -54,10 +55,13 @@ public class CapybaraBuilder {
                 .workAction(new WorkAction())
                 .workType(WorkType.NONE)
                 .build();
+        Race race = Race.builder()
+                .defeats(0)
+                .wins(0)
+                .raceAction(new RaceAction(5))
+                .build();
         return Capybara.builder()
                 .name(name)
-                .wins(0)
-                .defeats(0)
                 .currency(100L)
                 .created(LocalDateTime.now())
                 .level(level)
@@ -66,7 +70,7 @@ public class CapybaraBuilder {
                 .user(user)
                 .tea(tea)
                 .photo(RandomUtils.getRandomDefaultPhoto())
-                .raceAction(new RaceAction(5))
+                .race(race)
                 .chat(chat)
                 .work(work)
                 .improvement(improvement)

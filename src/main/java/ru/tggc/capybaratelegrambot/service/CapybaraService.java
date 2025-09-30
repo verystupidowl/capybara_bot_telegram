@@ -237,7 +237,7 @@ public class CapybaraService {
         User user = userService.getUserById(userId);
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(IllegalArgumentException::new);
-        int size = capybaraRepository.findByChatId(chatId).size();
+        int size = capybaraRepository.countByChatId(chatId);
         Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
         capybaraRepository.save(capybara);
         return PhotoDto.builder()
@@ -282,12 +282,12 @@ public class CapybaraService {
     }
 
     public void doMassage(CapybaraContext ctx) {
-        Capybara capybara = getCapybaraByContext(ctx);
+        Capybara capybara = getRaceCapybara(ctx);
         if (capybara.getCurrency() <= 50) {
             throw new CapybaraHasNoMoneyException();
         }
         capybara.setCurrency(capybara.getCurrency() - 50);
-        capybara.getRaceAction().setCharges(capybara.getRaceAction().getMaxCharges());
+        capybara.getRace().getRaceAction().setCharges(capybara.getRace().getRaceAction().getMaxCharges());
 
         capybaraRepository.save(capybara);
     }

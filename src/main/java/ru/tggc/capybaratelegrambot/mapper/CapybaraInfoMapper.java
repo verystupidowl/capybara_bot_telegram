@@ -39,8 +39,8 @@ public class CapybaraInfoMapper {
         String improvement = null;
         Boolean canSatiety = capybara.getSatiety().canPerform();
         String satietyTime = timedActionService.getStatus(capybara.getSatiety());
-        Boolean canRace = capybara.getRaceAction().canPerform();
-        String raceTime = timedActionService.getStatus(capybara.getRaceAction());
+        Boolean canRace = capybara.getRace().getRaceAction().canPerform();
+        String raceTime = timedActionService.getStatus(capybara.getRace().getRaceAction());
         if (capybara.getImprovement() != null) {
             improvement = capybara.getImprovement().getImprovementValue().getLabel();
         }

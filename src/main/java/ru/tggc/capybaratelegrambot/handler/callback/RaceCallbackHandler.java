@@ -1,12 +1,9 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
-import com.pengrad.telegrambot.model.CallbackQuery;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.annotation.params.CallbackParam;
 import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
@@ -29,52 +26,45 @@ public class RaceCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("improve_pills")
-    public Response improvePills(@MessageId int messageId,
-                                 @Ctx CapybaraContext ctx) {
+    public Response improvePills(@Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.ANTI_LOSE);
-        return editSimpleMessage(ctx.chatId(), messageId, "ur capy taken a pill");
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "ur capy taken a pill");
     }
 
     @CallbackHandle("improve_watermelon")
-    public Response improveWatermelon(@MessageId int messageId,
-                                      @Ctx CapybaraContext ctx) {
+    public Response improveWatermelon(@Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.WATERMELON);
-        return editSimpleMessage(ctx.chatId(), messageId, "ur capy eaten a watermelon");
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "ur capy eaten a watermelon");
     }
 
     @CallbackHandle("improve_boots")
-    public Response improveBoots(@MessageId int messageId,
-                                 @Ctx CapybaraContext ctx) {
+    public Response improveBoots(@Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.BOOTS);
-        return editSimpleMessage(ctx.chatId(), messageId, "ur capy wears boots");
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "ur capy wears boots");
     }
 
     @CallbackHandle("buy_improve")
-    public Response buyImprove(@MessageId int messageId,
-                               @Ctx CapybaraContext ctx) {
+    public Response buyImprove(@Ctx CapybaraContext ctx) {
         Capybara capybara = capybaraService.getCapybaraByContext(ctx);
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
-            return editSimpleMessage(ctx.chatId(), messageId, "choose one", inlineCreator.improvements());
+            return editSimpleMessage(ctx.chatId(), ctx.messageId(), "choose one", inlineCreator.improvements());
         }
-        return editSimpleMessage(ctx.chatId(), messageId, "u already have an improvement");
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "u already have an improvement");
     }
 
     @CallbackHandle("do_massage")
-    public Response doMassage(@MessageId int messageId,
-                              @Ctx CapybaraContext ctx) {
+    public Response doMassage(@Ctx CapybaraContext ctx) {
         capybaraService.doMassage(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "u did a massage");
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "u did a massage");
     }
 
     @CallbackHandle("refuse_race")
-    public Response refuseRace(@MessageId int messageId,
-                               @Ctx CapybaraContext ctx) {
+    public Response refuseRace(@Ctx CapybaraContext ctx) {
         return raceService.refuseRace(ctx);
     }
 
     @CallbackHandle("accept_race")
-    public Response acceptRace(@CallbackParam CallbackQuery query,
-                               @Ctx CapybaraContext ctx) {
+    public Response acceptRace(@Ctx CapybaraContext ctx) {
         return raceService.acceptRace(ctx);
     }
 }
