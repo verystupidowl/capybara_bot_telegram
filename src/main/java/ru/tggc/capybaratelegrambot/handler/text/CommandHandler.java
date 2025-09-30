@@ -9,7 +9,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.TopCapybaraDto;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.utils.Text;
@@ -23,7 +23,17 @@ public class CommandHandler extends TextHandler {
     private final CapybaraService capybaraService;
     private final InlineKeyboardCreator inlineCreator;
 
-    @MessageHandle("/command_list@capybara_pet_bot")
+    @MessageHandle(value = "/start", canPrivate = true, canPublic = false)
+    public Response start(@ChatId long chatId) {
+        PhotoDto photoDto = PhotoDto.builder()
+                .chatId(chatId)
+                .caption(Text.START)
+                .url("https://hi-news.ru/wp-content/uploads/2025/07/spokoimaya-kapibara-1-e1752078102391-750x523.jpg")
+                .build();
+        return sendSimplePhoto(photoDto);
+    }
+
+    @MessageHandle(value = "/command_list@capybara_pet_bot", canPrivate = true)
     public Response sendCommandList(@ChatId long chatId) {
         return sendSimpleMessage(chatId, Text.LIST_OF_COMMANDS);
     }
@@ -40,7 +50,7 @@ public class CommandHandler extends TextHandler {
         return sendSimplePhoto(photoDto);
     }
 
-    @MessageHandle("/top_capybar@capybara_pet_bot")
+    @MessageHandle(value = "/top_capybar@capybara_pet_bot", canPrivate = true)
     public Response top(@ChatId long chatId) {
         List<TopCapybaraDto> topCapybaras = capybaraService.getTopCapybaras();
         PhotoDto photo = topCapybaras.getFirst().photoDto();

@@ -19,7 +19,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.FileDto;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.FileType;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.RaceRequest;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;

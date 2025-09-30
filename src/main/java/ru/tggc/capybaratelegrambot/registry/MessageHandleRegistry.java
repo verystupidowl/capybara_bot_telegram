@@ -8,7 +8,7 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
@@ -34,6 +34,16 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
                                     UserRateLimiterService rateLimiterService) {
         super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
         this.historyService = historyService;
+    }
+
+    @Override
+    protected boolean canRequestBePublic(Method method) {
+        return method.getAnnotation(MessageHandle.class).canPublic();
+    }
+
+    @Override
+    protected boolean canRequestBePrivate(Method method) {
+        return method.getAnnotation(MessageHandle.class).canPrivate();
     }
 
     @Override

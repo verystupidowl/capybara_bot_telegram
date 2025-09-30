@@ -6,7 +6,7 @@ import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
 import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.service.WeddingService;
 
 @BotHandler

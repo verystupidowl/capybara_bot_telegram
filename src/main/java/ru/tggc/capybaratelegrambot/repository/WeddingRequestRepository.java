@@ -13,7 +13,5 @@ public interface WeddingRequestRepository extends JpaRepository<WeddingRequest, 
 
     Optional<WeddingRequest> findByTargetIdAndStatusAndType(@Param("targetId") Long targetId, @Param("status") WeddingStatus status, WeddingRequestType type);
 
-    Optional<WeddingRequest> findByProposerIdAndStatus(Long proposerId, WeddingStatus status);
-
     boolean existsByProposerOrTarget(Capybara proposer, Capybara target);
 }

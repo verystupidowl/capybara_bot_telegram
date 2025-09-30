@@ -5,6 +5,7 @@ import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
+import ru.tggc.capybaratelegrambot.utils.Text;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class CriminalWorkProvider extends AbstractWorkProvider {
             }
         } else {
             capybara.setCurrency(capybara.getCurrency() - capybara.getCurrency() / 10);
-            messages.add("Твою капибару поймали! У нее забрали 10% долек...");
+            messages.add(Text.BUSTED);
         }
 
         return messages;

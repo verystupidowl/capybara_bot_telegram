@@ -14,6 +14,25 @@ public class Text {
     public final String ALREADY_ON_WORK = "Твоя капибара уже на работе!\n " +
             "Неужели ты хочешь, чтобы она работала на нескольких работах???";
 
+    public static final String START = """
+            Ну привет дружок-пирожок!
+            Я капибаработ, чтобы со мной поиграть, добавь меня в беседу и дай права администратора""";
+
+    public static final String DELETE_CAPYBARA = "Ты выкинул капибару! Надеюсь ты доволен!";
+
+    public static final String START_RACE = "Напиши ник пользователя, чью капибару ты хочешь вызвать на забег через @";
+
+    public static final String ANTI_LOSE = "Твоя капибара приняла антипроигрыш! Шанс победить 90%!!! Но при поражении 30 счастья твоей капибары уходит сопернику";
+
+    public static final String WATERMELON = "Твоя капибара съела целый арбуз! шанс победы уменьшается на 5%, но при поражении капибара не потеряет счастья.";
+
+    public static final String BOOTS = "Твоя капибара теперь носит модные удобные ботиночки. Твоя капибара будет бежать быстрее, шанс победить увеличен.";
+
+    public static final String GREETINGS = """
+            Привет! Я капибаработ!
+            Чтобы ты мог играть со мной, мне нужно дать права доступа
+            Как только ты это сделаешь, смело пиши "Взять капибару", чтобы начать играть\uD83D\uDCAB""";
+
     public String newLevel(String userId, String name) {
         return "[id" + userId + "|" + name +
                 "],Ваша капибара достигла нового уровня! Поздравляю!";
@@ -224,13 +243,6 @@ public class Text {
             Стоимость - 100 арбузных долек.
             
             4. \uD83D\uDC4C\uD83C\uDFFBНичего: Начать проект без улучшений""";
-
-    private static String timeToString(long secs) {
-        long hour = secs / 3600;
-        long min = secs / 60 % 60;
-        long sec = secs % 60;
-        return String.format("%02d:%02d:%02d", hour, min, sec);
-    }
 
     private static String renderStaminaBar(double percent) {
         int totalBlocks = 5;

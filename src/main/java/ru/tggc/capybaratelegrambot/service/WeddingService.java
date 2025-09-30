@@ -63,6 +63,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 .build();
     }
 
+    @Transactional
     public String respondUnWedding(CapybaraContext ctx, boolean accept) {
         Capybara accepter = capybaraService.getCapybaraByContext(ctx);
         WeddingRequest request = weddingRequestRepository.findByTargetIdAndStatusAndType(

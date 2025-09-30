@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.ListableBeanFactory;
 import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
@@ -18,7 +19,7 @@ import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.annotation.params.UserId;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
@@ -104,14 +105,8 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
         Response response;
         long chatId = chat.id();
         try {
-            UserRole[] requiredRoles = getRequiredRoles(method);
-            if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
-                return Response.empty();
-            }
-            Response ddosResponse = rateLimiter.checkUser(from, chat);
-            if (ddosResponse != null) {
-                return ddosResponse;
-            }
+            Response checkedRequest = checkRequest(from, method, chat);
+            if (checkedRequest != null) return checkedRequest;
             rateLimiter.lock(from.id());
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException | CompletionException e) {
@@ -167,6 +162,25 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
             return CompletableFuture.completedFuture(null);
         });
     }
+
+    @Nullable
+    private Response checkRequest(User from, Method method, Chat chat) {
+        UserRole[] requiredRoles = getRequiredRoles(method);
+        if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
+            return Response.empty();
+        }
+        boolean isPrivateMessage = from.id().equals(chat.id());
+        boolean canRequestBePrivate = canRequestBePrivate(method);
+        boolean canRequestBePublic = canRequestBePublic(method);
+        if ((isPrivateMessage && canRequestBePrivate) || (!isPrivateMessage && canRequestBePublic)) {
+            return rateLimiter.checkUser(from, chat);
+        }
+        return Response.empty();
+    }
+
+    protected abstract boolean canRequestBePublic(Method method);
+
+    protected abstract boolean canRequestBePrivate(Method method);
 
     protected abstract UserRole[] getRequiredRoles(Method method);
 

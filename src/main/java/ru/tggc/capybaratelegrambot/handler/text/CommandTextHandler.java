@@ -8,7 +8,7 @@ import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
 
@@ -42,7 +42,7 @@ public class CommandTextHandler extends TextHandler {
                                   @MessageParam Message message,
                                   @Ctx CapybaraContext ctx) {
         String targetUsername = getTargetUsername(username, message);
-        capybaraService.transferMoney(ctx, targetUsername, amount);
+        capybaraService.transferMoney(ctx, targetUsername, amount); //todo доработать
 
         return sendSimpleMessage(ctx.chatId(), "ok");
     }

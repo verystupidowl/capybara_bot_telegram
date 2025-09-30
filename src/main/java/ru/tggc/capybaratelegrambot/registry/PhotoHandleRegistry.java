@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.PhotoHandle;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
@@ -28,6 +28,16 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
                                   UserService userService,
                                   UserRateLimiterService rateLimiterService) {
         super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+    }
+
+    @Override
+    protected boolean canRequestBePublic(Method method) {
+        return method.getAnnotation(PhotoHandle.class).canPublic();
+    }
+
+    @Override
+    protected boolean canRequestBePrivate(Method method) {
+        return method.getAnnotation(PhotoHandle.class).canPrivate();
     }
 
     @Override

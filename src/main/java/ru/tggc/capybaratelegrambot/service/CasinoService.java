@@ -8,9 +8,10 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
@@ -59,6 +60,7 @@ public class CasinoService {
         map.put(historyDto, ctx);
     }
 
+    @Transactional
     public PhotoDto casino(CapybaraContext historyDto, CasinoTargetType type) {
         long chatId = historyDto.chatId();
         Capybara capybara = capybaraService.findCapybara(historyDto)
@@ -105,6 +107,7 @@ public class CasinoService {
         return response;
     }
 
+    @Transactional
     public Response slots(CapybaraContext ctx, long bet) {
         throwIf(!map.containsKey(ctx), () -> new CapybaraException("Ты не играешь!"));
 
