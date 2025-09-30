@@ -5,8 +5,8 @@ import lombok.Builder;
 @Builder
 public record MyCapybaraDto(
         String name,
-        Integer wins,
-        Integer defeats,
+        Long wins,
+        Long defeats,
         Integer level,
         String type,
         String job,

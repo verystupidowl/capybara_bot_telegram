@@ -1,10 +1,9 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
 import lombok.RequiredArgsConstructor;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
@@ -22,10 +21,9 @@ public class WeddingHandler extends CallbackHandler {
     }
 
     @CallbackHandle("accept_unwedding")
-    public Response unwedding(@Ctx CapybaraContext ctx,
-                          @MessageId int messageId) {
+    public Response unwedding(@Ctx CapybaraContext ctx) {
         String message = weddingService.respondUnWedding(ctx, true);
-        return editSimpleMessage(ctx.chatId(), messageId, message);
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), message);
     }
 
     @CallbackHandle("refuse_wedding")
@@ -35,9 +33,8 @@ public class WeddingHandler extends CallbackHandler {
     }
 
     @CallbackHandle("refuse_unwedding")
-    public Response refuseUnwedding(@Ctx CapybaraContext ctx,
-                                @MessageId int messageId) {
+    public Response refuseUnwedding(@Ctx CapybaraContext ctx) {
         String message = weddingService.respondUnWedding(ctx, false);
-        return editSimpleMessage(ctx.chatId(), messageId, message);
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), message);
     }
 }

@@ -2,12 +2,12 @@ package ru.tggc.capybaratelegrambot.handler.callback;
 
 import com.pengrad.telegrambot.request.DeleteMessage;
 import lombok.RequiredArgsConstructor;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
+import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
+import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
@@ -50,8 +50,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("take_from_tea")
-    public Response takeFromTea(@MessageId int messageId,
-                                @Ctx CapybaraContext ctx) {
+    public Response takeFromTea(@Ctx CapybaraContext ctx) {
         capybaraService.takeFromTea(ctx);
         return sendSimpleMessage(ctx.chatId(), "ok");
     }
@@ -62,18 +61,18 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("fatten")
-    public Response fatten(@Ctx CapybaraContext ctx, @MessageId int messageId) {
-        return editPhotos(messageId, capybaraService.fatten(ctx));
+    public Response fatten(@Ctx CapybaraContext ctx) {
+        return editPhotos(ctx.messageId(), capybaraService.fatten(ctx));
     }
 
     @CallbackHandle("feed")
-    public Response feed(@Ctx CapybaraContext ctx, @MessageId int messageId) {
-        return editPhotos(messageId, capybaraService.feed(ctx));
+    public Response feed(@Ctx CapybaraContext ctx) {
+        return editPhotos(ctx.messageId(), capybaraService.feed(ctx));
     }
 
     @CallbackHandle("make_happy")
-    public Response makeHappy(@Ctx CapybaraContext ctx, @MessageId int messageId) {
-        return editPhotos(messageId, capybaraService.makeHappy(ctx));
+    public Response makeHappy(@Ctx CapybaraContext ctx) {
+        return editPhotos(ctx.messageId(), capybaraService.makeHappy(ctx));
     }
 
     @CallbackHandle("feed_fatten")
@@ -82,64 +81,62 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("set_default_photo")
-    public Response setDefaultPhoto(@MessageId int messageId,
-                                    @Ctx CapybaraContext ctx) {
+    public Response setDefaultPhoto(@Ctx CapybaraContext ctx) {
         String response = capybaraService.setDefaultPhoto(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, response);
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), response);
     }
 
     @CallbackHandle("not_change")
-    public Response notChange(@MessageId int messageId,
-                              @Ctx CapybaraContext ctx) {
+    public Response notChange(@Ctx CapybaraContext ctx) {
         historyService.removeFromHistory(ctx);
-        return editSimpleMessage(ctx.chatId(), messageId, "Ok");
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "Ok");
     }
 
     @CallbackHandle("start_change_photo")
-    public Response startChangePhoto(@MessageId int messageId,
-                                     @Ctx CapybaraContext ctx) {
+    public Response startChangePhoto(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_PHOTO);
-        return editSimpleMessage(ctx.chatId(), messageId, Text.START_CHANGE_PHOTO, inlineCreator.defaultPhoto());
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.START_CHANGE_PHOTO, inlineCreator.defaultPhoto());
     }
 
     @CallbackHandle("start_change_name")
-    public Response startChangeName(@MessageId int messageId,
-                                    @Ctx CapybaraContext ctx) {
+    public Response startChangeName(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_NAME);
-        return editSimpleMessage(ctx.chatId(), messageId, Text.START_CHANGE_NAME, inlineCreator.notChange());
+        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.START_CHANGE_NAME, inlineCreator.notChange());
     }
 
     @CallbackHandle("go_to_main")
-    public Response sendGoToMainMessage(@MessageId int messageId,
-                                        @Ctx CapybaraContext ctx) {
+    public Response sendGoToMainMessage(@Ctx CapybaraContext ctx) {
         MyCapybaraDto capybara = capybaraService.getMyCapybara(ctx);
         return editMessageCaption(
                 ctx.chatId(),
-                messageId,
+                ctx.messageId(),
                 Text.getMyCapybara(capybara),
                 inlineCreator.myCapybaraKeyboard(capybara)
         );
     }
 
     @CallbackHandle("info")
-    public Response sendInfoMessage(@MessageId int messageId,
-                                    @Ctx CapybaraContext ctx) {
+    public Response sendInfoMessage(@Ctx CapybaraContext ctx) {
         CapybaraInfoDto info = capybaraService.getInfo(ctx);
-        return editMessageCaption(ctx.chatId(), messageId, Text.getInfo(info), inlineCreator.infoKeyboard(info));
+        return editMessageCaption(
+                ctx.chatId(),
+                ctx.messageId(),
+                Text.getInfo(info),
+                inlineCreator.infoKeyboard(info)
+        );
     }
 
     @CallbackHandle("casino_${target}")
-    public Response casino(@MessageId int messageId,
-                           @Ctx CapybaraContext ctx,
+    public Response casino(@Ctx CapybaraContext ctx,
                            @HandleParam("target") CasinoTargetType target) {
         PhotoDto response = casinoService.casino(ctx, target);
-        return editPhoto(ctx.chatId(), messageId, response.getUrl(), response.getCaption());
+        return editPhoto(ctx.chatId(), ctx.messageId(), response.getUrl(), response.getCaption());
     }
 
     @CallbackHandle("take_capybara")
-    public Response takeCapybara(@Ctx CapybaraContext ctx, @MessageId int messageId) {
+    public Response takeCapybara(@Ctx CapybaraContext ctx) {
         PhotoDto photoDto = capybaraService.saveCapybara(ctx);
         return sendSimplePhoto(photoDto)
-                .andThen(Response.of(new DeleteMessage(ctx.chatId(), messageId)));
+                .andThen(Response.of(new DeleteMessage(ctx.chatId(), ctx.messageId())));
     }
 }

@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.aop.annotation.handle;
+package ru.tggc.capybaratelegrambot.annotation.handle;
 
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 
@@ -9,11 +9,9 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface CallbackHandle {
+public @interface PhotoHandle {
 
     String value();
 
     UserRole[] requiredRoles() default {};
-
-    boolean handlePrivate() default false;
 }

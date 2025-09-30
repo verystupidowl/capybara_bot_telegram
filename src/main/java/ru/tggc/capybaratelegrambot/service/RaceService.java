@@ -225,8 +225,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
 
     @Transactional
     public void updateWinsAndDefeats(Capybara winner, Capybara loser) {
-        winner.setWins(winner.getWins() + 1);
-        loser.setDefeats(loser.getDefeats() + 1);
+        winner.getRace().setWins(winner.getRace().getWins() + 1);
+        loser.getRace().setDefeats(loser.getRace().getDefeats() + 1);
     }
 
     @Transactional
@@ -237,12 +237,12 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
 
     @Transactional
     public void afterRaceUpdate(Capybara c) {
-        c.getRaceAction().recordRace();
+        c.getRace().getRaceAction().recordRace();
     }
 
     @Transactional
     public void checkStamina(Capybara c) {
-        RaceAction raceAction = c.getRaceAction();
+        RaceAction raceAction = c.getRace().getRaceAction();
         throwIf(!raceAction.canPerform(), () -> {
             String status = getStatus(raceAction);
             InlineKeyboardMarkup markup = inlineKeyboardCreator.raceMassage();

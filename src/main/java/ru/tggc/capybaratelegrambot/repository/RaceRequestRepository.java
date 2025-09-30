@@ -14,6 +14,7 @@ public interface RaceRequestRepository extends JpaRepository<RaceRequest, Long> 
             "challenger.improvement", "challenger.improvement.improvementValue",
             "challenger.level",
             "challenger.happiness",
+            "challenger.race"
     })
     Optional<RaceRequest> findByOpponentId(Long id);
 

@@ -8,15 +8,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.DefaultMessageHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.CallbackParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.ChatId;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.UserId;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.CallbackParam;
+import ru.tggc.capybaratelegrambot.annotation.params.ChatId;
+import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
+import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
+import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
+import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
+import ru.tggc.capybaratelegrambot.annotation.params.UserId;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -113,8 +114,8 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
             }
             rateLimiter.lock(from.id());
             response = (Response) method.invoke(bean, args);
-        } catch (InvocationTargetException e) {
-            Throwable cause = e.getCause();
+        } catch (InvocationTargetException | CompletionException e) {
+            Throwable cause = unwrap(e);
             switch (cause) {
                 case CapybaraNotFoundException ex -> {
                     log.info(ex.getMessage(), chatId);
@@ -134,7 +135,7 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
                 }
                 case CapybaraHasNoMoneyException ex -> {
                     log.info(ex.getMessage());
-                    String messageToSend = "ur capy has no money(";
+                    String messageToSend = Text.NO_MONEY;
                     response = Response.of(new SendMessage(chatId, messageToSend));
                 }
                 case CapybaraTiredException ex -> {
@@ -200,5 +201,15 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
 
     protected String buildMessageToAdmin(String message, Chat chat, User from) {
         return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
+    }
+
+    private Throwable unwrap(Throwable e) {
+        if (e instanceof InvocationTargetException ite && ite.getCause() != null) {
+            return unwrap(ite.getCause());
+        }
+        if (e instanceof CompletionException ce && ce.getCause() != null) {
+            return unwrap(ce.getCause());
+        }
+        return e;
     }
 }

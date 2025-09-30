@@ -1,7 +1,6 @@
 package ru.tggc.capybaratelegrambot.domain.model;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +17,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
-import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.WeddingGift;
@@ -45,8 +43,6 @@ public class Capybara {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private Integer wins;
-    private Integer defeats;
     private Long currency;
     private LocalDateTime created;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,8 +52,8 @@ public class Capybara {
     boolean deleted = false;
     @OneToOne
     private RaceRequest raceRequest;
-    @Embedded
-    private RaceAction raceAction;
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Race race;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Level level;
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)

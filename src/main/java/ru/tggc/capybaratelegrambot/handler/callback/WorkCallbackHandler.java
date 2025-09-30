@@ -1,11 +1,10 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
 import lombok.RequiredArgsConstructor;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.HandleParam;
-import ru.tggc.capybaratelegrambot.aop.annotation.params.MessageId;
+import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
+import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
+import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
@@ -32,26 +31,24 @@ public class WorkCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("set_job_${jobType}")
-    public Response setJob(@MessageId int messageId,
-                           @Ctx CapybaraContext ctx,
+    public Response setJob(@Ctx CapybaraContext ctx,
                            @HandleParam("jobType") WorkType workType) {
         String photoUrl = capybaraService.setJob(ctx, workType);
         return editPhoto(
                 ctx.chatId(),
-                messageId,
+                ctx.messageId(),
                 photoUrl,
                 "Твоя капибара теперь " + workType.getLabel() + "! Поздравляю!"
         );
     }
 
     @CallbackHandle("get_job")
-    public Response getJob(@MessageId int messageId,
-                           @Ctx CapybaraContext ctx) {
+    public Response getJob(@Ctx CapybaraContext ctx) {
         boolean hasWork = capybaraService.hasWork(ctx);
         if (!hasWork) {
-            return editMessageCaption(ctx.chatId(), messageId, "Выбери работу", inlineCreator.newJob());
+            return editMessageCaption(ctx.chatId(), ctx.messageId(), "Выбери работу", inlineCreator.newJob());
         } else {
-            return editMessageCaption(ctx.chatId(), messageId, "Твоя капибара уже имеет работу", null);
+            return editMessageCaption(ctx.chatId(), ctx.messageId(), "Твоя капибара уже имеет работу", null);
         }
     }
 }

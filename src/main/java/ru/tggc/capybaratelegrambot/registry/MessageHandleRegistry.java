@@ -6,7 +6,7 @@ import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.aop.annotation.handle.MessageHandle;
+import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;

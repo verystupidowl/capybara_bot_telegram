@@ -3,7 +3,6 @@ package ru.tggc.capybaratelegrambot.repository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.User;
@@ -32,12 +31,15 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
     })
     Optional<Capybara> findByUserIdAndChatId(Long userId, Long chatId);
 
-    List<Capybara> findByChatId(Long chatId);
+    int countByChatId(Long chatId);
 
     String user(User user);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM capybara ORDER BY level LIMIT 10")
-    List<Capybara> getTopCapybaras();
+    @EntityGraph(attributePaths = {
+            "photo",
+            "level"
+    })
+    List<Capybara> findTop10ByOrderByLevelValueDesc();
 
     @EntityGraph(attributePaths = {
             "level", "level.type",
@@ -45,7 +47,8 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "happiness",
             "satiety",
             "spouse",
-            "photo"
+            "photo",
+            "race"
     })
     Optional<Capybara> findMyCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
@@ -54,7 +57,8 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "happiness",
             "work", "work.workType", "work.workAction",
             "improvement",
-            "satiety"
+            "satiety",
+            "race"
     })
     Optional<Capybara> findInfoCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
@@ -81,7 +85,8 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "improvement", "improvement.improvementValue",
             "level",
             "happiness",
-            "chat"
+            "chat",
+            "race"
     })
     Optional<Capybara> findRaceCapybaraByUserIdAndChatId(Long userId, Long chatId);
 }
