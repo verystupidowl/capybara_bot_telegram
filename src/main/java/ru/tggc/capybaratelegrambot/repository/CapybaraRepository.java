@@ -89,4 +89,10 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "race"
     })
     Optional<Capybara> findRaceCapybaraByUserIdAndChatId(Long userId, Long chatId);
+
+    @EntityGraph(attributePaths = {
+            "level",
+            "fight"
+    })
+    Optional<Capybara> findFightCapybaraByChatIdAndUserId(Long chatId, Long userId);
 }

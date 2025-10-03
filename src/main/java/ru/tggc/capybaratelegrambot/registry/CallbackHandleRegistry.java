@@ -79,7 +79,7 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
         String template = method.getAnnotation(CallbackHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;
 
-        Object[] args = buildArgs(method, query, chatId, from.id(), messageId, matcher, query);
+        Object[] args = buildArgs(method, query, chatId, from, messageId, matcher, query);
         return invokeWithCatch(from, method, beans.get(template), args, chat);
     }
 }

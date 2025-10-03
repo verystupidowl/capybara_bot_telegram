@@ -18,9 +18,10 @@ import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.annotation.params.UserId;
+import ru.tggc.capybaratelegrambot.annotation.params.Username;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
@@ -187,7 +188,7 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
     protected Object[] buildArgs(Method method,
                                  Object update,
                                  long chatId,
-                                 long userId,
+                                 User from,
                                  int messageId,
                                  Matcher matcher,
                                  U param) {
@@ -195,8 +196,10 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
                 .map(parameter -> switch (parameter) {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
                     case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
-                    case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId, messageId);
+                    case Parameter p when p.isAnnotationPresent(UserId.class) -> from.id();
+                    case Parameter p when p.isAnnotationPresent(Username.class) -> from.username();
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) ->
+                            new CapybaraContext(chatId, from.id(), messageId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;

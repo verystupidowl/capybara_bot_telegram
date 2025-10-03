@@ -11,6 +11,10 @@ public record CapybaraContext(
         int messageId
 ) {
 
+    public CapybaraContext(long chatId, long userId) {
+        this(chatId, userId, 0);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(chatId, userId);

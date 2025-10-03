@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraTeaDto;
+import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.TopCapybaraDto;
@@ -27,6 +28,11 @@ import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
 import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffShield;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffSpecial;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffWeapon;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
@@ -37,6 +43,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraTeaMapper;
+import ru.tggc.capybaratelegrambot.mapper.FightCapybaraMapper;
 import ru.tggc.capybaratelegrambot.mapper.MyCapybaraMapper;
 import ru.tggc.capybaratelegrambot.provider.WorkProvider;
 import ru.tggc.capybaratelegrambot.provider.WorkProviderFactory;
@@ -69,6 +76,7 @@ public class CapybaraService {
     private final CapybaraInfoMapper capybaraInfoMapper;
     private final InlineKeyboardCreator inlineKeyboardCreator;
     private final ChatRepository chatRepository;
+    private final FightCapybaraMapper fightCapybaraMapper;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
@@ -76,6 +84,10 @@ public class CapybaraService {
     @Transactional(readOnly = true)
     public Optional<Capybara> findCapybara(CapybaraContext ctx) {
         return capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
+    }
+
+    public boolean existsCapybara(CapybaraContext ctx) {
+        return capybaraRepository.existsCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
     }
 
     @Transactional(readOnly = true)
@@ -445,7 +457,7 @@ public class CapybaraService {
     }
 
     private void checkCurrency(Capybara capybara, Integer currency) {
-        throwIf(capybara.getCurrency() <= currency, CapybaraHasNoMoneyException::new);
+        throwIf(capybara.getCurrency() < currency, CapybaraHasNoMoneyException::new);
     }
 
     @Transactional
@@ -483,5 +495,70 @@ public class CapybaraService {
             photo.setType(FileType.DOC);
         }
         capybaraRepository.save(capybara);
+    }
+
+    public Capybara getFightCapybara(Long chatId, Long userId) {
+        return capybaraRepository.findFightCapybaraByChatIdAndUserId(chatId, userId)
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    public FightCapybaraDto getFightInfo(CapybaraContext ctx) {
+        Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
+        return fightCapybaraMapper.toDto(fightCapybara.getFight());
+    }
+
+    public void buyBuff(CapybaraContext ctx, String buff, BuffType buffType) {
+        Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
+        switch (buffType) {
+            case ATTACK -> {
+                throwIf(
+                        fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 weapon!")
+                );
+                buyWeapon(fightCapybara, FightBuffWeapon.valueOf(buff));
+            }
+            case DEFEND -> {
+                throwIf(
+                        fightCapybara.getFight().getShield() != FightBuffShield.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 shield!")
+                );
+                buyShield(fightCapybara, FightBuffShield.valueOf(buff));
+            }
+            case HEAL -> {
+                throwIf(
+                        fightCapybara.getFight().getHeal() != FightBuffHeal.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 heal!")
+                );
+                buyHeal(fightCapybara, FightBuffHeal.valueOf(buff));
+            }
+            case SPECIAL -> {
+                throwIf(
+                        fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 special!")
+                );
+                buySpecial(fightCapybara, FightBuffSpecial.valueOf(buff));
+            }
+        }
+        capybaraRepository.save(fightCapybara);
+    }
+
+    private void buySpecial(Capybara fightCapybara, FightBuffSpecial fightBuffSpecial) {
+        checkCurrency(fightCapybara, fightBuffSpecial.getCost());
+        fightCapybara.getFight().setSpecial(fightBuffSpecial);
+    }
+
+    private void buyHeal(Capybara fightCapybara, FightBuffHeal fightBuffHeal) {
+        checkCurrency(fightCapybara, fightBuffHeal.getCost());
+        fightCapybara.getFight().setHeal(fightBuffHeal);
+    }
+
+    private void buyShield(Capybara fightCapybara, FightBuffShield fightBuffShield) {
+        checkCurrency(fightCapybara, fightBuffShield.getCost());
+        fightCapybara.getFight().setShield(fightBuffShield);
+    }
+
+    private void buyWeapon(Capybara fightCapybara, FightBuffWeapon fightBuffWeapon) {
+        checkCurrency(fightCapybara, fightBuffWeapon.getCost());
+        fightCapybara.getFight().setWeapon(fightBuffWeapon);
     }
 }

@@ -21,7 +21,7 @@ public abstract class AbstractWorkProvider implements WorkProvider {
     public List<String> takeFromWork(Capybara capybara) {
         checkHasWork(capybara);
         Work work = capybara.getWork();
-        throwIf(!work.getWorkAction().canTakeFrom(), () -> new CapybaraException("u cant take ur capy"));
+        work.getWorkAction().takeFromWork();
 
         int salary = getJobType().getCalculateSalary().apply(work.getIndex());
         capybara.setCurrency(capybara.getCurrency() + salary);

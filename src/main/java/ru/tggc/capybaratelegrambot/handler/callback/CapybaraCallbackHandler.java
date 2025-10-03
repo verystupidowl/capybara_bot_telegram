@@ -19,6 +19,7 @@ import ru.tggc.capybaratelegrambot.service.CasinoService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
 import ru.tggc.capybaratelegrambot.utils.CasinoTargetType;
 import ru.tggc.capybaratelegrambot.utils.Text;
+import ru.tggc.capybaratelegrambot.utils.TextBuilder;
 
 import static ru.tggc.capybaratelegrambot.utils.HistoryType.CHANGE_NAME;
 import static ru.tggc.capybaratelegrambot.utils.HistoryType.CHANGE_PHOTO;
@@ -98,7 +99,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
         return editMessageCaption(
                 ctx.chatId(),
                 ctx.messageId(),
-                Text.getMyCapybara(capybara),
+                TextBuilder.getMyCapybara(capybara),
                 inlineCreator.myCapybaraKeyboard(capybara)
         );
     }

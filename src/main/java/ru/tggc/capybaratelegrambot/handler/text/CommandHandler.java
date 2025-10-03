@@ -13,6 +13,7 @@ import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.utils.Text;
+import ru.tggc.capybaratelegrambot.utils.TextBuilder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class CommandHandler extends TextHandler {
         MyCapybaraDto dto = capybaraService.getMyCapybara(ctx);
         PhotoDto photoDto = PhotoDto.builder()
                 .url(dto.photo())
-                .caption(Text.getMyCapybara(dto))
+                .caption(TextBuilder.getMyCapybara(dto))
                 .markup(inlineCreator.myCapybaraKeyboard(dto))
                 .chatId(ctx.chatId())
                 .build();

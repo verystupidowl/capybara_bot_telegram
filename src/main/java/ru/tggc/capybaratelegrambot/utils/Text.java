@@ -2,9 +2,19 @@ package ru.tggc.capybaratelegrambot.utils;
 
 
 import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.NotNull;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraTeaDto;
-import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
+import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffEnum;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffShield;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffSpecial;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffWeapon;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @UtilityClass
 public class Text {
@@ -32,6 +42,18 @@ public class Text {
             Привет! Я капибаработ!
             Чтобы ты мог играть со мной, мне нужно дать права доступа
             Как только ты это сделаешь, смело пиши "Взять капибару", чтобы начать играть\uD83D\uDCAB""";
+
+    public static final String MY_CAPYBARA = """
+            Твоя капибара:
+            ✨Имя: ${name}
+            \uD83C\uDF1FУровень: ${level}
+            \uD83D\uDC51Тип: ${type}
+            \uD83E\uDD71Бодрость: ${stamina}
+            \uD83D\uDCBCРабота: ${work}
+            \uD83C\uDF49Дольки арбуза: ${currency}
+            \uD83D\uDC8DБрак: ${wedding}
+            \uD83C\uDF3DСытость: ${satiety}
+            \uD83E\uDD29Счастье: ${happiness}""";
 
     public String newLevel(String userId, String name) {
         return "[id" + userId + "|" + name +
@@ -96,23 +118,9 @@ public class Text {
             
             Список будет пополняться\uD83D\uDCC8""";
 
-    public String getMyCapybara(MyCapybaraDto capybara) {
-        String wins = "\n\n\uD83E\uDD47Побед в забегах: " + capybara.wins() + "\n\uD83D\uDE14Поражений в забегах: " + capybara.defeats();
-        return "Твоя капибара:\n✨Имя: " + capybara.name() +
-                "\n\uD83C\uDF1FУровень капибары: " + capybara.level() +
-                "\n\uD83D\uDC51Тип капибары: " + capybara.type() +
-                "\n\uD83E\uDD71Бодрость капибары: " + renderStaminaBar(capybara.stamina()) +
-                "\n\uD83D\uDCBCРабота: " + capybara.job() +
-                "\n\uD83C\uDF49Дольки арбуза: " + capybara.currency() +
-                (capybara.wedding() != null ? "\n\uD83D\uDC8DБрак: " + capybara.wedding() : "") +
-                "\n\uD83C\uDF3DСытость капибары: " + capybara.satietyLevel() + "/" + capybara.satietyMaxLevel() +
-                "\n\uD83E\uDD29Счастье капибары: " + capybara.happinessLevel() + "/" + capybara.happinessMaxLevel() +
-                wins;
-    }
-
-    public String getTea(CapybaraTeaDto capybara, CapybaraTeaDto capybara1) {
-        return capybara.name()
-                + ", твой собеседник сегодня - " + capybara1.name() + "\nСчастье увеличено на 10";
+    public String getTea(CapybaraTeaDto c1, CapybaraTeaDto c2) {
+        return c1.name()
+                + ", твой собеседник сегодня - " + c2.name() + "\nСчастье увеличено на 10";
     }
 
     public String getCurrency(int random) {
@@ -244,14 +252,31 @@ public class Text {
             
             4. \uD83D\uDC4C\uD83C\uDFFBНичего: Начать проект без улучшений""";
 
-    private static String renderStaminaBar(double percent) {
-        int totalBlocks = 5;
-        int filledBlocks = (int) Math.round(percent / (100.0 / totalBlocks));
+    public static String getFightInfo(FightCapybaraDto fightInfo) {
+        StringBuilder sb = new StringBuilder("Информация о бое с боссом: \nМожно через: ");
+        if (fightInfo.canFight()) {
+            sb.append("Уже можно\n");
+        } else {
+            sb.append(fightInfo.fightTime()).append("\n");
+        }
+        sb.append("Твои улучшения:\n");
+        fightInfo.buffs().forEach(buff -> sb.append(buff.getTitle()).append("\n"));
+        return sb.toString();
+    }
 
-        return "["
-                + "█".repeat(filledBlocks)
-                + "░".repeat(totalBlocks - filledBlocks)
-                + "] "
-                + (int) percent + "%";
+    public static String getBuffs(BuffType buffType) {
+        return switch (buffType) {
+            case ATTACK -> getCollect(FightBuffWeapon.values());
+            case DEFEND -> getCollect(FightBuffShield.values());
+            case HEAL -> getCollect(FightBuffHeal.values());
+            case SPECIAL -> getCollect(FightBuffSpecial.values());
+        };
+    }
+
+    @NotNull
+    private static String getCollect(FightBuffEnum[] buff) {
+        return Arrays.stream(buff)
+                .map(v -> v.getTitle() + " - \uD83C\uDF49" + v.getCost() + "\n" + v.getDescription())
+                .collect(Collectors.joining("\n\n"));
     }
 }

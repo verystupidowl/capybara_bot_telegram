@@ -73,17 +73,7 @@ public class CasinoService {
         CasinoCtx ctx = map.get(historyDto);
         Long betAmount = ctx.getBet();
 
-        throwIf(capybara.getCurrency() < betAmount, () -> {
-            map.remove(historyDto);
-            return new CapybaraHasNoMoneyException();
-        });
-
-        long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
-
-        throwIf(betAmount < minBetAmount, () -> {
-            map.remove(historyDto);
-            return new CapybaraException("Минимальная твоя ставка - " + minBetAmount);
-        });
+        checkBet(historyDto, betAmount, capybara);
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         PhotoDto response = PhotoDto.builder()
@@ -116,10 +106,7 @@ public class CasinoService {
                     map.remove(ctx);
                     return new CapybaraNotFoundException();
                 });
-        throwIf(capybara.getCurrency() < bet, () -> {
-            map.remove(ctx);
-            return new CapybaraHasNoMoneyException();
-        });
+        checkBet(ctx, bet, capybara);
 
         return bot -> {
             Message response = bot.execute(new SendDice(ctx.chatId()).slotMachine()).message();
@@ -153,6 +140,19 @@ public class CasinoService {
             }, 2000, TimeUnit.MILLISECONDS);
             return future;
         };
+    }
+
+    private void checkBet(CapybaraContext ctx, long bet, Capybara capybara) {
+        throwIf(capybara.getCurrency() < bet, () -> {
+            map.remove(ctx);
+            return new CapybaraHasNoMoneyException();
+        });
+        long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
+
+        throwIf(bet < minBetAmount, () -> {
+            map.remove(ctx);
+            return new CapybaraException("Минимальная твоя ставка - " + minBetAmount);
+        });
     }
 
     @NotNull

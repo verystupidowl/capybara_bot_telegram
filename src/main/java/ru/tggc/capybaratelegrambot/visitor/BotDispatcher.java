@@ -77,7 +77,7 @@ public class BotDispatcher implements UpdateDispatcherVisitor {
 
     private void saveOrUpdateUser(User from, Chat chat) {
         ChatDto chatDto = new ChatDto(chat.id(), chat.title());
-        UserDto user = new UserDto(from.id().toString(), from.username());
+        UserDto user = new UserDto(from.id(), from.username());
         userService.saveOrUpdate(user, chatDto);
     }
 }
