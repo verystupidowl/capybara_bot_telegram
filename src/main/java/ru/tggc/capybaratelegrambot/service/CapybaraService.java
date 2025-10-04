@@ -533,7 +533,7 @@ public class CapybaraService {
             }
             case SPECIAL -> {
                 throwIf(
-                        fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
+                        fightCapybara.getFight().getSpecial() != FightBuffSpecial.NONE,
                         () -> new CapybaraException("Ur capy can only have 1 special!")
                 );
                 buySpecial(fightCapybara, FightBuffSpecial.valueOf(buff));

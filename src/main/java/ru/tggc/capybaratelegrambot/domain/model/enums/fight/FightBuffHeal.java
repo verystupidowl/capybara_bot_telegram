@@ -2,7 +2,8 @@ package ru.tggc.capybaratelegrambot.domain.model.enums.fight;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import ru.tggc.capybaratelegrambot.domain.dto.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.positive.AntiDebuffEffect;
 
 import java.util.function.Consumer;
 
@@ -11,8 +12,11 @@ import java.util.function.Consumer;
 public enum FightBuffHeal implements FightBuffEnum {
     NONE("Ничего", "Ничего не делает", 0, stats -> {
     }),
-    SHIELD_LEAF("🍃🛡 Лист щита", "Улучшает действие щита на 25%", 100,
-            player -> player.setBaseDefend(player.getBaseDefend() * 1.25));
+    HEALING_HERB("🌿 Зелье травницы", "Увеличивает восстановление хп на 25%", 100,
+            stats -> stats.setBaseHeal(stats.getBaseHeal() * 1.25)),
+    ANTI_DEBUFFS("\uD83E\uDDEAПротивоядие", "Исцеление снимает отрицательные эффекты", 75,
+            stats -> stats.getEffects().add(new AntiDebuffEffect())),
+    ;
 
 
     private final String title;

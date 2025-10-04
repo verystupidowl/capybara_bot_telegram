@@ -2,7 +2,8 @@ package ru.tggc.capybaratelegrambot.domain.model.enums.fight;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import ru.tggc.capybaratelegrambot.domain.dto.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.positive.VampirismEffect;
 
 import java.util.function.Consumer;
 
@@ -15,10 +16,11 @@ public enum FightBuffWeapon implements FightBuffEnum {
             stats -> stats.setBaseDamage(stats.getBaseDamage() * 1.25)),
     DAGGER("Кровавый кинжал \uD83E\uDE78", "Атаки восстанавливают 50% от нанесенного урона. Урон снижен на 10%", 250,
             stats -> {
-                stats.setVampirism(50);
+                stats.setVampirism(0.5);
                 stats.setBaseDamage(stats.getBaseDamage() * 0.9);
+                stats.getEffects().add(new VampirismEffect());
             }),
-    CAPYBARA_SWORD("Меч капибары-рыцаря ⚔\uFE0F", "Шанс крита увеличен на 20%", 200,
+    CAPYBARA_SWORD("Меч капибары-рыцаря ⚔️", "Шанс крита увеличен на 20%", 200,
             stats -> stats.setCritChance(stats.getCritChance() + 20));
 
     private final String title;

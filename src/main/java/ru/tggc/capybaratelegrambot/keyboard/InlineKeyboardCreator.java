@@ -114,9 +114,6 @@ public class InlineKeyboardCreator {
                 },
                 new InlineKeyboardButton[]{
                         new InlineKeyboardButton("Защита").callbackData("fight_action_DEFEND")
-                },
-                new InlineKeyboardButton[]{
-                        new InlineKeyboardButton("скип").callbackData("fight_action_SKIP")
                 }
         );
     }
@@ -359,13 +356,16 @@ public class InlineKeyboardCreator {
     public InlineKeyboardMarkup fightBuffTypes() {
         return new InlineKeyboardMarkup(
                 new InlineKeyboardButton[]{
-                        new InlineKeyboardButton("Атака").callbackData("fight_buffs_ATTACK")
+                        new InlineKeyboardButton("⚔️Атака").callbackData("fight_buffs_ATTACK")
                 },
                 new InlineKeyboardButton[]{
-                        new InlineKeyboardButton("Защита").callbackData("fight_buffs_DEFEND")
+                        new InlineKeyboardButton("🛡Защита").callbackData("fight_buffs_DEFEND")
                 },
                 new InlineKeyboardButton[]{
-                        new InlineKeyboardButton("Хил").callbackData("fight_buffs_HEAL")
+                        new InlineKeyboardButton("🌿Хил").callbackData("fight_buffs_HEAL")
+                },
+                new InlineKeyboardButton[] {
+                        new InlineKeyboardButton("\uD83E\uDEE3Особое").callbackData("fight_buffs_SPECIAL")
                 },
                 new InlineKeyboardButton[]{
                         new InlineKeyboardButton("Ничего").callbackData("go_to_main")
@@ -397,6 +397,9 @@ public class InlineKeyboardCreator {
 
     public InlineKeyboardMarkup leaveFight() {
         return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Присоединиться к сражению").callbackData("join_fight")
+                },
                 new InlineKeyboardButton[]{
                         new InlineKeyboardButton("Ливнуть с позором").callbackData("leave_fight")
                 },

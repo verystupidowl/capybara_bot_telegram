@@ -1,8 +1,13 @@
 package ru.tggc.capybaratelegrambot.service;
 
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.InputMediaPhoto;
+import com.pengrad.telegrambot.request.AnswerCallbackQuery;
+import com.pengrad.telegrambot.request.DeleteMessage;
+import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.EditMessageMedia;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -10,12 +15,14 @@ import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
-import ru.tggc.capybaratelegrambot.domain.dto.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
-import ru.tggc.capybaratelegrambot.domain.dto.enums.BossAction;
-import ru.tggc.capybaratelegrambot.domain.dto.enums.BossType;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.BossAction;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.BossType;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Fight;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
@@ -23,11 +30,11 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,26 +59,26 @@ public class BossFightService {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private static final List<String> ATTACK_TEXTS = List.of(
+    public static final List<String> ATTACK_TEXTS = List.of(
             "⚔️ %s прыгнул на босса и вцепился зубами! Урон: %d",
             "💥 %s с размаху ударил хвостом по боссу! Урон: %d",
             "🔥 %s атакует со всей силы! Урон: %d"
     );
-    private static final List<String> DEFEND_TEXTS = List.of(
+    public static final List<String> DEFEND_TEXTS = List.of(
             "🛡️ %s встал в оборону и приготовился к удару",
             "🌊 %s прячется за камышами и снижает входящий урон",
             "🪵 %s нашёл бревно и использует его как щит"
     );
-    private static final List<String> HEAL_TEXTS = List.of(
+    public static final List<String> HEAL_TEXTS = List.of(
             "🌿 %s жует свежую травку и восстанавливает %d HP",
             "💧 %s сделал глоток прохладной воды и восстановил %d HP",
             "✨ %s вдохнул силы природы и восстановил %d HP"
     );
 
-    public void joinFight(CapybaraContext ctx, String username) {
+    public String joinFight(CapybaraContext ctx, String username) {
         Capybara capybara = capybaraService.getFightCapybara(ctx.chatId(), ctx.userId());
         throwIf(!capybara.getFight().getFightAction().canPerform(), () -> new CapybaraException("u will can join only in " + timedActionService.getStatus(capybara.getFight().getFightAction())));
-        provider.joinFight(ctx.chatId(), ctx.userId(), username);
+        return provider.joinFight(ctx.chatId(), ctx.userId(), username);
     }
 
     public void leaveFight(Long chatId, Long userId) {
@@ -82,9 +89,12 @@ public class BossFightService {
         Optional<BossFightState> optional = provider.getFight(chatId);
         throwIf(optional.isPresent(), () -> new CapybaraException("Файт уже идет"));
         BossFightState fight = new BossFightState();
-        BossType boss = RandomUtils.geetRandomBoss();
-        fight.setBoss(boss);
-        fight.setBossHp(boss.getHp());
+        BossType bossType = RandomUtils.geetRandomBoss();
+        BossFightState.BossState bossState = BossFightState.BossState.builder()
+                .bossType(bossType)
+                .bossHp(bossType.getHp())
+                .build();
+        fight.setBossState(bossState);
         fight.setTurn(1);
         fight.setPlayers(new HashMap<>());
         fight.setActionLogs(new ArrayList<>());
@@ -100,12 +110,13 @@ public class BossFightService {
                     .alive(true)
                     .stunned(false)
                     .lastAction(null)
+                    .boss(bossState)
                     .build();
             fight.getPlayers().put(user.userId(), ps);
         });
 
         provider.startFight(chatId, fight);
-        return "fight started!\nBoss: " + boss.getName() + " hp: " + boss.getHp();
+        return "Бой начинается!⚔️\nBoss: " + bossType.getName() + " hp: " + bossType.getHp();
     }
 
     private BossFightState.PlayerStats createPlayerStates(Capybara fightCapybara) {
@@ -113,10 +124,11 @@ public class BossFightService {
         BossFightState.PlayerStats stats = BossFightState.PlayerStats.builder()
                 .hp(100 + level / 10)
                 .baseDamage(100 + ((double) level / 5))
-                .baseDefend(50 + ((double) level / 5))
-                .baseHeal(20 + ((double) level / 5))
-                .critChance(15 + (double) level / 5)
+                .baseDefend(0.5)
+                .baseHeal(20)
+                .critChance(0.15)
                 .vampirism(0)
+                .effects(new HashSet<>())
                 .build();
         Fight fight = fightCapybara.getFight();
         fight.getWeapon().apply(stats);
@@ -127,7 +139,8 @@ public class BossFightService {
     }
 
 
-    public Response registerAction(long chatId, UserDto userDto, BossFightState.ActionType action) {
+    public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
+        long chatId = query.maybeInaccessibleMessage().chat().id();
         return provider.getFight(chatId)
                 .map(fight -> {
                     fight.getPlayers().values().stream()
@@ -141,27 +154,36 @@ public class BossFightService {
 
                     ps.setLastAction(action);
                     log.info("Игрок {} выбрал {}", ps.getUsername(), action);
-                    return nextTurn(chatId, fight)
-                            .andThen(bot -> {
-                                fight.getPlayers().values().stream()
-                                        .map(BossFightState.PlayerState::getUserId)
-                                        .forEach(userRateLimiterService::unlock);
-                                return CompletableFuture.completedFuture(null);
-                            });
+                    return Response.of(new AnswerCallbackQuery(query.id()))
+                            .andThen(nextTurn(query, fight)
+                                    .andThen(bot -> {
+                                        fight.getPlayers().values().stream()
+                                                .map(BossFightState.PlayerState::getUserId)
+                                                .forEach(userRateLimiterService::unlock);
+                                        return CompletableFuture.completedFuture(null);
+                                    }));
                 })
                 .orElseThrow(() -> new CapybaraException("файт не идет"));
     }
 
-    public Response nextTurn(long chatId, BossFightState fight) {
+    public Response nextTurn(CallbackQuery query, BossFightState fight) {
+        long chatId = query.maybeInaccessibleMessage().chat().id();
+        Integer oldMessageId = query.maybeInaccessibleMessage().messageId();
         if (fight.getPlayers().values().stream()
                 .filter(BossFightState.PlayerState::isAlive)
                 .filter(ps -> !ps.isStunned())
                 .anyMatch(p -> p.getLastAction() == null)) {
-            return Response.of(new SendMessage(chatId, "⌛ Ждём действий от всех игроков"));
+            String text = ((Message) query.maybeInaccessibleMessage())
+                    .caption() + "\n==========================\n⌛ Ждём действий от всех игроков";
+            EditMessageCaption message = new EditMessageCaption(chatId, oldMessageId)
+                    .caption(text)
+                    .replyMarkup(inlineKeyboardCreator.fightKeyboard());
+            return Response.of(message);
         }
 
         return bot -> {
             CompletableFuture<Void> overall = new CompletableFuture<>();
+            bot.execute(new DeleteMessage(chatId, oldMessageId));
 
             Message msg = bot.execute(new SendPhoto(chatId, "https://www.kalashnikov.ru/wp-content/uploads/2021/01/wp-image-142900476-1.jpg")
                             .caption("🐊 Босс готовится к атаке..."))
@@ -170,227 +192,111 @@ public class BossFightService {
             int messageId = msg.messageId();
 
             String bossAction = doBossAction(fight);
-            String playersAction = doPlayerAction(fight);
+            String playersAction = doPlayerAction(fight) +
+                    "\n❤️ HP босса: " + fight.getBossState().getBossHp() + "/" + fight.getBossState().getBossType().getHp();
 
-            List<AnimationStep> steps = List.of(
-                    new AnimationStep(messageId, bossAction, "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg"),
-                    new AnimationStep(messageId, playersAction +
-                            "\n❤️ HP босса: " + fight.getBossHp() + "/" + fight.getBoss().getHp(),
-                            "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg"),
-                    new AnimationStep(messageId, generateStatus(fight), "https://news.store.rambler.ru/img/a2176d6eec9bdb79276b517d10d3c930?img-format=auto&img-1-resize=height:400,fit:max&img-2-filter=sharpen", inlineKeyboardCreator.fightKeyboard())
-            );
+            List<AnimationStep> steps = getAnimationSteps(messageId, bossAction, playersAction);
 
-            for (int i = 1; i < steps.size() + 1; i++) {
-                AnimationStep step = steps.get(i - 1);
-                scheduler.schedule(() -> {
-                    try {
-                        if (step.photoPath != null) {
-                            EditMessageMedia request = new EditMessageMedia(
-                                    chatId,
-                                    step.messageId,
-                                    new InputMediaPhoto(step.photoPath)
-                                            .caption(step.text)
-                            );
-                            ifPresent(step.markup, request::replyMarkup);
-                            bot.execute(request);
-                        } else {
-                            bot.execute(new EditMessageText(chatId, step.messageId, step.text));
-                        }
-                    } catch (Exception e) {
-                        overall.completeExceptionally(e);
-                    }
-                }, i * 4, TimeUnit.SECONDS);
-            }
-
-            scheduler.schedule(() -> {
-                boolean allPlayersDead = fight.getPlayers().values().stream()
-                        .noneMatch(BossFightState.PlayerState::isAlive);
-                boolean bossDead = fight.getBossHp() <= 0;
-
-                if (allPlayersDead || bossDead) {
-                    String endMessage = bossDead ? "🎉 Босс повержен!" : "☠ Все капибары без сознания. Босс победил.";
-                    bot.execute(new SendMessage(chatId, endMessage));
-                    provider.endFight(chatId);
-                }
-                fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
-                fight.setActionLogs(new ArrayList<>());
-                overall.complete(null);
-            }, steps.size() * 4, TimeUnit.SECONDS);
+            sendMessages(chatId, fight, bot, steps, overall);
 
             return overall;
         };
     }
 
+    @NotNull
+    private List<AnimationStep> getAnimationSteps(int messageId, String bossAction, String playersAction) {
+        String result = bossAction + "\n==========================\n" + playersAction;
+        return List.of(
+                new AnimationStep(messageId, bossAction, "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg"),
+                new AnimationStep(messageId, playersAction,
+                        "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg"),
+                new AnimationStep(messageId, result, "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg",
+                        inlineKeyboardCreator.fightKeyboard())
+        );
+    }
+
+    private void sendMessages(long chatId, BossFightState fight, TelegramBot bot, List<AnimationStep> steps, CompletableFuture<Void> overall) {
+        for (int i = 1; i < steps.size() + 1; i++) {
+            AnimationStep step = steps.get(i - 1);
+            scheduler.schedule(() -> {
+                try {
+                    if (step.photoPath != null) {
+                        EditMessageMedia request = new EditMessageMedia(
+                                chatId,
+                                step.messageId,
+                                new InputMediaPhoto(step.photoPath)
+                                        .caption(step.text)
+                        );
+                        ifPresent(step.markup, request::replyMarkup);
+                        bot.execute(request);
+                    } else {
+                        bot.execute(new EditMessageText(chatId, step.messageId, step.text));
+                    }
+                } catch (Exception e) {
+                    overall.completeExceptionally(e);
+                }
+            }, i * 4L, TimeUnit.SECONDS);
+        }
+
+        scheduler.schedule(() -> {
+            boolean allPlayersDead = fight.getPlayers().values().stream()
+                    .noneMatch(BossFightState.PlayerState::isAlive);
+            boolean bossDead = fight.getBossState().getBossHp() <= 0;
+
+            if (allPlayersDead || bossDead) {
+                String endMessage = bossDead ? "🎉 Босс повержен!" : "☠ Все капибары без сознания. Босс победил.";
+                bot.execute(new SendMessage(chatId, endMessage));
+                provider.endFight(chatId);
+            }
+            fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
+            fight.setActionLogs(new ArrayList<>());
+            overall.complete(null);
+        }, steps.size() * 4L, TimeUnit.SECONDS);
+    }
+
     private static String doBossAction(BossFightState fight) {
-        BossAction bossAction = RandomUtils.getRandomBossAction(fight.getBoss());
+        BossAction bossAction = RandomUtils.getRandomBossAction(fight.getBossState().getBossType());
         List<BossFightState.PlayerState> alivePlayers = fight.getPlayers().values().stream()
                 .filter(BossFightState.PlayerState::isAlive)
                 .toList();
 
         if (alivePlayers.isEmpty()) return "";
 
-
-        StringBuilder log = new StringBuilder("🐊 Ход босса: " + bossAction.name() + "\n\n");
-        int value = 0;
-        StringBuilder username = new StringBuilder();
-        switch (bossAction) {
-            case TAIL_ON_THE_WATER -> {
-                username = new StringBuilder("всех");
-                for (BossFightState.PlayerState ps : alivePlayers) {
-                    value = BossAction.TAIL_ON_THE_WATER.getDamage();
-                    if (ps.isDefending()) {
-                        value *= (int) (RandomUtils.getRandomStat(ps.getPlayerStats().getBaseDefend()) / 100);
-                    }
-                    ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() - value);
-                    log.append("🌊 ").append(ps.getUsername())
-                            .append(" получил ").append(value)
-                            .append(" урона (HP: ").append(Math.max(ps.getPlayerStats().getHp(), 0)).append(")\n");
-                }
-            }
-            case BITE -> {
-                BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
-                username = new StringBuilder(ps.getUsername());
-                value = BossAction.BITE.getDamage();
-                if (ps.isDefending()) {
-                    value *= (int) (RandomUtils.getRandomStat(ps.getPlayerStats().getBaseDefend()) / 100);
-                }
-                ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() - value);
-                log.append("🦷 Босс укусил ").append(ps.getUsername())
-                        .append(" на ").append(value)
-                        .append(" урона (HP: ").append(Math.max(ps.getPlayerStats().getHp(), 0)).append(")\n");
-            }
-            case STUN -> {
-                BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
-                username = new StringBuilder(ps.getUsername());
-                value = BossAction.STUN.getDamage();
-                if (ps.isDefending()) {
-                    value *= (int) (RandomUtils.getRandomStat(ps.getPlayerStats().getBaseDefend()) / 100);
-                }
-                ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() - value);
-                ps.setStunned(true);
-                log.append("💥 Босс застанил ").append(ps.getUsername())
-                        .append(" (HP: ").append(Math.max(ps.getPlayerStats().getHp(), 0)).append(")\n");
-            }
-            case AOE_DAMAGE -> {
-                log.append("🌊 Босс поднял волну и ударил всех!\n");
-                username = new StringBuilder("всех");
-                for (BossFightState.PlayerState ps : alivePlayers) {
-                    value = BossAction.AOE_DAMAGE.getDamage();
-                    if (ps.isDefending()) {
-                        value *= (int) (RandomUtils.getRandomStat(ps.getPlayerStats().getBaseDefend()) / 100);
-                    }
-                    ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() - value);
-                    log.append(" └ ").append(ps.getUsername())
-                            .append(" получил ").append(value)
-                            .append(" урона (HP: ").append(Math.max(ps.getPlayerStats().getHp(), 0)).append(")\n");
-                }
-            }
-            case AOE_STUN -> {
-                log.append("⚡ Босс издал рёв, сотрясая землю!\n");
-                for (BossFightState.PlayerState ps : alivePlayers) {
-                    if (RandomUtils.chance(0.5)) {
-                        username.append(ps.getUsername());
-                        value = BossAction.AOE_STUN.getDamage();
-                        if (ps.isDefending()) {
-                            value *= (int) (RandomUtils.getRandomStat(ps.getPlayerStats().getBaseDefend()) / 100);
-                        }
-                        ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() - value);
-                        ps.setStunned(true);
-                        log.append(" └ 😵 ").append(ps.getUsername())
-                                .append(" оглушён и получил ").append(value)
-                                .append(" урона (HP: ").append(Math.max(ps.getPlayerStats().getHp(), 0)).append(")\n");
-                    }
-                }
-            }
-            case FOCUSED_STRIKE -> {
-                BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
-                username.append(ps.getUsername());
-                value = BossAction.FOCUSED_STRIKE.getDamage();
-                if (RandomUtils.chance(0.2)) {
-                    value *= 2;
-                }
-                if (ps.isDefending()) {
-                    value *= (int) (RandomUtils.getRandomStat(ps.getPlayerStats().getBaseDefend()) / 100);
-                }
-                ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() - value);
-                log.append("💢 Босс нанёс мощный удар по ").append(ps.getUsername())
-                        .append(" на ").append(value)
-                        .append(" урона (HP: ").append(Math.max(ps.getPlayerStats().getHp(), 0)).append(")\n");
-            }
-            case HEAL -> {
-                username.append("себя");
-                value = Math.abs(BossAction.HEAL.getDamage());
-                fight.setBossHp(Math.min(fight.getBossHp() + value, fight.getBoss().getHp()));
-                log.append("🩸 Босс втянул силы из земли и восстановил ").append(value)
-                        .append(" HP (").append(fight.getBossHp()).append("/").append(fight.getBoss().getHp()).append(")\n");
-            }
-        }
-        fight.getActionLogs().add(new BossFightState.ActionLog("Boss", bossAction.name(), value, username.toString()));
-        return log.append(checkPs(alivePlayers)).toString();
+        return "🐊 Ход босса:\n" +
+                bossAction.apply(fight, alivePlayers) +
+                checkPs(alivePlayers);
     }
 
     private String doPlayerAction(BossFightState fight) {
         StringBuilder response = new StringBuilder();
         Collection<BossFightState.PlayerState> players = fight.getPlayers().values();
-        List<BossFightState.ActionLog> logs = new ArrayList<>();
 
         for (BossFightState.PlayerState ps : players) {
-            if (!ps.isAlive()) {
+            if (!ps.isAlive() || ps.isStunned()) {
+                if (ps.isStunned()) {
+                    response.append("😵 ").append(ps.getUsername())
+                            .append(" оглушён и пропускает ход!\n");
+                    ps.endTurn();
+                }
                 continue;
             }
-            if (ps.isStunned()) {
-                response.append("😵 ").append(ps.getUsername())
-                        .append(" оглушён и пропускает ход!\n");
-                ps.setStunned(false);
-                continue;
-            }
 
-            BossFightState.ActionLog log = new BossFightState.ActionLog();
-            log.setActor(ps.getUsername());
-            log.setWhom("босса");
-            BossFightState.PlayerStats stats = ps.getPlayerStats();
-
-            switch (ps.getLastAction()) {
-                case ATTACK -> {
-                    int damage = (int) RandomUtils.getRandomStat(stats.getBaseDamage());
-                    if (RandomUtils.chance(stats.getCritChance() / 100)) {
-                        damage *= 2;
-                    }
-                    fight.setBossHp(fight.getBossHp() - damage);
-
-                    String text = String.format(
-                            RandomUtils.getRandomFromList(ATTACK_TEXTS),
-                            ps.getUsername(), damage
-                    );
-                    response.append(text);
-                    log.setAction(BossFightState.ActionType.ATTACK.name());
-                    log.setValue(damage);
-                }
-                case DEFEND -> {
-                    ps.setDefending(true);
-                    String text = String.format(RandomUtils.getRandomFromList(DEFEND_TEXTS), ps.getUsername());
-                    response.append(text);
-                    log.setAction(BossFightState.ActionType.DEFEND.name());
-                    log.setValue(2);
-                }
-                case HEAL -> {
-                    int heal = (int) RandomUtils.getRandomStat(stats.getBaseHeal());
-                    ps.getPlayerStats().setHp(ps.getPlayerStats().getHp() + heal);
-
-                    String text = String.format(
-                            RandomUtils.getRandomFromList(HEAL_TEXTS),
-                            ps.getUsername(), heal
-                    );
-                    response.append(text);
-                    log.setAction(BossFightState.ActionType.HEAL.name());
-                    log.setValue(heal);
-                }
-            }
-            logs.add(log);
+            response.append(ps.getLastAction().apply(fight, ps));
+            ps.endTurn();
         }
-        fight.getActionLogs().addAll(logs);
-
+        response.append("==========================\n").append(getPlayersHp(players));
         return response.toString();
+    }
+
+    private String getPlayersHp(Collection<BossFightState.PlayerState> players) {
+        return players.stream().map(ps -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("HP❤️").append(ps.getUsername()).append(": ");
+            String hp = ps.getPlayerStats().getHp() >= 0 ? String.valueOf(ps.getPlayerStats().getHp()) : "0☠";
+            sb.append(hp);
+
+            return sb.toString();
+        }).collect(Collectors.joining("\n"));
     }
 
     private static String checkPs(List<BossFightState.PlayerState> alivePlayers) {
@@ -398,33 +304,8 @@ public class BossFightService {
         for (BossFightState.PlayerState ps : alivePlayers) {
             if (ps.getPlayerStats().getHp() <= 0) {
                 ps.setAlive(false);
-
                 sb.append(ps.getUsername()).append(" Твоя капибара упала без сознания!");
             }
-        }
-        return sb.toString();
-    }
-
-    private String generateStatus(BossFightState fight) {
-        List<BossFightState.ActionLog> logs = fight.getActionLogs();
-        StringBuilder sb = new StringBuilder("📊 Статус после хода:\n");
-        sb.append("🐊 Босс: ").append(fight.getBossHp()).append("/").append(fight.getBoss().getHp()).append(" HP\n");
-        fight.getPlayers().values().forEach(p ->
-                sb.append("🧑‍🦱 ").append(p.getUsername())
-                        .append(": ").append(Math.max(p.getPlayerStats().getHp(), 0)).append(" HP")
-                        .append(p.isAlive() ? "" : " ☠")
-                        .append("\n")
-        );
-        sb.append("\n");
-        for (BossFightState.ActionLog logEntry : logs) {
-            sb.append(logEntry.getActor())
-                    .append(" сделал ")
-                    .append(logEntry.getAction())
-                    .append(": ")
-                    .append(logEntry.getValue())
-                    .append(" ")
-                    .append(logEntry.getWhom())
-                    .append("\n");
         }
         return sb.toString();
     }

@@ -11,7 +11,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.lang.annotation.Annotation;

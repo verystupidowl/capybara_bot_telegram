@@ -33,7 +33,6 @@ import ru.tggc.capybaratelegrambot.repository.RaceRequestRepository;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 
 import java.time.LocalDateTime;
 import java.util.Random;

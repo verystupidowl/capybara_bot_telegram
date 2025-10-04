@@ -32,7 +32,7 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 import ru.tggc.capybaratelegrambot.utils.Text;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;

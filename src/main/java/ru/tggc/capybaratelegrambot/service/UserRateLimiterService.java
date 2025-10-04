@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.utils;
+package ru.tggc.capybaratelegrambot.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

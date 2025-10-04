@@ -1,15 +1,17 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
+import com.pengrad.telegrambot.model.CallbackQuery;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
+import ru.tggc.capybaratelegrambot.annotation.params.CallbackParam;
 import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.annotation.params.Username;
-import ru.tggc.capybaratelegrambot.domain.dto.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
@@ -27,8 +29,9 @@ public class FightCallbackHandler extends CallbackHandler {
     @CallbackHandle("fight_action_${action}")
     public Response fightStep(@Ctx CapybaraContext ctx,
                               @Username String username,
-                              @HandleParam("action") BossFightState.ActionType actionType) {
-        return bossFightService.registerAction(ctx.chatId(), new UserDto(ctx.userId(), username), actionType);
+                              @CallbackParam CallbackQuery query,
+                              @HandleParam("action") PlayerActionType actionType) {
+        return bossFightService.registerAction(query, new UserDto(ctx.userId(), username), actionType);
     }
 
     @CallbackHandle("fight_info")
@@ -44,8 +47,8 @@ public class FightCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("join_fight")
     public Response joinFight(@Ctx CapybaraContext ctx, @Username String username) {
-        bossFightService.joinFight(ctx, username);
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), "Ты участвуешь теперь", inlineKeyboardCreator.leaveFight());
+        String response = bossFightService.joinFight(ctx, username);
+        return editMessageCaption(ctx.chatId(), ctx.messageId(), response, inlineKeyboardCreator.leaveFight());
     }
 
     @CallbackHandle("leave_fight")
@@ -56,7 +59,12 @@ public class FightCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("start_fight")
     public Response startFight(@Ctx CapybaraContext ctx) {
-        return sendSimpleMessage(ctx.chatId(), bossFightService.startFight(ctx.chatId()), inlineKeyboardCreator.fightKeyboard());
+        return editMessageCaption(
+                ctx.chatId(),
+                ctx.messageId(),
+                bossFightService.startFight(ctx.chatId()),
+                inlineKeyboardCreator.fightKeyboard()
+        );
     }
 
     @CallbackHandle("maybe_start_fight")
