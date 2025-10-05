@@ -1,8 +1,10 @@
 package ru.tggc.capybaratelegrambot.utils;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.text.StringSubstitutor;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -33,6 +35,22 @@ public class Utils {
         if (condition) {
             throw e.get();
         }
+    }
+
+    public static String getText(String text, Map<String, String> params) {
+        StringSubstitutor sub = new StringSubstitutor(params);
+        return sub.replace(text);
+    }
+
+    public static String renderStaminaBar(double percent) {
+        int totalBlocks = 5;
+        int filledBlocks = (int) Math.round(percent / (100.0 / totalBlocks));
+
+        return "["
+                + "█".repeat(filledBlocks)
+                + "░".repeat(totalBlocks - filledBlocks)
+                + "] "
+                + (int) percent + "%";
     }
 
     public static String formatDuration(Duration duration) {

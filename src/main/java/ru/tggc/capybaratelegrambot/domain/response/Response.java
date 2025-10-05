@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.domain.dto.response;
+package ru.tggc.capybaratelegrambot.domain.response;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.BaseRequest;

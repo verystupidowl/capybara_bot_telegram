@@ -2,7 +2,7 @@ package ru.tggc.capybaratelegrambot.visitor;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 
 import java.util.concurrent.CompletableFuture;
 

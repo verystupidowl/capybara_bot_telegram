@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 import ru.tggc.capybaratelegrambot.domain.model.BigJob;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Chat;
+import ru.tggc.capybaratelegrambot.domain.model.Fight;
 import ru.tggc.capybaratelegrambot.domain.model.Improvement;
 import ru.tggc.capybaratelegrambot.domain.model.Level;
 import ru.tggc.capybaratelegrambot.domain.model.Race;
@@ -12,12 +13,19 @@ import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
 import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffShield;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffSpecial;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffWeapon;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.BigJobAction;
+import ru.tggc.capybaratelegrambot.domain.model.timedaction.FightAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.RaceAction;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @UtilityClass
@@ -47,7 +55,7 @@ public class CapybaraBuilder {
                 .build();
         BigJob bigJob = BigJob.builder()
                 .active(false)
-                .isOnBigJob(false)
+                .bigJobAction(new BigJobAction())
                 .build();
         Work work = Work.builder()
                 .index(0)
@@ -59,6 +67,15 @@ public class CapybaraBuilder {
                 .defeats(0)
                 .wins(0)
                 .raceAction(new RaceAction(5))
+                .build();
+        Fight fight = Fight.builder()
+                .loses(0)
+                .wins(0)
+                .heal(FightBuffHeal.NONE)
+                .shield(FightBuffShield.NONE)
+                .weapon(FightBuffWeapon.NONE)
+                .special(FightBuffSpecial.NONE)
+                .fightAction(new FightAction(Duration.ofHours(2)))
                 .build();
         return Capybara.builder()
                 .name(name)
@@ -74,6 +91,7 @@ public class CapybaraBuilder {
                 .chat(chat)
                 .work(work)
                 .improvement(improvement)
+                .fight(fight)
                 .build();
     }
 }

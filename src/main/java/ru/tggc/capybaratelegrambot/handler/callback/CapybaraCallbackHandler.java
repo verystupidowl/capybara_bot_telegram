@@ -12,13 +12,14 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
 import ru.tggc.capybaratelegrambot.utils.CasinoTargetType;
 import ru.tggc.capybaratelegrambot.utils.Text;
+import ru.tggc.capybaratelegrambot.utils.TextBuilder;
 
 import static ru.tggc.capybaratelegrambot.utils.HistoryType.CHANGE_NAME;
 import static ru.tggc.capybaratelegrambot.utils.HistoryType.CHANGE_PHOTO;
@@ -34,19 +35,19 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     @CallbackHandle("set_name")
     public Response setName(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_NAME);
-        return sendSimpleMessage(ctx.chatId(), "Введи новое имя своей капибары", inlineCreator.notChange());
+        return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_NAME, inlineCreator.notChange());
     }
 
     @CallbackHandle("set_photo")
     public Response setPhoto(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_PHOTO);
-        return sendSimpleMessage(ctx.chatId(), "Пришли новое фото своей капибары", inlineCreator.notChange());
+        return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_PHOTO, inlineCreator.notChange());
     }
 
     @CallbackHandle("exactly_delete")
     public Response deleteCapybara(@Ctx CapybaraContext ctx) {
         capybaraService.deleteCapybara(ctx);
-        return sendSimpleMessage(ctx.chatId(), "Ты выкинул капибару! Надеюсь ты доволен!");
+        return sendSimpleMessage(ctx.chatId(), Text.DELETE_CAPYBARA);
     }
 
     @CallbackHandle("take_from_tea")
@@ -92,25 +93,13 @@ public class CapybaraCallbackHandler extends CallbackHandler {
         return editSimpleMessage(ctx.chatId(), ctx.messageId(), "Ok");
     }
 
-    @CallbackHandle("start_change_photo")
-    public Response startChangePhoto(@Ctx CapybaraContext ctx) {
-        historyService.setHistory(ctx, CHANGE_PHOTO);
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.START_CHANGE_PHOTO, inlineCreator.defaultPhoto());
-    }
-
-    @CallbackHandle("start_change_name")
-    public Response startChangeName(@Ctx CapybaraContext ctx) {
-        historyService.setHistory(ctx, CHANGE_NAME);
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.START_CHANGE_NAME, inlineCreator.notChange());
-    }
-
     @CallbackHandle("go_to_main")
     public Response sendGoToMainMessage(@Ctx CapybaraContext ctx) {
         MyCapybaraDto capybara = capybaraService.getMyCapybara(ctx);
         return editMessageCaption(
                 ctx.chatId(),
                 ctx.messageId(),
-                Text.getMyCapybara(capybara),
+                TextBuilder.getMyCapybara(capybara),
                 inlineCreator.myCapybaraKeyboard(capybara)
         );
     }

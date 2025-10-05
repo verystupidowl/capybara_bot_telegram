@@ -19,7 +19,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.FileDto;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.FileType;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.RaceRequest;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
@@ -33,7 +33,6 @@ import ru.tggc.capybaratelegrambot.repository.RaceRequestRepository;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
 
 import java.time.LocalDateTime;
 import java.util.Random;

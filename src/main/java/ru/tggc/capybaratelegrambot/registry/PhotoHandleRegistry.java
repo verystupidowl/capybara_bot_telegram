@@ -7,11 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.PhotoHandle;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.lang.annotation.Annotation;
@@ -28,6 +28,16 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
                                   UserService userService,
                                   UserRateLimiterService rateLimiterService) {
         super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+    }
+
+    @Override
+    protected boolean canRequestBePublic(Method method) {
+        return method.getAnnotation(PhotoHandle.class).canPublic();
+    }
+
+    @Override
+    protected boolean canRequestBePrivate(Method method) {
+        return method.getAnnotation(PhotoHandle.class).canPrivate();
     }
 
     @Override
@@ -64,7 +74,7 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
         throwIfNull(method, IllegalStateException::new);
 
         String template = method.getAnnotation(PhotoHandle.class).value();
-        Object[] args = buildArgs(method, message, chat.id(), from.id(), 0, null, message);
+        Object[] args = buildArgs(method, message, chat.id(), from, 0, null, message);
         return invokeWithCatch(from, method, beans.get(template), args, chat);
     }
 }

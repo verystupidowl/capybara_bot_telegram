@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.utils;
+package ru.tggc.capybaratelegrambot.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -7,7 +7,7 @@ import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;

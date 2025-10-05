@@ -3,7 +3,7 @@ package ru.tggc.capybaratelegrambot.handler.callback;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import lombok.extern.slf4j.Slf4j;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.handler.Handler;
 
 @Slf4j

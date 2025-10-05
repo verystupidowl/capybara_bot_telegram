@@ -14,4 +14,8 @@ public @interface CallbackHandle {
     String value();
 
     UserRole[] requiredRoles() default {};
+
+    boolean canPrivate() default false;
+
+    boolean canPublic() default true;
 }

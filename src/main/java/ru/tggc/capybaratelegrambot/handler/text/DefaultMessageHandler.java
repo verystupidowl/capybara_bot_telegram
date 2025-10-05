@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;

@@ -8,19 +8,20 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
 import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
-import ru.tggc.capybaratelegrambot.utils.Utils;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
 
 @Component
 @Slf4j
@@ -37,8 +38,18 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
     }
 
     @Override
+    protected boolean canRequestBePublic(Method method) {
+        return getOr(method.getAnnotation(MessageHandle.class), MessageHandle::canPublic, true);
+    }
+
+    @Override
+    protected boolean canRequestBePrivate(Method method) {
+        return getOr(method.getAnnotation(MessageHandle.class), MessageHandle::canPrivate, false);
+    }
+
+    @Override
     protected UserRole[] getRequiredRoles(Method method) {
-        return Utils.getOr(
+        return getOr(
                 method.getAnnotation(MessageHandle.class),
                 MessageHandle::requiredRoles,
                 new UserRole[0]
@@ -73,7 +84,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
             } else {
                 CapybaraContext ctx = new CapybaraContext(chat.id(), from.id(), message.messageId());
                 if (historyService.contains(ctx)) {
-                    Object[] args = buildArgs(defaultMethod, message, chat.id(), from.id(), 0, null, message);
+                    Object[] args = buildArgs(defaultMethod, message, chat.id(), from, 0, null, message);
                     response = invokeWithCatch(from, defaultMethod, defaultBean, args, chat);
                 }
             }
@@ -84,7 +95,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
         String template = method.getAnnotation(MessageHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(text) : null;
 
-        Object[] args = buildArgs(method, message, chat.id(), from.id(), 0, matcher, message);
+        Object[] args = buildArgs(method, message, chat.id(), from, 0, matcher, message);
         return invokeWithCatch(from, method, beans.get(template), args, chat);
     }
 }

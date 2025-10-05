@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.ListableBeanFactory;
 import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
@@ -17,9 +18,10 @@ import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.annotation.params.UserId;
+import ru.tggc.capybaratelegrambot.annotation.params.Username;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
@@ -30,7 +32,7 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 import ru.tggc.capybaratelegrambot.utils.Text;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -104,14 +106,8 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
         Response response;
         long chatId = chat.id();
         try {
-            UserRole[] requiredRoles = getRequiredRoles(method);
-            if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
-                return Response.empty();
-            }
-            Response ddosResponse = rateLimiter.checkUser(from, chat);
-            if (ddosResponse != null) {
-                return ddosResponse;
-            }
+            Response checkedRequest = checkRequest(from, method, chat);
+            if (checkedRequest != null) return checkedRequest;
             rateLimiter.lock(from.id());
             response = (Response) method.invoke(bean, args);
         } catch (InvocationTargetException | CompletionException e) {
@@ -168,12 +164,31 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
         });
     }
 
+    @Nullable
+    private Response checkRequest(User from, Method method, Chat chat) {
+        UserRole[] requiredRoles = getRequiredRoles(method);
+        if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
+            return Response.empty();
+        }
+        boolean isPrivateMessage = from.id().equals(chat.id());
+        boolean canRequestBePrivate = canRequestBePrivate(method);
+        boolean canRequestBePublic = canRequestBePublic(method);
+        if ((isPrivateMessage && canRequestBePrivate) || (!isPrivateMessage && canRequestBePublic)) {
+            return rateLimiter.checkUser(from, chat);
+        }
+        return Response.empty();
+    }
+
+    protected abstract boolean canRequestBePublic(Method method);
+
+    protected abstract boolean canRequestBePrivate(Method method);
+
     protected abstract UserRole[] getRequiredRoles(Method method);
 
     protected Object[] buildArgs(Method method,
                                  Object update,
                                  long chatId,
-                                 long userId,
+                                 User from,
                                  int messageId,
                                  Matcher matcher,
                                  U param) {
@@ -181,8 +196,10 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
                 .map(parameter -> switch (parameter) {
                     case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
                     case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
-                    case Parameter p when p.isAnnotationPresent(UserId.class) -> userId;
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) -> new CapybaraContext(chatId, userId, messageId);
+                    case Parameter p when p.isAnnotationPresent(UserId.class) -> from.id();
+                    case Parameter p when p.isAnnotationPresent(Username.class) -> from.username();
+                    case Parameter p when p.isAnnotationPresent(Ctx.class) ->
+                            new CapybaraContext(chatId, from.id(), messageId);
                     case Parameter p when p.isAnnotationPresent(CallbackParam.class)
                             || p.isAnnotationPresent(MessageParam.class) -> param;
                     case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;

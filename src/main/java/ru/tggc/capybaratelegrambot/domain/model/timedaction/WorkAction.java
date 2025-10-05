@@ -2,6 +2,7 @@ package ru.tggc.capybaratelegrambot.domain.model.timedaction;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -21,7 +22,7 @@ public class WorkAction implements LongTimedAction {
 
     public void startWorking() {
         if (!canPerform()) {
-            throw new IllegalStateException("Нельзя отправить сейчас!");
+            throw new CapybaraException("Нельзя отправить сейчас!");
         }
         startTime = Instant.now();
     }
@@ -31,7 +32,7 @@ public class WorkAction implements LongTimedAction {
             lastTaken = Instant.now();
             startTime = null;
         } else {
-            throw new IllegalStateException("Работа ещё не завершена!");
+            throw new CapybaraException("Работа ещё не завершена!");
         }
     }
 

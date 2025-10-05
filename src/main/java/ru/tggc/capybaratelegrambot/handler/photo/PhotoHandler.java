@@ -8,7 +8,7 @@ import ru.tggc.capybaratelegrambot.annotation.handle.PhotoHandle;
 import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
 import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.handler.Handler;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;

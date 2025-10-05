@@ -45,6 +45,8 @@ public class Capybara {
     private String name;
     private Long currency;
     private LocalDateTime created;
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Fight fight;
     @ManyToOne(fetch = FetchType.LAZY)
     private Chat chat;
     @OneToOne(fetch = FetchType.LAZY)

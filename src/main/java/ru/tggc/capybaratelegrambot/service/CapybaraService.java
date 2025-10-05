@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraTeaDto;
+import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.TopCapybaraDto;
@@ -27,6 +28,11 @@ import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
 import ru.tggc.capybaratelegrambot.domain.model.enums.Type;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffShield;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffSpecial;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffWeapon;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Happiness;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Satiety;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.Tea;
@@ -37,6 +43,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraTeaMapper;
+import ru.tggc.capybaratelegrambot.mapper.FightCapybaraMapper;
 import ru.tggc.capybaratelegrambot.mapper.MyCapybaraMapper;
 import ru.tggc.capybaratelegrambot.provider.WorkProvider;
 import ru.tggc.capybaratelegrambot.provider.WorkProviderFactory;
@@ -69,36 +76,45 @@ public class CapybaraService {
     private final CapybaraInfoMapper capybaraInfoMapper;
     private final InlineKeyboardCreator inlineKeyboardCreator;
     private final ChatRepository chatRepository;
+    private final FightCapybaraMapper fightCapybaraMapper;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
 
+    @Transactional(readOnly = true)
     public Optional<Capybara> findCapybara(CapybaraContext ctx) {
         return capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
     }
 
+    public boolean existsCapybara(CapybaraContext ctx) {
+        return capybaraRepository.existsCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
+    }
+
+    @Transactional(readOnly = true)
     public Capybara getCapybara(Long id) {
         return capybaraRepository.findById(id)
-                .orElseThrow(() -> new CapybaraNotFoundException("Capy didnt found"));
+                .orElseThrow(CapybaraNotFoundException::new);
     }
 
     public Capybara getCapybaraByUserId(long userId, long chatId) {
-        return getCapybara(userId, chatId);
+        return self.getCapybara(userId, chatId);
     }
 
     public Capybara getCapybaraByContext(CapybaraContext ctx) {
         return getCapybaraByUserId(ctx.userId(), ctx.chatId());
     }
 
+    @Transactional(readOnly = true)
     public MyCapybaraDto getMyCapybara(CapybaraContext ctx) {
         Capybara capybara = capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("U have no capy"));
+                .orElseThrow(CapybaraNotFoundException::new);
         return myCapybaraMapper.toDto(capybara);
     }
 
+    @Transactional(readOnly = true)
     public CapybaraInfoDto getInfo(CapybaraContext ctx) {
         Capybara capybara = capybaraRepository.findInfoCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("u have no capy"));
+                .orElseThrow(CapybaraNotFoundException::new);
         return capybaraInfoMapper.toDto(capybara);
     }
 
@@ -139,6 +155,7 @@ public class CapybaraService {
         return messages;
     }
 
+    @Transactional
     public List<PhotoDto> feed(CapybaraContext ctx) {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
@@ -152,9 +169,10 @@ public class CapybaraService {
         return messages;
     }
 
+    @Transactional
     public List<PhotoDto> fatten(CapybaraContext ctx) {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
-                .orElseThrow(() -> new CapybaraNotFoundException("ur capy didint found"));
+                .orElseThrow(CapybaraNotFoundException::new);
         checkCurrency(capybara, 50);
         List<PhotoDto> messages = self.feed(capybara, 50);
         capybara.setCurrency(capybara.getCurrency() - 50);
@@ -170,6 +188,7 @@ public class CapybaraService {
         return messages;
     }
 
+    @Transactional
     public List<PhotoDto> goTea(CapybaraContext ctx) {
         Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
@@ -190,8 +209,8 @@ public class CapybaraService {
             String photo = interlocutor.getPhoto().getUrl();
             CapybaraTeaDto myDto = capybaraTeaMapper.toDto(capybara);
             CapybaraTeaDto interlocutorDto = capybaraTeaMapper.toDto(interlocutor);
-            updateTea(tea);
-            updateTea(incerlocutorTea);
+            self.updateTea(tea);
+            self.updateTea(incerlocutorTea);
             capybara.getHappiness().setLevel(capybara.getHappiness().getLevel() + 10);
             interlocutor.getHappiness().setLevel(interlocutor.getHappiness().getLevel() + 10);
             List<PhotoDto> photosToReturn = new ArrayList<>(self.checkNewLevel(capybara));
@@ -282,7 +301,7 @@ public class CapybaraService {
     }
 
     public void doMassage(CapybaraContext ctx) {
-        Capybara capybara = getRaceCapybara(ctx);
+        Capybara capybara = self.getRaceCapybara(ctx);
         if (capybara.getCurrency() <= 50) {
             throw new CapybaraHasNoMoneyException();
         }
@@ -340,7 +359,7 @@ public class CapybaraService {
         throwIf(sourcecapybara.getCurrency() < amount, CapybaraHasNoMoneyException::new);
 
         User user = userService.getUserByUsername(targetUsername);
-        Capybara targetCapybara = getCapybara(user.getId());
+        Capybara targetCapybara = self.getCapybara(user.getId());
 
         targetCapybara.setCurrency(targetCapybara.getCurrency() + amount);
         sourcecapybara.setCurrency(sourcecapybara.getCurrency() - amount);
@@ -352,9 +371,10 @@ public class CapybaraService {
         capybaraRepository.save(capybara);
     }
 
-    private Capybara getCapybara(long userId, long chatId) {
+    @Transactional(readOnly = true)
+    public Capybara getCapybara(long userId, long chatId) {
         return capybaraRepository.findMyCapybaraByUserIdAndChatId(userId, chatId)
-                .orElseThrow(() -> new CapybaraNotFoundException("User" + userId + "doesnt have capybara"));
+                .orElseThrow(CapybaraNotFoundException::new);
     }
 
     @Transactional
@@ -409,7 +429,7 @@ public class CapybaraService {
                     .findFirst()
                     .map(type -> {
                         capybara.getLevel().setType(type);
-                        capybara.getLevel().setMaxValue(calculateMaxLevel(level));
+                        capybara.getLevel().setMaxValue(self.calculateMaxLevel(level));
                         capybara.setCurrency(capybara.getCurrency() + type.getGift());
                         return PhotoDto.builder()
                                 .caption(Text.newType(type.getLabel(), type.getGift()))
@@ -421,12 +441,14 @@ public class CapybaraService {
         }
     }
 
-    private void updateTea(Tea tea) {
+    @Transactional
+    public void updateTea(Tea tea) {
         tea.setWaiting(false);
         tea.setLastTea(LocalDateTime.now());
     }
 
-    private Integer calculateMaxLevel(Level level) {
+    @Transactional
+    public Integer calculateMaxLevel(Level level) {
         return switch (level.getValue()) {
             case Integer i when i < 100 -> level.getMaxValue() + 10;
             case Integer i when i < 150 -> 150;
@@ -435,7 +457,7 @@ public class CapybaraService {
     }
 
     private void checkCurrency(Capybara capybara, Integer currency) {
-        throwIf(capybara.getCurrency() <= currency, CapybaraHasNoMoneyException::new);
+        throwIf(capybara.getCurrency() < currency, CapybaraHasNoMoneyException::new);
     }
 
     @Transactional
@@ -448,6 +470,7 @@ public class CapybaraService {
         capybaraRepository.save(capybara);
     }
 
+    @Transactional(readOnly = true)
     public Capybara getRaceCapybara(CapybaraContext ctx) {
         return capybaraRepository.findRaceCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
@@ -472,5 +495,70 @@ public class CapybaraService {
             photo.setType(FileType.DOC);
         }
         capybaraRepository.save(capybara);
+    }
+
+    public Capybara getFightCapybara(Long chatId, Long userId) {
+        return capybaraRepository.findFightCapybaraByChatIdAndUserId(chatId, userId)
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    public FightCapybaraDto getFightInfo(CapybaraContext ctx) {
+        Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
+        return fightCapybaraMapper.toDto(fightCapybara.getFight());
+    }
+
+    public void buyBuff(CapybaraContext ctx, String buff, BuffType buffType) {
+        Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
+        switch (buffType) {
+            case ATTACK -> {
+                throwIf(
+                        fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 weapon!")
+                );
+                buyWeapon(fightCapybara, FightBuffWeapon.valueOf(buff));
+            }
+            case DEFEND -> {
+                throwIf(
+                        fightCapybara.getFight().getShield() != FightBuffShield.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 shield!")
+                );
+                buyShield(fightCapybara, FightBuffShield.valueOf(buff));
+            }
+            case HEAL -> {
+                throwIf(
+                        fightCapybara.getFight().getHeal() != FightBuffHeal.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 heal!")
+                );
+                buyHeal(fightCapybara, FightBuffHeal.valueOf(buff));
+            }
+            case SPECIAL -> {
+                throwIf(
+                        fightCapybara.getFight().getSpecial() != FightBuffSpecial.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 special!")
+                );
+                buySpecial(fightCapybara, FightBuffSpecial.valueOf(buff));
+            }
+        }
+        capybaraRepository.save(fightCapybara);
+    }
+
+    private void buySpecial(Capybara fightCapybara, FightBuffSpecial fightBuffSpecial) {
+        checkCurrency(fightCapybara, fightBuffSpecial.getCost());
+        fightCapybara.getFight().setSpecial(fightBuffSpecial);
+    }
+
+    private void buyHeal(Capybara fightCapybara, FightBuffHeal fightBuffHeal) {
+        checkCurrency(fightCapybara, fightBuffHeal.getCost());
+        fightCapybara.getFight().setHeal(fightBuffHeal);
+    }
+
+    private void buyShield(Capybara fightCapybara, FightBuffShield fightBuffShield) {
+        checkCurrency(fightCapybara, fightBuffShield.getCost());
+        fightCapybara.getFight().setShield(fightBuffShield);
+    }
+
+    private void buyWeapon(Capybara fightCapybara, FightBuffWeapon fightBuffWeapon) {
+        checkCurrency(fightCapybara, fightBuffWeapon.getCost());
+        fightCapybara.getFight().setWeapon(fightBuffWeapon);
     }
 }

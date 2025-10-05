@@ -8,11 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.domain.dto.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.utils.UserRateLimiterService;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -28,6 +28,16 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
                                      UserService userService,
                                      UserRateLimiterService rateLimiterService) {
         super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+    }
+
+    @Override
+    protected boolean canRequestBePublic(Method method) {
+        return method.getAnnotation(CallbackHandle.class).canPublic();
+    }
+
+    @Override
+    protected boolean canRequestBePrivate(Method method) {
+        return method.getAnnotation(CallbackHandle.class).canPrivate();
     }
 
     @Override
@@ -69,7 +79,7 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
         String template = method.getAnnotation(CallbackHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;
 
-        Object[] args = buildArgs(method, query, chatId, from.id(), messageId, matcher, query);
+        Object[] args = buildArgs(method, query, chatId, from, messageId, matcher, query);
         return invokeWithCatch(from, method, beans.get(template), args, chat);
     }
 }

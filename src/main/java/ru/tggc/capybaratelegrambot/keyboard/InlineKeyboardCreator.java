@@ -6,14 +6,25 @@ import com.pengrad.telegrambot.model.request.Keyboard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
+import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffEnum;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffShield;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffSpecial;
+import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffWeapon;
+import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class InlineKeyboardCreator {
+
+    private final BossFightProvider bossFightProvider;
 
     public InlineKeyboardMarkup myCapybaraKeyboard(MyCapybaraDto capybara) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
@@ -78,7 +89,7 @@ public class InlineKeyboardCreator {
             jobs = new ArrayList<>();
             jobs.add(getJob);
         }
-//
+
         if (jobs != null) {
             rows.add(jobs);
         }
@@ -93,6 +104,20 @@ public class InlineKeyboardCreator {
         return new InlineKeyboardMarkup(rows.stream().map(row -> row.toArray(InlineKeyboardButton[]::new)).toArray(InlineKeyboardButton[][]::new));
     }
 
+    public InlineKeyboardMarkup fightKeyboard() {
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Атака").callbackData("fight_action_ATTACK")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Хил").callbackData("fight_action_HEAL")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Защита").callbackData("fight_action_DEFEND")
+                }
+        );
+    }
+
     public InlineKeyboardMarkup infoKeyboard(CapybaraInfoDto capybara) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
@@ -101,6 +126,7 @@ public class InlineKeyboardCreator {
         List<InlineKeyboardButton> job;
         List<InlineKeyboardButton> improve;
         List<InlineKeyboardButton> race;
+        List<InlineKeyboardButton> fight;
 
         InlineKeyboardButton main = new InlineKeyboardButton("Моя капибара").callbackData("go_to_main");
         mainRow.add(main);
@@ -133,6 +159,10 @@ public class InlineKeyboardCreator {
             race.add(raceBtn);
             rows.add(race);
         }
+
+        InlineKeyboardButton fightBtn = new InlineKeyboardButton("Бой с боссом").callbackData("fight_info");
+        fight = List.of(fightBtn);
+        rows.add(fight);
 
         InlineKeyboardButton[][] newRows = rows.stream()
                 .map(row -> row.toArray(InlineKeyboardButton[]::new))
@@ -301,6 +331,95 @@ public class InlineKeyboardCreator {
     public InlineKeyboardMarkup toMainMenu() {
         return new InlineKeyboardMarkup(
                 new InlineKeyboardButton("Моя капибара").callbackData("go_to_main")
+        );
+    }
+
+    public InlineKeyboardMarkup fightInfoKeyboard(FightCapybaraDto fightCapybaraDto, Long chatId) {
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+
+        if (fightCapybaraDto.canFight()) {
+            rows.add(List.of(new InlineKeyboardButton("Присоединиться к сражению").callbackData("join_fight")));
+        }
+        if (bossFightProvider.canStartFight(chatId)) {
+            rows.add(List.of(new InlineKeyboardButton("Начать сражение").callbackData("start_fight")));
+        }
+        rows.add(List.of(new InlineKeyboardButton("Купить ништяки").callbackData("list_of_buffs")));
+        rows.add(List.of(new InlineKeyboardButton("Ничего").callbackData("go_to_main")));
+
+        InlineKeyboardButton[][] newRows = rows.stream()
+                .map(row -> row.toArray(InlineKeyboardButton[]::new))
+                .toArray(InlineKeyboardButton[][]::new);
+
+        return new InlineKeyboardMarkup(newRows);
+    }
+
+    public InlineKeyboardMarkup fightBuffTypes() {
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("⚔️Атака").callbackData("fight_buffs_ATTACK")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("🛡Защита").callbackData("fight_buffs_DEFEND")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("🌿Хил").callbackData("fight_buffs_HEAL")
+                },
+                new InlineKeyboardButton[] {
+                        new InlineKeyboardButton("\uD83E\uDEE3Особое").callbackData("fight_buffs_SPECIAL")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Ничего").callbackData("go_to_main")
+                }
+        );
+    }
+
+    public InlineKeyboardMarkup fightBuffs(BuffType buffType) {
+        List<List<InlineKeyboardButton>> buffs = new ArrayList<>(switch (buffType) {
+            case ATTACK -> getBuffs(FightBuffWeapon.values());
+            case DEFEND -> getBuffs(FightBuffShield.values());
+            case HEAL -> getBuffs(FightBuffHeal.values());
+            case SPECIAL -> getBuffs(FightBuffSpecial.values());
+        });
+        buffs.add(List.of(new InlineKeyboardButton("Ничего").callbackData("go_to_main")));
+
+        InlineKeyboardButton[][] newRows = buffs.stream()
+                .map(row -> row.toArray(InlineKeyboardButton[]::new))
+                .toArray(InlineKeyboardButton[][]::new);
+
+        return new InlineKeyboardMarkup(newRows);
+    }
+
+    private List<List<InlineKeyboardButton>> getBuffs(FightBuffEnum[] values) {
+        return Arrays.stream(values)
+                .map(v -> List.of(new InlineKeyboardButton(v.getTitle()).callbackData("buy_buff_" + v.name() + "_" + v.getBuffType())))
+                .toList();
+    }
+
+    public InlineKeyboardMarkup leaveFight() {
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Присоединиться к сражению").callbackData("join_fight")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Ливнуть с позором").callbackData("leave_fight")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Начать файт").callbackData("maybe_start_fight")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Назад").callbackData("go_to_main")
+                }
+        );
+    }
+
+    public InlineKeyboardMarkup maybeStartFight() {
+        return new InlineKeyboardMarkup(
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Да начинаем").callbackData("start_fight")
+                },
+                new InlineKeyboardButton[]{
+                        new InlineKeyboardButton("Нет я ссу босса").callbackData("go_to_main")
+                }
         );
     }
 }
