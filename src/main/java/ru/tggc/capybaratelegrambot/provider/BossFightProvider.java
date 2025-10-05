@@ -2,9 +2,11 @@ package ru.tggc.capybaratelegrambot.provider;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.statemachine.StateMachine;
 import org.springframework.stereotype.Component;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
+import ru.tggc.capybaratelegrambot.domain.sm.BossFightEvents;
+import ru.tggc.capybaratelegrambot.domain.sm.BossFightStates;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -14,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class BossFightProvider {
-    private final Cache<Long, BossFightState> currentFights = Caffeine.newBuilder()
+    private final Cache<Long, StateMachine<BossFightStates, BossFightEvents>> currentFights = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofHours(1))
             .maximumSize(10_000)
             .build();
@@ -55,11 +57,11 @@ public class BossFightProvider {
         preparingFights.put(chatId, users);
     }
 
-    public void startFight(Long chatId, BossFightState fight) {
+    public void startFight(Long chatId, StateMachine<BossFightStates, BossFightEvents> fight) {
         currentFights.put(chatId, fight);
     }
 
-    public Optional<BossFightState> getFight(Long chatId) {
+    public Optional<StateMachine<BossFightStates, BossFightEvents>> getFight(Long chatId) {
         return Optional.ofNullable(currentFights.getIfPresent(chatId));
     }
 

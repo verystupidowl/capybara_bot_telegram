@@ -21,7 +21,7 @@ public class BossFightState {
     private BossState bossState;
     private int turn;
     private Map<Long, PlayerState> players;
-    private List<ActionLog> actionLogs;
+    private List<String> actionLogs;
 
 
     @Data
