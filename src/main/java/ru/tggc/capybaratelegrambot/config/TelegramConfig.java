@@ -1,6 +1,7 @@
 package ru.tggc.capybaratelegrambot.config;
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetWebhook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,7 @@ public class TelegramConfig {
                                    @Value("${bot.webhook_url}") String webhookUrl) {
         TelegramBot bot = new TelegramBot(botToken);
         bot.execute(new SetWebhook().url(webhookUrl));
+        bot.execute(new SendMessage(428873987, "Деплой прошел успешно"));
         return bot;
     }
 }
