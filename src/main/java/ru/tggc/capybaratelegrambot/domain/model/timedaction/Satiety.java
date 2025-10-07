@@ -4,12 +4,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -29,7 +27,7 @@ public class Satiety implements TimedAction {
 
     private LocalDateTime lastFed;
 
-    private static final Duration COOLDOWN = Duration.ofMinutes(2);
+    private static final Duration COOLDOWN = Duration.ofHours(2);
 
     @Override
     public boolean canPerform() {
