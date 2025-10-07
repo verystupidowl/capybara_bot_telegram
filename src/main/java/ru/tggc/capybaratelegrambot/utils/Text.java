@@ -14,6 +14,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffSpecial;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffWeapon;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @UtilityClass
@@ -263,6 +264,22 @@ public class Text {
         fightInfo.buffs().forEach(buff -> sb.append(buff.getTitle()).append("\n"));
         return sb.toString();
     }
+
+    public static final List<String> ATTACK_TEXTS = List.of(
+            "⚔️ %s прыгнул на босса и вцепился зубами! Урон: %f",
+            "💥 %s с размаху ударил хвостом по боссу! Урон: %f",
+            "🔥 %s атакует со всей силы! Урон: %f"
+    );
+    public static final List<String> DEFEND_TEXTS = List.of(
+            "🛡️ %s встал в оборону и приготовился к удару",
+            "🌊 %s прячется за камышами и снижает входящий урон",
+            "🪵 %s нашёл бревно и использует его как щит"
+    );
+    public static final List<String> HEAL_TEXTS = List.of(
+            "🌿 %s жует свежую травку и восстанавливает %f HP",
+            "💧 %s сделал глоток прохладной воды и восстановил %f HP",
+            "✨ %s вдохнул силы природы и восстановил %f HP"
+    );
 
     public static String getBuffs(BuffType buffType) {
         return switch (buffType) {

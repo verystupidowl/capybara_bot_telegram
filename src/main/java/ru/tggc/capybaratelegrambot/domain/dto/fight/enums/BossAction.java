@@ -3,8 +3,9 @@ package ru.tggc.capybaratelegrambot.domain.dto.fight.enums;
 import lombok.Getter;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.DamageEvent;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.Blindness;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.BlindnessEffect;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.PoisonEffect;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.StunEffect;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.WeakenedEffect;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
@@ -36,7 +37,7 @@ public enum BossAction {
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(30) + 1;
         DamageEvent damageEvent = ps.applyDamage(damage);
-        ps.setStunned(true);
+        ps.getPlayerStats().getEffects().add(new StunEffect(1));
         return "💥 Босс застанил " + ps.getUsername() + " на " + damageEvent.getDamage();
     }),
     AOE_DAMAGE((fight, alivePlayers) -> {
@@ -87,20 +88,20 @@ public enum BossAction {
         ps.getPlayerStats().getEffects().add(new PoisonEffect());
         DamageEvent damageEvent = ps.applyDamage(damage);
         return "\uD83D\uDCA6 Босс сделал ядовитый укус! по " + ps.getUsername() +
-                " на " + damageEvent + "! Теперь ему нужно противоядие\uD83E\uDDEA";
+                " на " + damageEvent.getDamage() + "! Теперь ему нужно противоядие\uD83E\uDDEA";
     }),
     TAIL_SLAM_DUST((fight, alivePlayers) -> {
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(10) + 5;
-        ps.getPlayerStats().getEffects().add(new Blindness(0.25, 10));
+        ps.getPlayerStats().getEffects().add(new BlindnessEffect(0.25, 10));
         DamageEvent damageEvent = ps.applyDamage(damage);
         return "Босс бьёт хвостом по земле, поднимая облако пыли. Она ослепляет " +
                 ps.getUsername() + ", заставляя его промахиваться и наносит ему " +
                 damageEvent.getDamage() + " урона! Капибаре нужно 10 ходов, чтобы оправиться";
     }),
     TAIL_MUD_SPLASH((fight, alivePlayers) -> {
-        StringBuilder log = new StringBuilder("Босс бьет хвостом по грязи и заливает всем капибарам глаза")
-                .append("Им нужно 3 хода, чтобы оправиться, а пока их урон уменьшен вдвое");
+        StringBuilder log = new StringBuilder("Босс бьет хвостом по грязи и заливает всем капибарам глаза\n")
+                .append("Им нужно 3 хода, чтобы оправиться, а пока их урон уменьшен вдвое!");
         int damage = RandomUtils.getRandomInt(10) + 5;
         alivePlayers.forEach(ps -> {
             ps.getPlayerStats().getEffects().add(new WeakenedEffect(0.5, 3));

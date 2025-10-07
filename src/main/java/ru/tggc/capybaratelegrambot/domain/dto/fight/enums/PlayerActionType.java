@@ -1,22 +1,24 @@
 package ru.tggc.capybaratelegrambot.domain.dto.fight.enums;
 
+import lombok.Getter;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.DamageEvent;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
 import java.util.function.BiFunction;
 
-import static ru.tggc.capybaratelegrambot.service.BossFightService.ATTACK_TEXTS;
-import static ru.tggc.capybaratelegrambot.service.BossFightService.DEFEND_TEXTS;
-import static ru.tggc.capybaratelegrambot.service.BossFightService.HEAL_TEXTS;
+import static ru.tggc.capybaratelegrambot.utils.Text.ATTACK_TEXTS;
+import static ru.tggc.capybaratelegrambot.utils.Text.DEFEND_TEXTS;
+import static ru.tggc.capybaratelegrambot.utils.Text.HEAL_TEXTS;
 
+@Getter
 public enum PlayerActionType {
-    ATTACK((fight, ps) -> {
+    ATTACK("Атака", (fight, ps) -> {
         StringBuilder log = new StringBuilder();
         BossFightState.PlayerStats stats = ps.getPlayerStats();
         int damage = (int) RandomUtils.getRandomStat(stats.getBaseDamage());
         if (RandomUtils.chance(stats.getCritChance())) {
-            log.append("\uD83D\uDCA2Критический урон!").append("\n");
+            log.append("\uD83D\uDCA2Критический урон!");
             damage *= 2;
         }
         DamageEvent damageEvent = new DamageEvent(damage);
@@ -24,30 +26,31 @@ public enum PlayerActionType {
 
         String text = String.format(
                 RandomUtils.getRandomFromList(ATTACK_TEXTS),
-                ps.getUsername(), damage
+                ps.getUsername(), damageEvent.getDamage()
         );
-        return log.append(text).append("\n").toString();
+        return log.append(text).toString();
     }),
-    DEFEND((fight, ps) -> {
+    DEFEND("Защита", (fight, ps) -> {
         ps.setDefending(true);
-        return String.format(RandomUtils.getRandomFromList(DEFEND_TEXTS), ps.getUsername()) + "\n";
+        return String.format(RandomUtils.getRandomFromList(DEFEND_TEXTS), ps.getUsername());
     }),
-    HEAL((fight, ps) -> {
+    HEAL("Лечение", (fight, ps) -> {
         BossFightState.PlayerStats stats = ps.getPlayerStats();
         int heal = (int) RandomUtils.getRandomStat(stats.getBaseHeal());
-        ps.applyHeal(heal);
+        DamageEvent damageEvent = ps.applyHeal(heal);
 
-        String text = String.format(
+        return String.format(
                 RandomUtils.getRandomFromList(HEAL_TEXTS),
-                ps.getUsername(), heal
+                ps.getUsername(), damageEvent.getDamage()
         );
-        return text + "\n";
     }),
     ;
 
+    private final String label;
     private final BiFunction<BossFightState, BossFightState.PlayerState, String> function;
 
-    PlayerActionType(BiFunction<BossFightState, BossFightState.PlayerState, String> function) {
+    PlayerActionType(String label, BiFunction<BossFightState, BossFightState.PlayerState, String> function) {
+        this.label = label;
         this.function = function;
     }
 

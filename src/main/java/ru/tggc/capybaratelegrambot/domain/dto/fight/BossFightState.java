@@ -33,7 +33,7 @@ public class BossFightState {
         private Integer bossHp;
 
         public void applyDamage(PlayerState ps, DamageEvent damageEvent) {
-            ps.playerStats.effects.forEach(e -> e.onDamageGiven(ps, this, damageEvent));
+            ps.playerStats.effects.forEach(e -> e.onDamageGiven(ps, damageEvent));
             bossHp -= (int) damageEvent.getDamage();
         }
     }
@@ -48,17 +48,19 @@ public class BossFightState {
         private String username;
         private boolean defending;
 
-        private boolean stunned;
+        private boolean canAct;
         private boolean alive;
         private PlayerActionType lastAction;
 
         private PlayerStats playerStats;
         private BossState boss;
+        private int specials;
 
         public void endTurn() {
             this.setDefending(false);
-            this.setStunned(false);
             this.setLastAction(null);
+            this.setCanAct(true);
+            this.getPlayerStats().getEffects().forEach(e -> e.onTurnEnd(this));
             this.getPlayerStats().getEffects().removeIf(Effect::isExpired);
         }
 
@@ -68,7 +70,7 @@ public class BossFightState {
             }
             DamageEvent damage = new DamageEvent(dmg);
 
-            playerStats.effects.forEach(e -> e.onDamageTaken(this, boss, damage));
+            playerStats.effects.forEach(e -> e.onDamageTaken(this, damage));
 
             this.getPlayerStats().setHp((int) (this.getPlayerStats().getHp() - damage.getDamage()));
             if (this.getPlayerStats().getHp() <= 0) {
@@ -89,22 +91,12 @@ public class BossFightState {
             return Objects.hashCode(userId);
         }
 
-        public void applyHeal(int heal) {
+        public DamageEvent applyHeal(int heal) {
             playerStats.setHp(playerStats.getHp() + heal);
             DamageEvent healEvent = new DamageEvent(heal);
-            playerStats.effects.forEach(e -> e.onHeal(this, boss, healEvent));
+            playerStats.effects.forEach(e -> e.onHeal(this, healEvent));
+            return healEvent;
         }
-    }
-
-
-    @AllArgsConstructor
-    @Data
-    @NoArgsConstructor
-    public static class ActionLog {
-        private String actor;
-        private String action;
-        private int value;
-        private String whom;
     }
 
     @AllArgsConstructor
@@ -118,7 +110,6 @@ public class BossFightState {
         private double baseDefend;
         private double critChance;
         private double damageReflection;
-        private double vampirism;
         private Set<Effect> effects;
     }
 }

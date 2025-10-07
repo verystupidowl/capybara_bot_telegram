@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
+import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffEnum;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;
@@ -343,6 +344,7 @@ public class InlineKeyboardCreator {
         if (bossFightProvider.canStartFight(chatId)) {
             rows.add(List.of(new InlineKeyboardButton("Начать сражение").callbackData("start_fight")));
         }
+        rows.add(List.of(new InlineKeyboardButton("Изменить класс капибары").callbackData("start_change_class")));
         rows.add(List.of(new InlineKeyboardButton("Купить ништяки").callbackData("list_of_buffs")));
         rows.add(List.of(new InlineKeyboardButton("Ничего").callbackData("go_to_main")));
 
@@ -364,7 +366,7 @@ public class InlineKeyboardCreator {
                 new InlineKeyboardButton[]{
                         new InlineKeyboardButton("🌿Хил").callbackData("fight_buffs_HEAL")
                 },
-                new InlineKeyboardButton[] {
+                new InlineKeyboardButton[]{
                         new InlineKeyboardButton("\uD83E\uDEE3Особое").callbackData("fight_buffs_SPECIAL")
                 },
                 new InlineKeyboardButton[]{

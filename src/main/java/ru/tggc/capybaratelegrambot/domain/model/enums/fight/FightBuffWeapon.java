@@ -16,9 +16,8 @@ public enum FightBuffWeapon implements FightBuffEnum {
             stats -> stats.setBaseDamage(stats.getBaseDamage() * 1.25)),
     DAGGER("Кровавый кинжал \uD83E\uDE78", "Атаки восстанавливают 50% от нанесенного урона. Урон снижен на 10%", 250,
             stats -> {
-                stats.setVampirism(0.5);
                 stats.setBaseDamage(stats.getBaseDamage() * 0.9);
-                stats.getEffects().add(new VampirismEffect());
+                stats.getEffects().add(new VampirismEffect(0.5));
             }),
     CAPYBARA_SWORD("Меч капибары-рыцаря ⚔️", "Шанс крита увеличен на 20%", 200,
             stats -> stats.setCritChance(stats.getCritChance() + 20));

@@ -8,8 +8,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.EffectType;
 public class AntiDebuffEffect extends AbstractEffect {
 
     @Override
-    public void onHeal(BossFightState.PlayerState ps, BossFightState.BossState boss, DamageEvent damage) {
-        ps.getPlayerStats().getEffects().removeIf(e -> e.getEffectType() == EffectType.POSITIVE);
+    public void onHeal(BossFightState.PlayerState ps, DamageEvent damage) {
+        ps.getPlayerStats().getEffects().removeIf(e -> e.getEffectType() == EffectType.NEGATIVE);
     }
 
     @Override

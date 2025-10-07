@@ -6,17 +6,17 @@ import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.AbstractEffect;
 import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.EffectType;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
-public class Blindness extends AbstractEffect {
+public class BlindnessEffect extends AbstractEffect {
     private final double chance;
     private int turnsLeft;
 
-    public Blindness(double chance, int turnsLeft) {
+    public BlindnessEffect(double chance, int turnsLeft) {
         this.chance = chance;
         this.turnsLeft = turnsLeft;
     }
 
     @Override
-    public void onDamageGiven(BossFightState.PlayerState ps, BossFightState.BossState boss, DamageEvent damage) {
+    public void onDamageGiven(BossFightState.PlayerState ps, DamageEvent damage) {
         if (RandomUtils.chance(chance)) {
             damage.setDamage(0);
         }

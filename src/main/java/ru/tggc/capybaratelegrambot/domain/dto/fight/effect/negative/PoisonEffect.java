@@ -9,13 +9,13 @@ public class PoisonEffect extends AbstractEffect {
     private int stacks = 1;
 
     @Override
-    public void onDamageTaken(BossFightState.PlayerState ps, BossFightState.BossState boss, DamageEvent damage) {
+    public void onDamageTaken(BossFightState.PlayerState ps, DamageEvent damage) {
         damage.setDamage(damage.getDamage() + stacks * 2);
         this.stacks++;
     }
 
     @Override
     public EffectType getEffectType() {
-        return null;
+        return EffectType.NEGATIVE;
     }
 }

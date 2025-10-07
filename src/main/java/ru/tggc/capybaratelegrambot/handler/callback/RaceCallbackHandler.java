@@ -29,28 +29,28 @@ public class RaceCallbackHandler extends CallbackHandler {
     @CallbackHandle("improve_pills")
     public Response improvePills(@Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.ANTI_LOSE);
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.ANTI_LOSE);
+        return sendSimpleMessage(ctx.chatId(), Text.ANTI_LOSE);
     }
 
     @CallbackHandle("improve_watermelon")
     public Response improveWatermelon(@Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.WATERMELON);
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.WATERMELON);
+        return sendSimpleMessage(ctx.chatId(), Text.WATERMELON);
     }
 
     @CallbackHandle("improve_boots")
     public Response improveBoots(@Ctx CapybaraContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.BOOTS);
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.BOOTS);
+        return sendSimpleMessage(ctx.chatId(), Text.BOOTS);
     }
 
     @CallbackHandle("buy_improve")
     public Response buyImprove(@Ctx CapybaraContext ctx) {
-        Capybara capybara = capybaraService.getCapybaraByContext(ctx);
+        Capybara capybara = capybaraService.getRaceCapybara(ctx);
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
-            return editSimpleMessage(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, inlineCreator.improvements());
+            return editMessageCaption(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, inlineCreator.improvements());
         }
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "У твоей капибары уже есть улучшение!");
+        return sendSimpleMessage(ctx.chatId(), "У твоей капибары уже есть улучшение!");
     }
 
     @CallbackHandle("do_massage")

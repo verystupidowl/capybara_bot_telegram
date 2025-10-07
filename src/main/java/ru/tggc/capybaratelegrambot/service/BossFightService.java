@@ -23,8 +23,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Fight;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.domain.sm.BossFightEvents;
-import ru.tggc.capybaratelegrambot.domain.sm.BossFightStates;
+import ru.tggc.capybaratelegrambot.domain.sm.event.BossFightEvents;
+import ru.tggc.capybaratelegrambot.domain.sm.state.BossFightStates;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
@@ -52,23 +52,6 @@ public class BossFightService {
     private final UserRateLimiterService userRateLimiterService;
     private final TimedActionService timedActionService;
     private final StateMachineFactory<BossFightStates, BossFightEvents> stateMachineFactory;
-
-
-    public static final List<String> ATTACK_TEXTS = List.of(
-            "⚔️ %s прыгнул на босса и вцепился зубами! Урон: %d",
-            "💥 %s с размаху ударил хвостом по боссу! Урон: %d",
-            "🔥 %s атакует со всей силы! Урон: %d"
-    );
-    public static final List<String> DEFEND_TEXTS = List.of(
-            "🛡️ %s встал в оборону и приготовился к удару",
-            "🌊 %s прячется за камышами и снижает входящий урон",
-            "🪵 %s нашёл бревно и использует его как щит"
-    );
-    public static final List<String> HEAL_TEXTS = List.of(
-            "🌿 %s жует свежую травку и восстанавливает %d HP",
-            "💧 %s сделал глоток прохладной воды и восстановил %d HP",
-            "✨ %s вдохнул силы природы и восстановил %d HP"
-    );
 
     public String joinFight(CapybaraContext ctx, String username) {
         Capybara capybara = capybaraService.getFightCapybara(ctx.chatId(), ctx.userId());
@@ -104,9 +87,10 @@ public class BossFightService {
                     .username(user.username())
                     .playerStats(playerStates)
                     .alive(true)
-                    .stunned(false)
+                    .canAct(true)
                     .lastAction(null)
                     .boss(bossState)
+                    .specials(1)
                     .build();
             fight.getPlayers().put(user.userId(), ps);
 
@@ -123,6 +107,12 @@ public class BossFightService {
         return "Бой начинается!⚔️\nBoss: " + bossType.getName() + " hp: " + bossType.getHp();
     }
 
+    public String getUsers(CapybaraContext ctx) {
+        Set<UserDto> users = provider.getPreparedUsers(ctx.chatId());
+        return "Ты уверен? Ваша команда - " + users.size() + " капибар:\n" + users.stream()
+                .map(UserDto::username)
+                .collect(Collectors.joining("\n"));
+    }
 
     public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
         long chatId = query.maybeInaccessibleMessage().chat().id();
@@ -144,7 +134,7 @@ public class BossFightService {
 
                     boolean allChosen = fight.getPlayers().values().stream()
                             .filter(BossFightState.PlayerState::isAlive)
-                            .filter(playerState -> !playerState.isStunned())
+                            .filter(BossFightState.PlayerState::isCanAct)
                             .allMatch(p -> p.getLastAction() != null);
 
                     if (allChosen) {
@@ -167,7 +157,8 @@ public class BossFightService {
                                 });
                     }
                     String text = ((Message) query.maybeInaccessibleMessage())
-                            .caption() + "\n==========================\n⌛ Ждём действий от всех игроков";
+                            .caption() + "\n==========================\n" + ps.getUsername() + " выбрал " + action.getLabel() +
+                            "\n==========================\n⌛ Ждём действий от всех игроков";
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
                             .replyMarkup(inlineKeyboardCreator.fightKeyboard());
@@ -178,21 +169,23 @@ public class BossFightService {
 
     private void sendEvents(StateMachine<BossFightStates, BossFightEvents> sm, BossFightState fight) {
         sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.PLAYERS_CHOSE).build()))
+                .thenMany(Flux.defer(() -> {
+                    boolean bossDead = fight.getBossState().getBossHp() <= 0;
+                    if (bossDead) {
+                        return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.BATTLE_FINISHED).build()));
+                    }
+                    return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.PLAYERS_DONE).build()));
+                }))
                 .thenMany(sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.BOSS_DONE).build())))
-                .thenMany(sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.PLAYERS_DONE).build())))
                 .thenMany(Flux.defer(() -> {
                     boolean allPlayersDead = fight.getPlayers().values().stream()
                             .noneMatch(BossFightState.PlayerState::isAlive);
-                    boolean bossDead = fight.getBossState().getBossHp() <= 0;
-
-                    if (allPlayersDead || bossDead) {
+                    if (allPlayersDead) {
                         return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.BATTLE_FINISHED).build()));
-                    } else {
-                        return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.TURN_FINISHED).build()));
                     }
+                    return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.TURN_FINISHED).build()));
                 })).subscribe();
     }
-
 
     public void doBossAction(BossFightState fight) {
         BossAction bossAction = RandomUtils.getRandomBossAction(fight.getBossState().getBossType());
@@ -202,18 +195,25 @@ public class BossFightService {
 
         if (alivePlayers.isEmpty()) return;
 
+        String response = bossAction.apply(fight, alivePlayers);
+        String checkedPlayers = checkPs(alivePlayers);
         fight.getActionLogs().add("🐊 Ход босса:\n" +
-                bossAction.apply(fight, alivePlayers) +
-                checkPs(alivePlayers));
+                response +
+                checkedPlayers + "\n==========================\n" +
+                getPlayersHp(fight.getPlayers().values(), fight.getBossState()));
+        if (fight.getPlayers().values().stream().noneMatch(BossFightState.PlayerState::isAlive)) {
+            fight.getActionLogs().add("Boss won!");
+        }
     }
 
     public void doPlayerAction(BossFightState fight) {
-        StringBuilder response = new StringBuilder();
+        StringBuilder response = new StringBuilder("Ход игроков:\n");
         Collection<BossFightState.PlayerState> players = fight.getPlayers().values();
 
         for (BossFightState.PlayerState ps : players) {
-            if (!ps.isAlive() || ps.isStunned()) {
-                if (ps.isStunned()) {
+            ps.getPlayerStats().getEffects().forEach(e -> e.onTurnBegin(ps));
+            if (!ps.isAlive() || !ps.isCanAct()) {
+                if (ps.isAlive()) {
                     response.append("😵 ").append(ps.getUsername())
                             .append(" оглушён и пропускает ход!\n");
                     ps.endTurn();
@@ -224,8 +224,34 @@ public class BossFightService {
             response.append(ps.getLastAction().apply(fight, ps));
             ps.endTurn();
         }
-        response.append("==========================\n").append(getPlayersHp(players, fight.getBossState()));
+        BossFightState.BossState boss = fight.getBossState();
+        if (boss.getBossHp() <= 0) {
+            fight.getActionLogs().add("Босс повержен!");
+        }
         fight.getActionLogs().add(response.toString());
+        log.info("player acted");
+    }
+
+    public int finishFight(long chatId, BossFightState fight, boolean isWin) {
+        provider.endFight(chatId);
+        int cost = fight.getBossState().getBossType().getCost();
+        if (isWin) {
+            fight.getPlayers().values().stream()
+                    .map(BossFightState.PlayerState::getUserId)
+                    .forEach(userId -> {
+                        Capybara capybara = capybaraService.getFightCapybara(chatId, userId);
+                        capybara.setCurrency(capybara.getCurrency() + cost);
+                        capybara.getFight().setWins(capybara.getFight().getWins() + 1);
+                    });
+        } else {
+            fight.getPlayers().values().stream()
+                    .map(BossFightState.PlayerState::getUserId)
+                    .forEach(userId -> {
+                        Capybara capybara = capybaraService.getFightCapybara(chatId, userId);
+                        capybara.getFight().setLoses(capybara.getFight().getLoses() + 1);
+                    });
+        }
+        return cost;
     }
 
     private String getPlayersHp(Collection<BossFightState.PlayerState> players, BossFightState.BossState boss) {
@@ -250,13 +276,6 @@ public class BossFightService {
         return sb.toString();
     }
 
-    public String getUsers(CapybaraContext ctx) {
-        Set<UserDto> users = provider.getPreparedUsers(ctx.chatId());
-        return "Ты уверен? Ваша команда - " + users.size() + " капибар:\n" + users.stream()
-                .map(UserDto::username)
-                .collect(Collectors.joining("\n"));
-    }
-
     private BossFightState.PlayerStats createPlayerStates(Capybara fightCapybara) {
         Integer level = fightCapybara.getLevel().getValue();
         BossFightState.PlayerStats stats = BossFightState.PlayerStats.builder()
@@ -265,7 +284,6 @@ public class BossFightService {
                 .baseDefend(0.5)
                 .baseHeal(20)
                 .critChance(0.15)
-                .vampirism(0)
                 .effects(new HashSet<>())
                 .build();
         Fight fight = fightCapybara.getFight();
@@ -274,11 +292,5 @@ public class BossFightService {
         fight.getHeal().apply(stats);
         fight.getSpecial().apply(stats);
         return stats;
-    }
-
-    public void finishFight(long chatId, StateMachine<BossFightStates, BossFightEvents> sm) {
-        sm.getExtendedState().getVariables().clear();
-        sm.stopReactively().block();
-        provider.endFight(chatId);
     }
 }
