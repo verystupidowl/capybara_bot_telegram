@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
+import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
 
 import java.time.Duration;
@@ -15,11 +16,16 @@ public class HistoryService {
             .expireAfterWrite(Duration.ofMinutes(3))
             .maximumSize(10_000)
             .build();
+    private final InlineKeyboardCreator inlineKeyboardCreator;
+
+    public HistoryService(InlineKeyboardCreator inlineKeyboardCreator) {
+        this.inlineKeyboardCreator = inlineKeyboardCreator;
+    }
 
     public void setHistory(CapybaraContext dto, HistoryType type) {
         HistoryType prev = capybaraHistory.asMap().putIfAbsent(dto, type);
         if (prev != null) {
-            throw new CapybaraException("ur capy already doing " + type);
+            throw new CapybaraException("ur capy already doing " + type, inlineKeyboardCreator.raceKeyboard());
         }
     }
 

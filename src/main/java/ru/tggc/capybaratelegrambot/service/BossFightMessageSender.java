@@ -7,7 +7,6 @@ import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.EditMessageMedia;
 import com.pengrad.telegrambot.request.EditMessageText;
-import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,7 +33,7 @@ public class BossFightMessageSender {
 
     private final InlineKeyboardCreator inlineKeyboardCreator;
 
-    public void sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
+    public int sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
         List<AnimationStep> steps = getAnimationSteps(fight.getActionLogs());
         CompletableFuture<Void> overall = new CompletableFuture<>();
         bot.execute(new DeleteMessage(chatId, oldMessageId));
@@ -70,6 +69,7 @@ public class BossFightMessageSender {
             fight.setActionLogs(new ArrayList<>());
             overall.complete(null);
         }, (steps.size() + 1) * 4L, TimeUnit.SECONDS);
+        return messageId;
     }
 
 
@@ -83,10 +83,10 @@ public class BossFightMessageSender {
                 .toList();
     }
 
-    public void sendFinishMessage(boolean bossDead, long chatId, TelegramBot bot, int messageId) {
-        String text = bossDead ? "Boss dead!" : "boss won!";
-        bot.execute(new SendMessage(chatId, text));
-        bot.execute(new EditMessageCaption(chatId, messageId).replyMarkup(null));
+    public void sendFinishMessage(List<String> actionLogs, boolean bossDead, long chatId, TelegramBot bot, int messageId, int cost) {
+        String text = String.join("\n==========================\n", actionLogs) +
+                (bossDead ? "\nТы заработал " + cost : "boss won!");
+        bot.execute(new EditMessageCaption(chatId, messageId).caption(text));
     }
 
     @AllArgsConstructor

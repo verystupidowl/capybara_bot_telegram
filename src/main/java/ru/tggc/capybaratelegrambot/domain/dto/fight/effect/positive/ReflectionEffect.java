@@ -8,7 +8,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.EffectType;
 public class ReflectionEffect extends AbstractEffect {
 
     @Override
-    public void onDamageTaken(BossFightState.PlayerState ps, BossFightState.BossState boss, DamageEvent damage) {
+    public void onDamageTaken(BossFightState.PlayerState ps, DamageEvent damage) {
+        BossFightState.BossState boss = ps.getBoss();
         int reflectedDamage = (int) (damage.getDamage() * ps.getPlayerStats().getDamageReflection());
         boss.setBossHp(boss.getBossHp() - reflectedDamage);
     }

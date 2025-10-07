@@ -5,8 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
-import ru.tggc.capybaratelegrambot.domain.sm.BossFightEvents;
-import ru.tggc.capybaratelegrambot.domain.sm.BossFightStates;
+import ru.tggc.capybaratelegrambot.domain.sm.event.BossFightEvents;
+import ru.tggc.capybaratelegrambot.domain.sm.state.BossFightStates;
 
 import java.time.Duration;
 import java.util.HashSet;

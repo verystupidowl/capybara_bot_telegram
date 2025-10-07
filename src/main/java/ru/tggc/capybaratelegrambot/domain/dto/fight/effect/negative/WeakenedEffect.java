@@ -15,7 +15,7 @@ public class WeakenedEffect extends AbstractEffect {
     }
 
     @Override
-    public void onDamageGiven(BossFightState.PlayerState ps, BossFightState.BossState boss, DamageEvent damage) {
+    public void onDamageGiven(BossFightState.PlayerState ps, DamageEvent damage) {
         if (turnsLeft > 0) {
             damage.setDamage(damage.getDamage() * damageReductionPercent);
         }
