@@ -56,7 +56,7 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
 
     @Override
     public Response dispatch(Message message) {
-        if (message.photo() == null || message.photo().length == 0 || message.animation() == null) {
+        if (message.photo() == null || message.photo().length == 0) {
             log.warn("PhotoHandleRegistry.dispatch called, but no photo in message");
             return null;
         }
