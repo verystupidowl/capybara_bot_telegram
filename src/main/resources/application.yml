@@ -19,3 +19,4 @@ spring:
 
 bot:
   token: ${BOT_TOKEN}
+  webhook_url: ${WEBHOOK_URL}
