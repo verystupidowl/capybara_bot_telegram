@@ -1,13 +1,14 @@
 package ru.tggc.capybaratelegrambot.domain.fight.effect.negative;
 
-import lombok.AllArgsConstructor;
 import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.fight.effect.AbstractEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.AbstractExpiringEffect;
 import ru.tggc.capybaratelegrambot.domain.fight.effect.EffectType;
 
-@AllArgsConstructor
-public class StunEffect extends AbstractEffect {
-    private int remainingTurns;
+public class StunEffect extends AbstractExpiringEffect {
+
+    protected StunEffect(int turnsLeft) {
+        super(turnsLeft);
+    }
 
     @Override
     public void onTurnBegin(BossFightState.PlayerState ps) {
@@ -16,15 +17,13 @@ public class StunEffect extends AbstractEffect {
 
     @Override
     public void onTurnEnd(BossFightState.PlayerState ps) {
-        remainingTurns--;
-        //todo придумать что-то типа onExpiration, чтобы стан уходил после удаления из списка эффектов
+        doEffect(() -> {});
     }
 
     @Override
-    public boolean isExpired() {
-        return remainingTurns <= 0;
+    public void onExpired(BossFightState.PlayerState ps) {
+        ps.setCanAct(true);
     }
-
 
     @Override
     public EffectType getEffectType() {

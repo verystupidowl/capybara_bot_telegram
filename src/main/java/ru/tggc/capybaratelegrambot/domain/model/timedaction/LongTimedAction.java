@@ -16,7 +16,7 @@ public interface LongTimedAction extends TimedAction {
     Duration getDuration();
 
     /**
-     * true, если действие всё ещё идёт
+     * @return true, если действие всё ещё идёт
      */
     boolean isInProgress();
 
@@ -25,5 +25,8 @@ public interface LongTimedAction extends TimedAction {
      */
     Duration timeUntilFinish();
 
+    /**
+     * Можно ли забрать с действия
+     */
     boolean canTakeFrom();
 }
