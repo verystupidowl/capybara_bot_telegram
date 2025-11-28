@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.provider.impl;
+package ru.tggc.capybaratelegrambot.service.work;
 
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
@@ -14,7 +14,7 @@ import java.util.List;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Service
-public class CriminalWorkProvider extends AbstractWorkProvider {
+public class CriminalWorkService extends AbstractWorkService {
 
     @Override
     public List<String> takeFromWork(Capybara capybara) {

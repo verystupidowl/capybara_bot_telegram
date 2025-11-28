@@ -1,10 +1,10 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight.effect.positive;
+package ru.tggc.capybaratelegrambot.domain.fight.effect.positive;
 
 import lombok.AllArgsConstructor;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.DamageEvent;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.AbstractEffect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.EffectType;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.DamageEvent;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.AbstractEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.EffectType;
 
 @AllArgsConstructor
 public class VampirismEffect extends AbstractEffect {

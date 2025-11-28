@@ -1,9 +1,9 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative;
+package ru.tggc.capybaratelegrambot.domain.fight.effect.negative;
 
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.DamageEvent;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.AbstractEffect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.EffectType;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.DamageEvent;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.AbstractEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.EffectType;
 
 public class PoisonEffect extends AbstractEffect {
     private int stacks = 1;

@@ -1,6 +1,6 @@
 package ru.tggc.capybaratelegrambot.domain.model.enums.fight;
 
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
 
 public interface FightBuffEnum {
 

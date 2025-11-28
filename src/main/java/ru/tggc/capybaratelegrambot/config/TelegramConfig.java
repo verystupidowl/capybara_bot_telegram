@@ -15,7 +15,7 @@ public class TelegramConfig {
                                    @Value("${bot.webhook_url}") String webhookUrl) {
         TelegramBot bot = new TelegramBot(botToken);
         bot.execute(new SetWebhook().url(webhookUrl));
-        bot.execute(new SendMessage(428873987, "Деплой прошел успешно"));
+        bot.execute(new SendMessage(428873987, "Деплой прошел успешно. Вебхук настроен"));
         return bot;
     }
 }

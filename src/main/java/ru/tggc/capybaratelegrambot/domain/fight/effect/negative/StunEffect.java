@@ -1,9 +1,9 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative;
+package ru.tggc.capybaratelegrambot.domain.fight.effect.negative;
 
 import lombok.AllArgsConstructor;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.AbstractEffect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.EffectType;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.AbstractEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.EffectType;
 
 @AllArgsConstructor
 public class StunEffect extends AbstractEffect {
@@ -17,6 +17,7 @@ public class StunEffect extends AbstractEffect {
     @Override
     public void onTurnEnd(BossFightState.PlayerState ps) {
         remainingTurns--;
+        //todo придумать что-то типа onExpiration, чтобы стан уходил после удаления из списка эффектов
     }
 
     @Override
@@ -27,6 +28,6 @@ public class StunEffect extends AbstractEffect {
 
     @Override
     public EffectType getEffectType() {
-        return null;
+        return EffectType.NEGATIVE;
     }
 }

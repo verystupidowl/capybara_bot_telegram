@@ -2,8 +2,8 @@ package ru.tggc.capybaratelegrambot.domain.model.enums.fight;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.positive.VampirismEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.positive.VampirismEffect;
 
 import java.util.function.Consumer;
 

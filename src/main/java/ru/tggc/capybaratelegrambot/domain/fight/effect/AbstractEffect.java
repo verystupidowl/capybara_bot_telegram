@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight.effect;
+package ru.tggc.capybaratelegrambot.domain.fight.effect;
 
 public abstract class AbstractEffect implements Effect {
 

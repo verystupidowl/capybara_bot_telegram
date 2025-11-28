@@ -2,8 +2,8 @@ package ru.tggc.capybaratelegrambot.utils;
 
 import lombok.experimental.UtilityClass;
 import ru.tggc.capybaratelegrambot.domain.dto.FileDto;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.BossAction;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.BossType;
+import ru.tggc.capybaratelegrambot.domain.fight.enums.BossAction;
+import ru.tggc.capybaratelegrambot.domain.fight.enums.BossType;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.HappinessThings;
 import ru.tggc.capybaratelegrambot.domain.model.Photo;
 
