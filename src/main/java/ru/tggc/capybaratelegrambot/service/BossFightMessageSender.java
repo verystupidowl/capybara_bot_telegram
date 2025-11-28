@@ -13,7 +13,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 
 import java.util.ArrayList;

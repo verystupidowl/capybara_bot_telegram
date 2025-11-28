@@ -1,12 +1,12 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight;
+package ru.tggc.capybaratelegrambot.domain.fight;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.Effect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.BossType;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.PlayerActionType;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.Effect;
+import ru.tggc.capybaratelegrambot.domain.fight.enums.BossType;
+import ru.tggc.capybaratelegrambot.domain.fight.enums.PlayerActionType;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
 import java.util.List;

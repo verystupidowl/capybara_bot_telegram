@@ -11,7 +11,7 @@ import ru.tggc.capybaratelegrambot.annotation.params.Username;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.enums.PlayerActionType;
+import ru.tggc.capybaratelegrambot.domain.fight.enums.PlayerActionType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;

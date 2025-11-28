@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight;
+package ru.tggc.capybaratelegrambot.domain.fight;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

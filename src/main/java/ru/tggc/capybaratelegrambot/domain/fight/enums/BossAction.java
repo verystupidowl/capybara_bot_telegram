@@ -1,12 +1,12 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight.enums;
+package ru.tggc.capybaratelegrambot.domain.fight.enums;
 
 import lombok.Getter;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.DamageEvent;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.BlindnessEffect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.PoisonEffect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.StunEffect;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.effect.negative.WeakenedEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.DamageEvent;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.negative.BlindnessEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.negative.PoisonEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.negative.StunEffect;
+import ru.tggc.capybaratelegrambot.domain.fight.effect.negative.WeakenedEffect;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
 import java.util.List;

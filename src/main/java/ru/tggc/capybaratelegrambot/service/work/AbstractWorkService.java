@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.provider.impl;
+package ru.tggc.capybaratelegrambot.service.work;
 
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
@@ -6,7 +6,7 @@ import ru.tggc.capybaratelegrambot.domain.model.Work;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
-import ru.tggc.capybaratelegrambot.provider.WorkProvider;
+import ru.tggc.capybaratelegrambot.service.WorkService;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import java.util.List;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @RequiredArgsConstructor
-public abstract class AbstractWorkProvider implements WorkProvider {
+public abstract class AbstractWorkService implements WorkService {
 
     @Override
     public List<String> takeFromWork(Capybara capybara) {
@@ -47,7 +47,7 @@ public abstract class AbstractWorkProvider implements WorkProvider {
     }
 
     @Override
-    public String setJob(Capybara capybara) {
+    public String setWork(Capybara capybara) {
         checkHasNoWork(capybara);
         WorkAction workAction = new WorkAction(getWorkDuration(), getWorkCooldown());
         Work work = Work.builder()

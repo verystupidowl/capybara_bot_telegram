@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.FightCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.BuffType;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffEnum;
 import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffHeal;

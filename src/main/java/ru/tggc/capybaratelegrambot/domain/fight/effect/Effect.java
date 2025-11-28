@@ -1,7 +1,7 @@
-package ru.tggc.capybaratelegrambot.domain.dto.fight.effect;
+package ru.tggc.capybaratelegrambot.domain.fight.effect;
 
-import ru.tggc.capybaratelegrambot.domain.dto.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.domain.dto.fight.DamageEvent;
+import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
+import ru.tggc.capybaratelegrambot.domain.fight.DamageEvent;
 
 public interface Effect {
 

@@ -1,4 +1,4 @@
-package ru.tggc.capybaratelegrambot.provider.impl;
+package ru.tggc.capybaratelegrambot.service.work;
 
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
@@ -6,25 +6,25 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import java.time.Duration;
 
 @Service
-public class ItWorkProvider extends AbstractWorkProvider {
+public class CashierWorkService extends AbstractWorkService {
 
     @Override
     public WorkType getJobType() {
-        return WorkType.PROGRAMMING;
+        return WorkType.CASHIER;
     }
 
     @Override
     protected String getSetWorkPhoto() {
-        return "https://vk.com/photo-209917797_457242284";
+        return "https://vk.com/photo-209917797_457242285";
     }
 
     @Override
     protected Duration getWorkCooldown() {
-        return Duration.ofMinutes(15);
+        return Duration.ofMinutes(30);
     }
 
     @Override
     protected Duration getWorkDuration() {
-        return Duration.ofMinutes(90);
+        return Duration.ofMinutes(30);
     }
 }
