@@ -31,6 +31,7 @@ public class Chat {
     @ToString.Exclude
     private Set<User> users;
     @OneToMany(mappedBy = "chat", fetch = FetchType.LAZY)
+    @ToString.Exclude
     private List<Capybara> capybaras;
 
     @Override

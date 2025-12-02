@@ -59,9 +59,14 @@ public class BossFightState {
         public void endTurn() {
             this.setDefending(false);
             this.setLastAction(null);
-            this.setCanAct(true);
             this.getPlayerStats().getEffects().forEach(e -> e.onTurnEnd(this));
-            this.getPlayerStats().getEffects().removeIf(Effect::isExpired);
+            this.getPlayerStats().getEffects().removeIf(e -> {
+                if (e.isExpired()) {
+                    e.onExpired(this);
+                    return true;
+                }
+                return false;
+            });
         }
 
         public DamageEvent applyDamage(double dmg) {

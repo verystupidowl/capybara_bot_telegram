@@ -20,6 +20,9 @@ public interface Effect {
     default void onTurnEnd(BossFightState.PlayerState ps) {
     }
 
+    default void onExpired(BossFightState.PlayerState ps) {
+    }
+
     default boolean isExpired() {
         return false;
     }
