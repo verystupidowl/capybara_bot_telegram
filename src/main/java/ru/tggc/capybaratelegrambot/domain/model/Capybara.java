@@ -58,6 +58,7 @@ public class Capybara {
     @OneToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
     private Capybara spouse;
+    @Builder.Default
     boolean deleted = false;
     @OneToOne
     private RaceRequest raceRequest;
