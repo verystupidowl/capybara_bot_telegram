@@ -6,7 +6,11 @@ import ru.tggc.capybaratelegrambot.domain.fight.effect.EffectType;
 
 public class StunEffect extends AbstractExpiringEffect {
 
-    protected StunEffect(int turnsLeft) {
+    public StunEffect() {
+        super(1);
+    }
+
+    public StunEffect(int turnsLeft) {
         super(turnsLeft);
     }
 
@@ -17,7 +21,8 @@ public class StunEffect extends AbstractExpiringEffect {
 
     @Override
     public void onTurnEnd(BossFightState.PlayerState ps) {
-        doEffect(() -> {});
+        doEffect(() -> {
+        });
     }
 
     @Override
