@@ -22,4 +22,4 @@ spring:
 bot:
   token: ${BOT_TOKEN}
   webhook_url: ${WEBHOOK_URL}
-  admin-id: 428873987
+  admin-id: ${ADMIN_ID}
