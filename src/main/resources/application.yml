@@ -11,7 +11,7 @@ spring:
   jpa:
     show-sql: false
     hibernate:
-      ddl-auto: create
+    #      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -22,3 +22,4 @@ spring:
 bot:
   token: ${BOT_TOKEN}
   webhook_url: ${WEBHOOK_URL}
+  admin-id: 428873987

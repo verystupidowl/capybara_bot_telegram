@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.model.Update;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.visitor.UpdateDispatcherVisitor;
 import ru.tggc.capybaratelegrambot.visitor.UpdateWrapper;
 
@@ -29,5 +30,10 @@ public class BotService {
                     log.error("Error while dispatching an update {}", update, e);
                     return null;
                 });
+    }
+
+    public void send(Response response) {
+        response.send(bot)
+                .thenRun(() -> log.debug("Sending response {}", response));
     }
 }
