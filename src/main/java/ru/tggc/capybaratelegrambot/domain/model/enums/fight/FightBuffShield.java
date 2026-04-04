@@ -5,6 +5,8 @@ import lombok.Getter;
 import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.fight.effect.positive.ReflectionEffect;
 
+import java.math.BigDecimal;
+
 @AllArgsConstructor
 @Getter
 public enum FightBuffShield implements FightBuffEnum {
@@ -14,8 +16,7 @@ public enum FightBuffShield implements FightBuffEnum {
     BLADE_MALE("\uD83D\uDC21\uD83E\uDD94Колючая броня", "Отражает 80% урона, нанесенного капибаре обратно в обидчика, но снижает действие щита на 10%", 150,
             stats -> {
                 stats.setBaseDefend(stats.getBaseDefend() * 0.9);
-                stats.setDamageReflection(0.8);
-                stats.getEffects().add(new ReflectionEffect());
+                stats.getEffects().add(new ReflectionEffect(new BigDecimal("0.8")));
             });
 
     private final String title;

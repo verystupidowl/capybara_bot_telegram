@@ -8,7 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.response.ResponseBuilder;
-import ru.tggc.capybaratelegrambot.exceptions.*;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
+import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
+import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.utils.Text;
 

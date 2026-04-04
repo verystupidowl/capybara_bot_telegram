@@ -16,10 +16,10 @@ public enum PlayerActionType {
     ATTACK("Атака", (fight, ps) -> {
         StringBuilder log = new StringBuilder();
         BossFightState.PlayerStats stats = ps.getPlayerStats();
-        int damage = (int) RandomUtils.getRandomStat(stats.getBaseDamage());
+        double damage = RandomUtils.getRandomStat(stats.getBaseDamage());
         if (RandomUtils.chance(stats.getCritChance())) {
             log.append("\uD83D\uDCA2Критический урон!");
-            damage *= 2;
+            damage *= stats.getCritMultiplier();
         }
         DamageEvent damageEvent = new DamageEvent(damage);
         fight.getBossState().applyDamage(ps, damageEvent);
