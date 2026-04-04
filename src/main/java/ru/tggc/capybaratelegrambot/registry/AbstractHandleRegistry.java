@@ -29,10 +29,10 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
 import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 import ru.tggc.capybaratelegrambot.utils.Text;
-import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -42,7 +42,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -158,10 +157,7 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
             log.error("Error invoking callback", e);
             response = Response.of(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
         }
-        return response.andThen(bot -> {
-            rateLimiter.unlock(from.id());
-            return CompletableFuture.completedFuture(null);
-        });
+        return response.andThen(bot -> rateLimiter.unlock(from.id()));
     }
 
     @Nullable
