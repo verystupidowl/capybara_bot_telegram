@@ -1,6 +1,7 @@
 package ru.tggc.capybaratelegrambot.domain.response;
 
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
@@ -70,8 +71,16 @@ public class ResponseBuilder {
         return this;
     }
 
-    public ResponseBuilder edit(int messageId, String newText) {
-        actions.add(bot -> bot.execute(new EditMessageText(chatId, messageId, newText)));
+    public ResponseBuilder edit(int messageId, String text) {
+        return edit(messageId, text, null);
+    }
+
+    public ResponseBuilder edit(int messageId, String newText, InlineKeyboardMarkup markup) {
+        actions.add(bot -> {
+            EditMessageText ed = new EditMessageText(chatId, messageId, newText);
+            ifPresent(markup, ed::replyMarkup);
+            bot.execute(new EditMessageText(chatId, messageId, newText));
+        });
         return this;
     }
 

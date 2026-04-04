@@ -10,7 +10,7 @@ import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
@@ -29,11 +29,11 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
     private final HistoryService historyService;
 
     protected MessageHandleRegistry(ListableBeanFactory beanFactory,
-                                    InlineKeyboardCreator inlineKeyboardCreator,
                                     UserService userService,
                                     HistoryService historyService,
-                                    UserRateLimiterService rateLimiterService) {
-        super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+                                    UserRateLimiterService rateLimiterService,
+                                    ExceptionHandler exceptionHandler) {
+        super(beanFactory, userService, rateLimiterService, exceptionHandler);
         this.historyService = historyService;
     }
 

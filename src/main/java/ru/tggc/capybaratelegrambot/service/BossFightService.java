@@ -30,14 +30,7 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
@@ -142,19 +135,12 @@ public class BossFightService {
                                 .andThen(bot -> {
                                     fight.getPlayers().values()
                                             .forEach(p -> userRateLimiterService.lock(p.getUserId()));
-                                    CompletableFuture<Void> future = new CompletableFuture<>();
 
-                                    sm.getExtendedState().getVariables().put("responseFuture", future);
                                     sm.getExtendedState().getVariables().put("bot", bot);
                                     sendEvents(sm, fight);
-
-                                    return future;
                                 })
-                                .andThen(bot -> {
-                                    fight.getPlayers().values()
-                                            .forEach(p -> userRateLimiterService.unlock(p.getUserId()));
-                                    return new CompletableFuture<>();
-                                });
+                                .andThen(bot -> fight.getPlayers().values()
+                                        .forEach(p -> userRateLimiterService.unlock(p.getUserId())));
                     }
                     String text = ((Message) query.maybeInaccessibleMessage())
                             .caption() + "\n==========================\n" + ps.getUsername() + " выбрал " + action.getLabel() +

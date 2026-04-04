@@ -2,7 +2,6 @@ package ru.tggc.capybaratelegrambot.registry;
 
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.User;
-import com.pengrad.telegrambot.request.SendMessage;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -11,45 +10,24 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.ListableBeanFactory;
 import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
 import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
-import ru.tggc.capybaratelegrambot.annotation.params.CallbackParam;
-import ru.tggc.capybaratelegrambot.annotation.params.ChatId;
-import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
-import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
-import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
-import ru.tggc.capybaratelegrambot.annotation.params.UserId;
-import ru.tggc.capybaratelegrambot.annotation.params.Username;
+import ru.tggc.capybaratelegrambot.annotation.params.*;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
-import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
-import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
-import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
-import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
-import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.utils.ParamConverter;
-import ru.tggc.capybaratelegrambot.utils.Text;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
-import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
@@ -60,14 +38,13 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
 
     protected final ListableBeanFactory beanFactory;
-    private final InlineKeyboardCreator inlineKeyboardCreator;
     private final UserService userService;
     private final UserRateLimiterService rateLimiter;
+    private final ExceptionHandler exceptionHandler;
 
     protected Method defaultMethod;
     protected Object defaultBean;
 
-    protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
     protected static final String NOT_IMPLEMENTED_MESSAGE = "Пока не реализовано, следите за новостями!";
     protected static final long ADMIN_ID = 428873987;
 
@@ -103,59 +80,13 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
 
     protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
         Response response;
-        long chatId = chat.id();
         try {
             Response checkedRequest = checkRequest(from, method, chat);
             if (checkedRequest != null) return checkedRequest;
             rateLimiter.lock(from.id());
             response = (Response) method.invoke(bean, args);
-        } catch (InvocationTargetException | CompletionException e) {
-            Throwable cause = unwrap(e);
-            switch (cause) {
-                case CapybaraNotFoundException ex -> {
-                    log.info(ex.getMessage(), chatId);
-                    SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                    message.replyMarkup(inlineKeyboardCreator.takeCapybara());
-                    response = Response.of(message);
-                }
-                case UserNotFoundException ex -> {
-                    log.info(ex.getMessage(), chatId);
-                    SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                    message.replyMarkup(inlineKeyboardCreator.takeCapybara());
-                    response = Response.of(message);
-                }
-                case CapybaraAlreadyExistsException ex -> {
-                    log.info(ex.getMessage(), chatId);
-                    response = Response.of(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
-                }
-                case CapybaraHasNoMoneyException ex -> {
-                    log.info(ex.getMessage());
-                    String messageToSend = Text.NO_MONEY;
-                    response = Response.of(new SendMessage(chatId, messageToSend));
-                }
-                case CapybaraTiredException ex -> {
-                    SendMessage sm = new SendMessage(chatId, ex.getMessage());
-                    ifPresent(ex.getMarkup(), sm::replyMarkup);
-                    response = Response.of(sm);
-                }
-                case CapybaraException ex -> {
-                    log.info(ex.getMessage(), chatId);
-                    String messageToSend = ex.getMessageToSend();
-                    SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE));
-                    ifPresent(ex.getMarkup(), sm::replyMarkup);
-                    response = Response.of(sm);
-                }
-                case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "Введи число!"));
-                default -> {
-                    log.error("Error invoking callback", cause);
-                    SendMessage sendMessageToUser = new SendMessage(chatId, DEFAULT_ERROR_MESSAGE);
-                    SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, buildMessageToAdmin(cause.getMessage(), chat, from));
-                    response = Response.ofAll(sendMessageToAdmin, sendMessageToUser);
-                }
-            }
         } catch (Exception e) {
-            log.error("Error invoking callback", e);
-            response = Response.of(new SendMessage(chatId, DEFAULT_ERROR_MESSAGE));
+            return exceptionHandler.handleException(e, chat, from);
         }
         return response.andThen(bot -> rateLimiter.unlock(from.id()));
     }
@@ -211,18 +142,4 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
     }
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
-
-    protected String buildMessageToAdmin(String message, Chat chat, User from) {
-        return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
-    }
-
-    private Throwable unwrap(Throwable e) {
-        if (e instanceof InvocationTargetException ite && ite.getCause() != null) {
-            return unwrap(ite.getCause());
-        }
-        if (e instanceof CompletionException ce && ce.getCause() != null) {
-            return unwrap(ce.getCause());
-        }
-        return e;
-    }
 }

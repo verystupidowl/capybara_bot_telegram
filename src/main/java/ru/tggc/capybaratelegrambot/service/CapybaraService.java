@@ -353,6 +353,7 @@ public class CapybaraService {
         capybaraRepository.save(capybara);
     }
 
+    @Transactional
     public void transferMoney(CapybaraContext ctx, String targetUsername, Long amount) {
         Capybara sourcecapybara = getCapybaraByContext(ctx);
         throwIf(sourcecapybara.getCurrency() < amount, CapybaraHasNoMoneyException::new);

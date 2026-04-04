@@ -14,6 +14,12 @@ public abstract class AbstractExpiringEffect extends AbstractEffect {
         }
     }
 
+    protected void decreaseTurnsLeft() {
+        if (this.turnsLeft > 0) {
+            this.turnsLeft--;
+        }
+    }
+
     @Override
     public boolean isExpired() {
         return turnsLeft <= 0;

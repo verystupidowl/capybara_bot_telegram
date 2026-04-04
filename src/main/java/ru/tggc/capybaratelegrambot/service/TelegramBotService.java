@@ -35,10 +35,10 @@ public class TelegramBotService {
         );
     }
 
-    public void sendDelayed(Consumer<TelegramBot> task, long delaySecs) {
+    public void sendDelayed(Consumer<TelegramBot> task, long delayMillis) {
         taskScheduler.schedule(
                 () -> eventPublisher.publishEvent(task),
-                Instant.now().plusMillis(delaySecs)
+                Instant.now().plusMillis(delayMillis)
         );
     }
 }
