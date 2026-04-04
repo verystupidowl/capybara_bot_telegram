@@ -28,7 +28,13 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
