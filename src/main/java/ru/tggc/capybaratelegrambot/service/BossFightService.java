@@ -23,6 +23,7 @@ import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Fight;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
+import ru.tggc.capybaratelegrambot.formatter.BossFightFormatter;
 import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
@@ -42,6 +43,7 @@ public class BossFightService {
     private final UserRateLimiterService userRateLimiterService;
     private final TimedActionService timedActionService;
     private final BossFightMessageSender messageSender;
+    private final BossFightFormatter bossFightFormatter;
 
     @Setter(onMethod = @__({@Autowired}))
     private BossFightService self;
@@ -89,14 +91,12 @@ public class BossFightService {
         });
 
         provider.startFight(chatId, fight);
-        return "Бой начинается!⚔️\nBoss: " + bossType.getName() + " hp: " + bossType.getHp();
+        return bossFightFormatter.getStartMessage(bossType);
     }
 
     public String getUsers(CapybaraContext ctx) {
         Set<UserDto> users = provider.getPreparedUsers(ctx.chatId());
-        return "Ты уверен? Ваша команда - " + users.size() + " капибар:\n" + users.stream()
-                .map(UserDto::username)
-                .collect(Collectors.joining("\n"));
+        return bossFightFormatter.getUsersMessage(users);
     }
 
     public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
@@ -109,7 +109,7 @@ public class BossFightService {
                     Integer messageId = query.maybeInaccessibleMessage().messageId();
 
                     if (ps == null || !ps.isAlive()) {
-                        return Response.of(new SendMessage(chatId, "Твоя капибара без сознания или не участвует!"));
+                        return Response.of(new SendMessage(chatId, bossFightFormatter.getCantActMessage()));
                     }
 
                     ps.setLastAction(action);
@@ -134,9 +134,8 @@ public class BossFightService {
                                     }
                                 });
                     }
-                    String text = ((Message) query.maybeInaccessibleMessage())
-                            .caption() + "\n==========================\n" + ps.getUsername() + " выбрал " + action.getLabel() +
-                            "\n==========================\n⌛ Ждём действий от всех игроков";
+                    String caption = ((Message) query.maybeInaccessibleMessage()).caption();
+                    String text = bossFightFormatter.getPlayerChoseMessage(caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
                             .replyMarkup(inlineKeyboardCreator.fightKeyboard());

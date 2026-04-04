@@ -18,6 +18,10 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+  messages:
+    basename: i18n/common,i18n/fight/messages,i18n/shop/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
 
 bot:
   token: ${BOT_TOKEN}

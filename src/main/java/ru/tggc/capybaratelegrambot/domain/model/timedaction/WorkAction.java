@@ -60,7 +60,7 @@ public class WorkAction implements LongTimedAction {
 
     @Override
     public boolean canTakeFrom() {
-        return isInProgress() && timeUntilFinish().isZero();
+        return startTime != null && !isInProgress();
     }
 
     @Override

@@ -24,7 +24,7 @@ public class BossFightMessageSender {
     private final TelegramBotService telegramBotService;
     private final InlineKeyboardCreator inlineKeyboardCreator;
 
-    public int sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
+    public void sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
         List<AnimationStep> steps = getAnimationSteps(fight.getActionLogs());
         bot.execute(new DeleteMessage(chatId, oldMessageId));
         int messageId = bot.execute(new SendPhoto(chatId, "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg")).message().messageId();
@@ -54,7 +54,6 @@ public class BossFightMessageSender {
             fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
             fight.setActionLogs(new ArrayList<>());
         }, (steps.size() + 1) * 4L);
-        return messageId;
     }
 
 
