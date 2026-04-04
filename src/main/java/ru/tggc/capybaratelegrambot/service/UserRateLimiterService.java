@@ -31,6 +31,11 @@ public class UserRateLimiterService {
         locked.set(true);
     }
 
+    public boolean tryLock(long id) {
+        AtomicBoolean locked = lockCache.get(id, i -> new  AtomicBoolean(true));
+        return locked.compareAndSet(false, true);
+    }
+
     public void unlock(long userId) {
         AtomicBoolean locked = lockCache.getIfPresent(userId);
         if (locked != null) locked.set(false);

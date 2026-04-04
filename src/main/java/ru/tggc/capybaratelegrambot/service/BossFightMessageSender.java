@@ -3,11 +3,7 @@ package ru.tggc.capybaratelegrambot.service;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.InputMediaPhoto;
-import com.pengrad.telegrambot.request.DeleteMessage;
-import com.pengrad.telegrambot.request.EditMessageCaption;
-import com.pengrad.telegrambot.request.EditMessageMedia;
-import com.pengrad.telegrambot.request.EditMessageText;
-import com.pengrad.telegrambot.request.SendPhoto;
+import com.pengrad.telegrambot.request.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +14,6 @@ import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
@@ -31,27 +26,22 @@ public class BossFightMessageSender {
 
     public int sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
         List<AnimationStep> steps = getAnimationSteps(fight.getActionLogs());
-        CompletableFuture<Void> overall = new CompletableFuture<>();
         bot.execute(new DeleteMessage(chatId, oldMessageId));
         int messageId = bot.execute(new SendPhoto(chatId, "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg")).message().messageId();
         for (int i = 1; i < steps.size() + 1; i++) {
             AnimationStep step = steps.get(i - 1);
             telegramBotService.sendDelayed(telegramBot -> {
-                try {
-                    if (step.photoPath != null) {
-                        EditMessageMedia request = new EditMessageMedia(
-                                chatId,
-                                messageId,
-                                new InputMediaPhoto(step.photoPath)
-                                        .caption(step.text)
-                        );
-                        ifPresent(step.markup, request::replyMarkup);
-                        telegramBot.execute(request);
-                    } else {
-                        telegramBot.execute(new EditMessageText(chatId, messageId, step.text));
-                    }
-                } catch (Exception e) {
-                    overall.completeExceptionally(e);
+                if (step.photoPath != null) {
+                    EditMessageMedia request = new EditMessageMedia(
+                            chatId,
+                            messageId,
+                            new InputMediaPhoto(step.photoPath)
+                                    .caption(step.text)
+                    );
+                    ifPresent(step.markup, request::replyMarkup);
+                    telegramBot.execute(request);
+                } else {
+                    telegramBot.execute(new EditMessageText(chatId, messageId, step.text));
                 }
             }, i * 4L);
         }
@@ -63,7 +53,6 @@ public class BossFightMessageSender {
             telegramBot.execute(new EditMessageCaption(chatId, messageId).caption(text).replyMarkup(inlineKeyboardCreator.fightKeyboard()));
             fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
             fight.setActionLogs(new ArrayList<>());
-            overall.complete(null);
         }, (steps.size() + 1) * 4L);
         return messageId;
     }

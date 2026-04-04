@@ -11,9 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @FunctionalInterface
-public interface Response {
-
-    void send(TelegramBot bot);
+public interface Response extends Consumer<TelegramBot> {
 
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(List<Rq> requests) {
         return bot -> requests.forEach(request -> {
@@ -62,8 +60,8 @@ public interface Response {
 
     default Response andThen(Response after) {
         return bot -> {
-            this.send(bot);
-            after.send(bot);
+            this.accept(bot);
+            after.accept(bot);
         };
     }
 }

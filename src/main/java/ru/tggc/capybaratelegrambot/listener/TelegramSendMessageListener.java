@@ -18,25 +18,25 @@ import java.util.function.Consumer;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SendMessageListener {
+public class TelegramSendMessageListener implements Listener<TelegramBot> {
     private final TelegramBot telegramBot;
-    private final TelegramBotService  telegramBotService;
+    private final TelegramBotService telegramBotService;
 
     @Async
     @EventListener
     @Retryable(
             retryFor = {SendException.class},
-            backoff = @Backoff(delay = 2000,  multiplier = 2)
+            backoff = @Backoff(delay = 2000, multiplier = 2)
     )
     public void listen(Response response) {
-        response.send(telegramBot);
+        response.accept(telegramBot);
     }
 
     @Async
     @EventListener
     @Retryable(
             retryFor = {SendException.class},
-            backoff = @Backoff(delay = 2000,  multiplier = 2)
+            backoff = @Backoff(delay = 2000, multiplier = 2)
     )
     public void listen(Consumer<TelegramBot> task) {
         task.accept(telegramBot);
