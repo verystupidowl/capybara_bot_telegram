@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 
 @Slf4j
@@ -88,7 +88,7 @@ public class ExceptionHandler {
     }
 
     public String buildMessageToAdmin(String message, Chat chat, User from) {
-        return LocalDateTime.now() + "\n" + from.username() + "\n" + getOr(chat.title(), Function.identity(), "Личка") + "\n" + message;
+        return LocalDateTime.now() + "\n" + from.username() + "\n" + getOrElse(chat.title(), Function.identity(), "Личка") + "\n" + message;
     }
 
     private Throwable unwrap(Throwable e) {

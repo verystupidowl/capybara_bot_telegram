@@ -6,7 +6,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import java.util.Map;
 import java.util.function.Function;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 import static ru.tggc.capybaratelegrambot.utils.Utils.getText;
 import static ru.tggc.capybaratelegrambot.utils.Utils.renderStaminaBar;
 
@@ -21,7 +21,7 @@ public class TextBuilder {
                 "stamina", renderStaminaBar(capybara.stamina()),
                 "work", capybara.job(),
                 "currency", String.valueOf(capybara.currency()),
-                "wedding", getOr(capybara.wedding(), Function.identity(), "Нет"),
+                "wedding", getOrElse(capybara.wedding(), Function.identity(), "Нет"),
                 "satiety", capybara.satietyLevel() + "/" + capybara.satietyMaxLevel(),
                 "happiness", capybara.happinessLevel() + "/" + capybara.happinessMaxLevel()
         );

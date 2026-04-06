@@ -21,7 +21,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 
 @Component
 @Slf4j
@@ -39,17 +39,17 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
 
     @Override
     protected boolean canRequestBePublic(Method method) {
-        return getOr(method.getAnnotation(MessageHandle.class), MessageHandle::canPublic, true);
+        return getOrElse(method.getAnnotation(MessageHandle.class), MessageHandle::canPublic, true);
     }
 
     @Override
     protected boolean canRequestBePrivate(Method method) {
-        return getOr(method.getAnnotation(MessageHandle.class), MessageHandle::canPrivate, false);
+        return getOrElse(method.getAnnotation(MessageHandle.class), MessageHandle::canPrivate, false);
     }
 
     @Override
     protected UserRole[] getRequiredRoles(Method method) {
-        return getOr(
+        return getOrElse(
                 method.getAnnotation(MessageHandle.class),
                 MessageHandle::requiredRoles,
                 new UserRole[0]

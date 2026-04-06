@@ -9,7 +9,7 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
 import ru.tggc.capybaratelegrambot.service.TimedActionService;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 
 @Component
 @RequiredArgsConstructor
@@ -46,13 +46,13 @@ public class CapybaraInfoMapper {
         }
         if (hasWork) {
             WorkAction workAction = work.getWorkAction();
-            canGoWork = getOr(workAction, WorkAction::canPerform, false);
-            isWorking = getOr(workAction, WorkAction::isInProgress, false);
+            canGoWork = getOrElse(workAction, WorkAction::canPerform, false);
+            isWorking = getOrElse(workAction, WorkAction::isInProgress, false);
             rise = work.getRise();
             index = work.getIndex();
             workTime = timedActionService.getStatus(workAction);
             if (isWorking) {
-                canTakeFromWork = getOr(workAction, WorkAction::canTakeFrom, false);
+                canTakeFromWork = getOrElse(workAction, WorkAction::canTakeFrom, false);
                 takeFromWork = timedActionService.getStatus(workAction);
             }
         }

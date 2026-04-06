@@ -12,11 +12,11 @@ import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.utils.Utils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIfNull;
 
 @Component
@@ -42,7 +42,7 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
 
     @Override
     protected UserRole[] getRequiredRoles(Method method) {
-        return Utils.getOr(
+        return getOrElse(
                 method.getAnnotation(PhotoHandle.class),
                 PhotoHandle::requiredRoles,
                 new UserRole[0]

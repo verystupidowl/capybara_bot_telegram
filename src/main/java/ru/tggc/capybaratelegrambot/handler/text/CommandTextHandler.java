@@ -24,7 +24,6 @@ public class CommandTextHandler extends TextHandler {
     private final InlineKeyboardCreator inlineKeyboardCreator;
 
     @MessageHandle("уволиться с работы")
-
     public Response dismissal(@Ctx CapybaraContext ctx) {
         capybaraService.dismissal(ctx);
         return sendSimpleMessage(ctx.chatId(), "ur capy has no work now");
