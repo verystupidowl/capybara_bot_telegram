@@ -8,7 +8,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.enums.ImprovementValue;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.RaceService;
 import ru.tggc.capybaratelegrambot.utils.Text;
@@ -17,7 +18,7 @@ import ru.tggc.capybaratelegrambot.utils.Text;
 @RequiredArgsConstructor
 public class RaceCallbackHandler extends CallbackHandler {
     private final CapybaraService capybaraService;
-    private final InlineKeyboardCreator inlineCreator;
+    private final KeyboardFactory keyboardFactory;
     private final RaceService raceService;
 
     @CallbackHandle("start_race")
@@ -48,7 +49,7 @@ public class RaceCallbackHandler extends CallbackHandler {
     public Response buyImprove(@Ctx CapybaraContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
-            return editMessageCaption(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, inlineCreator.improvements());
+            return editMessageCaption(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, keyboardFactory.getKeyboardInline(KeyboardType.IMPROVEMENTS));
         }
         return sendSimpleMessage(ctx.chatId(), "У твоей капибары уже есть улучшение!");
     }

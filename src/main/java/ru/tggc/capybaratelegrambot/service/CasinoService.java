@@ -139,7 +139,7 @@ public class CasinoService {
                     sendPhoto = new SendPhoto(chatId, WIN_PHOTO_URL);
                     sendPhoto.caption("Твоя капибара выиграла " + win);
                 }
-                bot.execute(sendPhoto);
+                tb.execute(sendPhoto);
                 map.invalidate(ctx);
             }, 2000L);
         };

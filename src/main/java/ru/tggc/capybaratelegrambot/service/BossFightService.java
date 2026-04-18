@@ -24,7 +24,8 @@ import ru.tggc.capybaratelegrambot.domain.model.Fight;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.formatter.BossFightFormatter;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
@@ -45,7 +46,7 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 public class BossFightService {
     private final BossFightProvider provider;
     private final CapybaraService capybaraService;
-    private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService userRateLimiterService;
     private final TimedActionService timedActionService;
     private final BossFightMessageSender messageSender;
@@ -144,7 +145,7 @@ public class BossFightService {
                     String text = bossFightFormatter.getPlayerChoseMessage(caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
-                            .replyMarkup(inlineKeyboardCreator.fightKeyboard());
+                            .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT));
                     return Response.of(message);
                 }).orElseGet(() -> Response.of(new SendMessage(chatId, "⚠️ Бой не найден."))
                         .andThen(Response.of(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()))));

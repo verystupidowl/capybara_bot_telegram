@@ -14,7 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 @RequiredArgsConstructor
 public class BossFightMessageSender {
     private final TelegramBotService telegramBotService;
-    private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final KeyboardFactory keyboardFactory;
 
     public void sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
         List<AnimationStep> steps = getAnimationSteps(fight.getActionLogs());
@@ -54,7 +55,7 @@ public class BossFightMessageSender {
             String text = steps.stream()
                     .map(AnimationStep::getText)
                     .collect(Collectors.joining());
-            telegramBot.execute(new EditMessageCaption(chatId, messageId).caption(text).replyMarkup(inlineKeyboardCreator.fightKeyboard()));
+            telegramBot.execute(new EditMessageCaption(chatId, messageId).caption(text).replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT)));
             fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
             fight.setActionLogs(new ArrayList<>());
         }, (steps.size() + 1) * 4L);

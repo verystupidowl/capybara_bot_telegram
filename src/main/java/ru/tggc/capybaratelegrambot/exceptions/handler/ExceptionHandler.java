@@ -14,7 +14,8 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
 import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
 import ru.tggc.capybaratelegrambot.utils.Text;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,7 +33,7 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 public class ExceptionHandler {
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
 
-    private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final KeyboardFactory keyboardFactory;
 
     public Response handleException(Exception e, Chat chat, User from) {
         Throwable cause = unwrap(e);
@@ -42,13 +43,13 @@ public class ExceptionHandler {
             case CapybaraNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
                 SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                message.replyMarkup(inlineKeyboardCreator.takeCapybara());
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case UserNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
                 SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                message.replyMarkup(inlineKeyboardCreator.takeCapybara());
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case CapybaraAlreadyExistsException ex -> {
