@@ -29,7 +29,7 @@ public abstract class AbstractInlineKeyboardCreator<T> implements KeyboardCreato
         return new InlineKeyboardButton(text).callbackData("go_to_main");
     }
 
-    protected List<List<InlineKeyboardButton>> singleRow(InlineKeyboardButton button) {
+    protected List<List<InlineKeyboardButton>> singleBtn(InlineKeyboardButton button) {
         return List.of(List.of(button));
     }
 
@@ -46,7 +46,7 @@ public abstract class AbstractInlineKeyboardCreator<T> implements KeyboardCreato
         List<List<InlineKeyboardButton>> list;
         if (getRowsSupplier() != null) {
             list = getRowsSupplier().get();
-        } else if (getRowsFunction() != null) {
+        } else if (getRowsFunction() != null && data != null) {
             list = getRowsFunction().apply(data);
         } else {
             throw new CapybaraException("Логика кнопок не определена для " + keyboardType);

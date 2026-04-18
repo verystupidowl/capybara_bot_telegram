@@ -18,6 +18,6 @@ public class DeleteCapybaraKeyboard extends AbstractInlineKeyboardCreator<Void> 
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleRow(btn("Точно выкинуть капибару", "exactly_delete"));
+        return () -> singleBtn(btn("Точно выкинуть капибару", "exactly_delete"));
     }
 }

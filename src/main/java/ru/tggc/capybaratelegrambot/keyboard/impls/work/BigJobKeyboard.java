@@ -18,6 +18,6 @@ public class BigJobKeyboard extends AbstractInlineKeyboardCreator<Void> {
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleRow(btn("Большое дело", "big_job"));
+        return () -> singleBtn(btn("Большое дело", "big_job"));
     }
 }

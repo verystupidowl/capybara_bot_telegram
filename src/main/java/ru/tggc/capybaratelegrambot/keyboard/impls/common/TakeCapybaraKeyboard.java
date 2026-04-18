@@ -18,6 +18,6 @@ public class TakeCapybaraKeyboard extends AbstractInlineKeyboardCreator<Void> {
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleRow(btn("Взять капибару", "take_capybara"));
+        return () -> singleBtn(btn("Взять капибару", "take_capybara"));
     }
 }

@@ -18,6 +18,6 @@ public class TeaKeyboard extends AbstractInlineKeyboardCreator<Void> {
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleRow(btn("Забрать капибару с чаепития", "take_from_tea"));
+        return () -> singleBtn(btn("Забрать капибару с чаепития", "take_from_tea"));
     }
 }

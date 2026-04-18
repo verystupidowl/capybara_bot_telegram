@@ -18,6 +18,6 @@ public class ToMainMenuKeyboard extends AbstractInlineKeyboardCreator<Void> {
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleRow(toMainMenuBtn("Моя капибара"));
+        return () -> singleBtn(toMainMenuBtn("Моя капибара"));
     }
 }

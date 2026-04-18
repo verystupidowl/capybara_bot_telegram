@@ -18,6 +18,6 @@ public class RaceMassageKeyboard extends AbstractInlineKeyboardCreator<Void> {
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleRow(btn("Сделать массаж", "do_massage"));
+        return () -> singleBtn(btn("Сделать массаж", "do_massage"));
     }
 }
