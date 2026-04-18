@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
@@ -52,7 +53,7 @@ public class BossFightService {
     private final BossFightMessageSender messageSender;
     private final BossFightFormatter bossFightFormatter;
 
-    @Setter(onMethod = @__({@Autowired}))
+    @Setter(onMethod = @__({@Lazy, @Autowired}))
     private BossFightService self;
 
     public String joinFight(CapybaraContext ctx, String username) {

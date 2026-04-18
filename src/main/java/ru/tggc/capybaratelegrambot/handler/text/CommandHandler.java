@@ -46,7 +46,7 @@ public class CommandHandler extends TextHandler {
         PhotoDto photoDto = PhotoDto.builder()
                 .url(dto.photo())
                 .caption(TextBuilder.getMyCapybara(dto))
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, dto))
                 .chatId(ctx.chatId())
                 .build();
         return sendSimplePhoto(photoDto);

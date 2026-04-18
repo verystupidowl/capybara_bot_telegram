@@ -20,6 +20,7 @@ public class TelegramWebhookController {
 
     @PostMapping("/webhook")
     public ResponseEntity<Void> onUpdateReceived(@RequestBody String updateJson) {
+        log.info("onUpdateReceived {}", updateJson);
         Update update = BotUtils.parseUpdate(updateJson);
         botService.receiveUpdate(update);
         return ResponseEntity.ok().build();

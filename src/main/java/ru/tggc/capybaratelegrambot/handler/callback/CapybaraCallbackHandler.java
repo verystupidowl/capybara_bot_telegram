@@ -104,7 +104,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
                 ctx.chatId(),
                 ctx.messageId(),
                 TextBuilder.getMyCapybara(capybara),
-                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA)
+                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
         );
     }
 
@@ -115,7 +115,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
                 ctx.chatId(),
                 ctx.messageId(),
                 Text.getInfo(info),
-                keyboardFactory.getKeyboardInline(KeyboardType.INFO)
+                keyboardFactory.getKeyboardInline(KeyboardType.INFO, info)
         );
     }
 

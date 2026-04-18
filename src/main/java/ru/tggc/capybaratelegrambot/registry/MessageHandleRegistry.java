@@ -63,6 +63,9 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
 
     @Override
     public Response dispatch(Message message) {
+        if (message.text() == null) {
+            return null;
+        }
         String text = message.text().toLowerCase();
         Method method = methods.values().stream()
                 .filter(m -> {
