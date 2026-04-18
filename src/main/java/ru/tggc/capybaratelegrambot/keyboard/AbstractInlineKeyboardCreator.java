@@ -11,10 +11,10 @@ import java.util.function.Supplier;
 
 @Getter
 public abstract class AbstractInlineKeyboardCreator<T> implements KeyboardCreator<T, InlineKeyboardMarkup> {
-    private final KeyboardType keyboardType;
+    private final KeyboardKey<T> keyboardKey;
 
-    public AbstractInlineKeyboardCreator(KeyboardType keyboardType) {
-        this.keyboardType = keyboardType;
+    public AbstractInlineKeyboardCreator(KeyboardKey<T> keyboardKey) {
+        this.keyboardKey = keyboardKey;
     }
 
     protected Function<T, List<List<InlineKeyboardButton>>> getRowsFunction() {
@@ -49,7 +49,7 @@ public abstract class AbstractInlineKeyboardCreator<T> implements KeyboardCreato
         } else if (getRowsFunction() != null && data != null) {
             list = getRowsFunction().apply(data);
         } else {
-            throw new CapybaraException("Логика кнопок не определена для " + keyboardType);
+            throw new CapybaraException("Логика кнопок не определена для " + keyboardKey.type());
         }
         InlineKeyboardButton[][] rows = list.stream()
                 .map(row -> row.toArray(InlineKeyboardButton[]::new))

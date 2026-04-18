@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.ROBBERY_IMPROVEMENT;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.ROBBERY_IMPROVEMENT;
 
 @Component
 public class RobberyImprovementKeyboard extends AbstractInlineKeyboardCreator<Void> {

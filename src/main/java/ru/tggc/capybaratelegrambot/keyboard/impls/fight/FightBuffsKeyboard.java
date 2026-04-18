@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.FIGHT_BUFFS;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.FIGHT_BUFFS;
 
 @Component
 public class FightBuffsKeyboard extends AbstractInlineKeyboardCreator<BuffType> {

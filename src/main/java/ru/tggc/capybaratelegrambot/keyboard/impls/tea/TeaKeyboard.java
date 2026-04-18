@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.TEA;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.TEA;
 
 @Component
 public class TeaKeyboard extends AbstractInlineKeyboardCreator<Void> {

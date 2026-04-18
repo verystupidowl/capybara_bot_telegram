@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.NOT_CHANGE;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.NOT_CHANGE;
 
 @Component
 public class NotChangeKeyboard extends AbstractInlineKeyboardCreator<Void> {

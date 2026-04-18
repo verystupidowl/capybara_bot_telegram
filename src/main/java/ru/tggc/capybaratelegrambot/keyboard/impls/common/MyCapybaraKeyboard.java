@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.MY_CAPYBARA;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.MY_CAPYBARA;
 
 @Component
 public class MyCapybaraKeyboard extends AbstractInlineKeyboardCreator<MyCapybaraDto> {

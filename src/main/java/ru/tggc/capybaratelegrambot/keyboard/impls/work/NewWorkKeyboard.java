@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.NEW_WORK;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.NEW_WORK;
 
 @Component
 public class NewWorkKeyboard extends AbstractInlineKeyboardCreator<Void> {

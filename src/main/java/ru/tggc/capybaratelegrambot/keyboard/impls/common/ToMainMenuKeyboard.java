@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.TO_MAIN_MENU;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.TO_MAIN_MENU;
 
 @Component
 public class ToMainMenuKeyboard extends AbstractInlineKeyboardCreator<Void> {

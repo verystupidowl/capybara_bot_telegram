@@ -6,5 +6,5 @@ public interface KeyboardCreator<T, K extends Keyboard> {
 
     K create(T t);
 
-    KeyboardType getKeyboardType();
+    KeyboardKey<T> getKeyboardKey();
 }

@@ -11,7 +11,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.RequestService;
 import ru.tggc.capybaratelegrambot.service.factory.RequestServiceFactory;
 
@@ -28,6 +28,6 @@ public class WeddingTextHandler extends TextHandler {
         String targetUsername = getTargetUsername(username, message);
         RequestService requestService = requestServiceFactory.getRequestService(RequestType.WEDDING);
         requestService.sendRequest(targetUsername, ctx);
-        return sendSimpleMessage(ctx.chatId(), "@" + username + ", тебе сделали предложение!", keyboardFactory.getKeyboardInline(KeyboardType.WEDDING));
+        return sendSimpleMessage(ctx.chatId(), "@" + username + ", тебе сделали предложение!", keyboardFactory.getKeyboardInline(KeyboardKey.WEDDING));
     }
 }

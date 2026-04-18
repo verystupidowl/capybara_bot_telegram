@@ -28,5 +28,4 @@ public enum KeyboardType {
     FIGHT_BUFFS,
     LEAVE_FIGHT,
     MAYBE_START_FIGHT,
-
 }

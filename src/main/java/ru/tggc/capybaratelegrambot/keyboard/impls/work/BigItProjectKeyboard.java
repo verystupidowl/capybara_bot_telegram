@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.BIG_IT_PROJECT;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.BIG_IT_PROJECT;
 
 @Component
 public class BigItProjectKeyboard extends AbstractInlineKeyboardCreator<Void> {

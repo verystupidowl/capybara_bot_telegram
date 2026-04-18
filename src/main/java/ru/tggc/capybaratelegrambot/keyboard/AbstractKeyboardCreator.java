@@ -9,10 +9,10 @@ import java.util.function.Supplier;
 
 @Getter
 public abstract class AbstractKeyboardCreator<T> implements KeyboardCreator<T, ReplyKeyboardMarkup> {
-    private final KeyboardType keyboardType;
+    private final KeyboardKey<T> keyboardKey;
 
-    protected AbstractKeyboardCreator(KeyboardType keyboardType) {
-        this.keyboardType = keyboardType;
+    protected AbstractKeyboardCreator(KeyboardKey<T> keyboardKey) {
+        this.keyboardKey = keyboardKey;
     }
 
     public Function<T, String[][]> getRowsFunction() {
@@ -31,7 +31,7 @@ public abstract class AbstractKeyboardCreator<T> implements KeyboardCreator<T, R
         } else if (getRowsFunction() != null) {
             rows = getRowsFunction().apply(data);
         } else {
-            throw new CapybaraException("Логика кнопок не определена для " + keyboardType);
+            throw new CapybaraException("Логика кнопок не определена для " + keyboardKey.type());
         }
         return new ReplyKeyboardMarkup(rows);
     }

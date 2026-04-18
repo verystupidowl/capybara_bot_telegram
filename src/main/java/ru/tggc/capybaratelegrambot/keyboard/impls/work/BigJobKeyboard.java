@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.BIG_JOB;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.BIG_JOB;
 
 @Component
 public class BigJobKeyboard extends AbstractInlineKeyboardCreator<Void> {

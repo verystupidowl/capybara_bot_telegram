@@ -5,7 +5,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractKeyboardCreator;
 
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.REPLY;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.REPLY;
 
 @Component
 public class ReplyKeyboard extends AbstractKeyboardCreator<Void> {

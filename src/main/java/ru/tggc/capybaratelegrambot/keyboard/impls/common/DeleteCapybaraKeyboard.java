@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.DELETE_CAPYBARA;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.DELETE_CAPYBARA;
 
 @Component
 public class DeleteCapybaraKeyboard extends AbstractInlineKeyboardCreator<Void> {

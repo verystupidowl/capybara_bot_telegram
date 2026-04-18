@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.FEED;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.FEED;
 
 @Component
 public class FeedKeyboard extends AbstractInlineKeyboardCreator<Void> {

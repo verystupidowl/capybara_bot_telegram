@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.DEFAULT_PHOTO;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.DEFAULT_PHOTO;
 
 @Component
 public class DefaultPhotoKeyboard extends AbstractInlineKeyboardCreator<Void> {

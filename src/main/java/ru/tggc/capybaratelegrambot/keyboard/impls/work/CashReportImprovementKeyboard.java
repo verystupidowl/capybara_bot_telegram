@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.CASH_REPORT;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.CASH_REPORT;
 
 @Component
 public class CashReportImprovementKeyboard extends AbstractInlineKeyboardCreator<Void> {

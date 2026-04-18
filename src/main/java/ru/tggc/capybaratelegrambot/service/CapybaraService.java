@@ -41,7 +41,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraTeaMapper;
 import ru.tggc.capybaratelegrambot.mapper.FightCapybaraMapper;
@@ -148,7 +148,7 @@ public class CapybaraService {
                 .caption(happinessThing.getLabel())
                 .chatId(ctx.chatId())
                 .url(happinessThing.getPhotoUrl())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         messages.addAll(self.checkNewLevel(capybara));
         capybaraRepository.save(capybara);
@@ -164,7 +164,7 @@ public class CapybaraService {
                 .caption("Твоя капибара успешно покушала, возвращайся через 2 часа!")
                 .chatId(ctx.chatId())
                 .url("https://vk.com/photo-209917797_457245510")
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         return messages;
     }
@@ -183,7 +183,7 @@ public class CapybaraService {
                         Возвращайся через 2 часа!""")
                 .url("https://vk.com/photo-209917797_457246187")
                 .chatId(ctx.chatId())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         return messages;
     }
@@ -234,7 +234,7 @@ public class CapybaraService {
         return List.of(PhotoDto.builder()
                 .url("https://vk.com/photo-209917797_457246193")
                 .chatId(ctx.chatId())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TEA))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TEA))
                 .caption("Твоя капибара ждет собеседника для чаепития!")
                 .build());
     }
@@ -264,7 +264,7 @@ public class CapybaraService {
                 .caption("Теперь у тебя есть капибара!\nПоздравляю!!!" +
                         "\nЕё имя: " + capybara.getName() + ". \nНо ты всегда можешь поменять его!")
                 .url(capybara.getPhoto().getUrl())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build();
     }
 

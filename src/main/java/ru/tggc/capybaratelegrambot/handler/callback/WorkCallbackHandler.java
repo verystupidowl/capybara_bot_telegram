@@ -9,7 +9,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.model.enums.WorkType;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 
 @BotHandler
@@ -46,7 +46,7 @@ public class WorkCallbackHandler extends CallbackHandler {
     public Response getJob(@Ctx CapybaraContext ctx) {
         boolean hasWork = capybaraService.hasWork(ctx);
         if (!hasWork) {
-            return editMessageCaption(ctx.chatId(), ctx.messageId(), "Выбери работу", keyboardFactory.getKeyboardInline(KeyboardType.NEW_WORK));
+            return editMessageCaption(ctx.chatId(), ctx.messageId(), "Выбери работу", keyboardFactory.getKeyboardInline(KeyboardKey.NEW_WORK));
         } else {
             return editMessageCaption(ctx.chatId(), ctx.messageId(), "Твоя капибара уже имеет работу", null);
         }

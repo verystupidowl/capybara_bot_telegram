@@ -4,17 +4,18 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.INFO;
+
 @Component
 public class InfoKeyboardCreator extends AbstractInlineKeyboardCreator<CapybaraInfoDto> {
 
     public InfoKeyboardCreator() {
-        super(KeyboardType.INFO);
+        super(INFO);
     }
 
     @Override

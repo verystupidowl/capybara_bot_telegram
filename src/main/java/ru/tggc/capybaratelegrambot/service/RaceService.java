@@ -28,7 +28,7 @@ import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.repository.RaceRequestRepository;
 import ru.tggc.capybaratelegrambot.service.factory.AbstractRequestService;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
@@ -245,7 +245,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         RaceAction raceAction = c.getRace().getRaceAction();
         throwIf(!raceAction.canPerform(), () -> {
             String status = getStatus(raceAction);
-            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE_MASSAGE);
+            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.RACE_MASSAGE);
             return new CapybaraTiredException(status, markup);
         });
     }
@@ -266,7 +266,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         boolean requestsAlreadyExists = raceRequestRepository.existsByChallengerOrOpponent(challenger, opponent);
         throwIf(requestsAlreadyExists, () -> {
             String messageToSend = "u or ur opponent already has a challenge";
-            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE);
+            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.RACE);
             return new CapybaraException(messageToSend, markup);
         });
         return RaceRequest.builder()

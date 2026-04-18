@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.RACE_MASSAGE;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.RACE_MASSAGE;
 
 @Component
 public class RaceMassageKeyboard extends AbstractInlineKeyboardCreator<Void> {

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.FIGHT_INFO;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.FIGHT_INFO;
 
 @Component
 public class FightInfoKeyboard extends AbstractInlineKeyboardCreator<FightCapybaraDto> {

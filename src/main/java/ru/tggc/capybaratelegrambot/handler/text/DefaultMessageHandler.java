@@ -9,7 +9,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
@@ -55,7 +55,7 @@ public class DefaultMessageHandler extends TextHandler {
         String username = text.substring(1);
         raceService.sendRequest(username, ctx);
         historyService.removeFromHistory(ctx);
-        return sendSimpleMessage(ctx.chatId(), text + ", тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardType.RACE));
+        return sendSimpleMessage(ctx.chatId(), text + ", тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
     }
 
     private Response slots(CapybaraContext historyDto, String bet) {
@@ -73,7 +73,7 @@ public class DefaultMessageHandler extends TextHandler {
                 .caption("Введите цель")
                 .url("https://vk.com/photo-209917797_457246196")
                 .chatId(historyDto.chatId())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.CASINO_TARGET))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.CASINO_TARGET))
                 .build();
         return sendSimplePhoto(photoDto);
     }

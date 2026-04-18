@@ -26,7 +26,7 @@ import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.formatter.BossFightFormatter;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
@@ -146,7 +146,7 @@ public class BossFightService {
                     String text = bossFightFormatter.getPlayerChoseMessage(caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
-                            .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT));
+                            .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
                     return Response.of(message);
                 }).orElseGet(() -> Response.of(new SendMessage(chatId, "⚠️ Бой не найден."))
                         .andThen(Response.of(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()))));

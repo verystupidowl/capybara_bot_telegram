@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.MAYBE_START_FIGHT;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.MAYBE_START_FIGHT;
 
 @Component
 public class MaybeStartFightKeyboard extends AbstractInlineKeyboardCreator<Void> {

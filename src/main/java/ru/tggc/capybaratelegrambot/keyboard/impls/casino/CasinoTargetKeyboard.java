@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.CASINO_TARGET;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.CASINO_TARGET;
 
 @Component
 public class CasinoTargetKeyboard extends AbstractInlineKeyboardCreator<Void> {

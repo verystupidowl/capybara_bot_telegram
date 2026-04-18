@@ -15,7 +15,7 @@ import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
@@ -37,14 +37,14 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     @CallbackHandle("set_name")
     public Response setName(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_NAME);
-        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE);
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE);
         return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_NAME, markup);
     }
 
     @CallbackHandle("set_photo")
     public Response setPhoto(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_PHOTO);
-        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE);
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE);
         return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_PHOTO, markup);
     }
 
@@ -82,7 +82,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("feed_fatten")
     public Response feedFatten(@MessageId int messageId, @ChatId long chatId) {
-        return editMessageCaption(chatId, messageId, Text.FEED_FATTEN, keyboardFactory.getKeyboardInline(KeyboardType.FEED));
+        return editMessageCaption(chatId, messageId, Text.FEED_FATTEN, keyboardFactory.getKeyboardInline(KeyboardKey.FEED));
     }
 
     @CallbackHandle("set_default_photo")
@@ -104,7 +104,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
                 ctx.chatId(),
                 ctx.messageId(),
                 TextBuilder.getMyCapybara(capybara),
-                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
+                keyboardFactory.getKeyboardInline(KeyboardKey.MY_CAPYBARA, capybara)
         );
     }
 
@@ -115,7 +115,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
                 ctx.chatId(),
                 ctx.messageId(),
                 Text.getInfo(info),
-                keyboardFactory.getKeyboardInline(KeyboardType.INFO, info)
+                keyboardFactory.getKeyboardInline(KeyboardKey.INFO, info)
         );
     }
 

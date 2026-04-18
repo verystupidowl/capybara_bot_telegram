@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.IMPROVEMENTS;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.IMPROVEMENTS;
 
 @Component
 public class ImprovementKeyboard extends AbstractInlineKeyboardCreator<Void> {

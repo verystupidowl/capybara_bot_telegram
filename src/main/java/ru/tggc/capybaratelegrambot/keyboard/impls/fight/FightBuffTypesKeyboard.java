@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.FIGHT_BUFF_TYPES;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.FIGHT_BUFF_TYPES;
 
 @Component
 public class FightBuffTypesKeyboard extends AbstractInlineKeyboardCreator<Void> {

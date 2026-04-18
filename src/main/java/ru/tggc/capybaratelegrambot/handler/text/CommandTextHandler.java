@@ -11,7 +11,7 @@ import ru.tggc.capybaratelegrambot.annotation.params.Username;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.BossFightService;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
@@ -61,6 +61,6 @@ public class CommandTextHandler extends TextHandler {
 
     @MessageHandle("start fight")
     public Response startFight(@Ctx CapybaraContext ctx, @Username String username) {
-        return sendSimpleMessage(ctx.chatId(), bossFightService.startFight(ctx.chatId()), keyboardFactory.getKeyboardInline(KeyboardType.FIGHT));
+        return sendSimpleMessage(ctx.chatId(), bossFightService.startFight(ctx.chatId()), keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
     }
 }

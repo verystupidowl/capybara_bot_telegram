@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.WEDDING;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.WEDDING;
 
 @Component
 public class WeddingKeyboard extends AbstractInlineKeyboardCreator<Void> {

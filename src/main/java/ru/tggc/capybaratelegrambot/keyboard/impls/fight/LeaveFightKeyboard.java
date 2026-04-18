@@ -7,7 +7,7 @@ import ru.tggc.capybaratelegrambot.keyboard.AbstractInlineKeyboardCreator;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static ru.tggc.capybaratelegrambot.keyboard.KeyboardType.LEAVE_FIGHT;
+import static ru.tggc.capybaratelegrambot.keyboard.KeyboardKey.LEAVE_FIGHT;
 
 @Component
 public class LeaveFightKeyboard extends AbstractInlineKeyboardCreator<Void> {

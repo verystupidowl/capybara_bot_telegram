@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.utils.HistoryType;
 
 import java.time.Duration;
@@ -24,7 +24,7 @@ public class HistoryService {
     public void setHistory(CapybaraContext dto, HistoryType type) {
         HistoryType prev = capybaraHistory.asMap().putIfAbsent(dto, type);
         if (prev != null) {
-            throw new CapybaraException("ur capy already doing " + type, keyboardFactory.getKeyboardInline(KeyboardType.RACE));
+            throw new CapybaraException("ur capy already doing " + type, keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
         }
     }
 

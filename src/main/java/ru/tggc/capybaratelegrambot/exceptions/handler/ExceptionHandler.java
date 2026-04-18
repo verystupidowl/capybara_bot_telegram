@@ -15,7 +15,7 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraTiredException;
 import ru.tggc.capybaratelegrambot.exceptions.UserNotFoundException;
 import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
-import ru.tggc.capybaratelegrambot.keyboard.KeyboardType;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.utils.Text;
 
 import java.lang.reflect.InvocationTargetException;
@@ -43,13 +43,13 @@ public class ExceptionHandler {
             case CapybaraNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
                 SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case UserNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
                 SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case CapybaraAlreadyExistsException ex -> {

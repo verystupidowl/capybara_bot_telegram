@@ -10,24 +10,24 @@ import java.util.stream.Collectors;
 
 @Component
 public class KeyboardFactory {
-    private final Map<KeyboardType, AbstractInlineKeyboardCreator<?>> keyboardInlineCreators;
+    private final Map<KeyboardKey<?>, AbstractInlineKeyboardCreator<?>> keyboardInlineCreators;
 
     public KeyboardFactory(List<AbstractInlineKeyboardCreator<?>> keyboardInlineCreators) {
         this.keyboardInlineCreators = keyboardInlineCreators.stream()
-                .collect(Collectors.toMap(AbstractInlineKeyboardCreator::getKeyboardType, Function.identity()));
-    }
-
-    public AbstractInlineKeyboardCreator<?> getKeyboardCreator(KeyboardType key) {
-        return keyboardInlineCreators.get(key);
+                .collect(Collectors.toMap(AbstractInlineKeyboardCreator::getKeyboardKey, Function.identity()));
     }
 
     @SuppressWarnings("unchecked")
-    public <T> InlineKeyboardMarkup getKeyboardInline(KeyboardType type, T data) {
-        AbstractInlineKeyboardCreator<T> creator = (AbstractInlineKeyboardCreator<T>) getKeyboardCreator(type);
+    public <T> AbstractInlineKeyboardCreator<T> getKeyboardCreator(KeyboardKey<T> key) {
+        return (AbstractInlineKeyboardCreator<T>) keyboardInlineCreators.get(key);
+    }
+
+    public <T> InlineKeyboardMarkup getKeyboardInline(KeyboardKey<T> type, T data) {
+        AbstractInlineKeyboardCreator<T> creator = getKeyboardCreator(type);
         return creator.create(data);
     }
 
-    public InlineKeyboardMarkup getKeyboardInline(KeyboardType type) {
+    public InlineKeyboardMarkup getKeyboardInline(KeyboardKey<Void> type) {
         return getKeyboardInline(type, null);
     }
 }
