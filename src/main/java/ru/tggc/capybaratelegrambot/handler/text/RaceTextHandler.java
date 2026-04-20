@@ -10,7 +10,8 @@ import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.enums.RequestType;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.RequestService;
 import ru.tggc.capybaratelegrambot.service.factory.RequestServiceFactory;
 
@@ -18,7 +19,7 @@ import ru.tggc.capybaratelegrambot.service.factory.RequestServiceFactory;
 @RequiredArgsConstructor
 public class RaceTextHandler extends TextHandler {
     private final RequestServiceFactory requestServiceFactory;
-    private final InlineKeyboardCreator inlineCreator;
+    private final KeyboardFactory keyboardFactory;
 
     @MessageHandle("забег")
     public Response challengeToRace(@HandleParam("username") String username,
@@ -27,6 +28,6 @@ public class RaceTextHandler extends TextHandler {
         String targetUsername = getTargetUsername(username, message);
         RequestService requestService = requestServiceFactory.getRequestService(RequestType.RACE);
         requestService.sendRequest(targetUsername, ctx);
-        return sendSimpleMessage(ctx.chatId(), "тебе бросили вызов!", inlineCreator.raceKeyboard());
+        return sendSimpleMessage(ctx.chatId(), "тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
     }
 }

@@ -8,11 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
-import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
-import ru.tggc.capybaratelegrambot.service.UserService;
+import ru.tggc.capybaratelegrambot.domain.response.Response;
+import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
+import ru.tggc.capybaratelegrambot.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -22,12 +22,14 @@ import java.util.regex.Pattern;
 @Component
 @Slf4j
 public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery> {
+    private final ExceptionHandler exceptionHandler;
 
     protected CallbackHandleRegistry(ListableBeanFactory beanFactory,
-                                     InlineKeyboardCreator inlineKeyboardCreator,
                                      UserService userService,
-                                     UserRateLimiterService rateLimiterService) {
-        super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+                                     UserRateLimiterService rateLimiterService,
+                                     ExceptionHandler exceptionHandler) {
+        super(beanFactory, userService, rateLimiterService, exceptionHandler);
+        this.exceptionHandler = exceptionHandler;
     }
 
     @Override
@@ -69,7 +71,7 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
 
         if (method == null) {
             log.warn("Unknown callback: {}", data);
-            String message = buildMessageToAdmin("Unknown callback: " + data, chat, from);
+            String message = exceptionHandler.buildMessageToAdmin("Unknown callback: " + data, chat, from);
             SendMessage sendMessageToUser = new SendMessage(chatId, NOT_IMPLEMENTED_MESSAGE);
             SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, message);
             return Response.ofAll(sendMessageToAdmin, sendMessageToUser);

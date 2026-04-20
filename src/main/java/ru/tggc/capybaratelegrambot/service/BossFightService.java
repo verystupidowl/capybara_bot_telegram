@@ -1,5 +1,6 @@
 package ru.tggc.capybaratelegrambot.service;
 
+import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.AnswerCallbackQuery;
@@ -7,13 +8,12 @@ import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.statemachine.StateMachine;
-import org.springframework.statemachine.config.StateMachineFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
@@ -23,10 +23,10 @@ import ru.tggc.capybaratelegrambot.domain.fight.enums.PlayerActionType;
 import ru.tggc.capybaratelegrambot.domain.model.Capybara;
 import ru.tggc.capybaratelegrambot.domain.model.Fight;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.domain.sm.event.BossFightEvents;
-import ru.tggc.capybaratelegrambot.domain.sm.state.BossFightStates;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.formatter.BossFightFormatter;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.provider.BossFightProvider;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 
@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
@@ -48,10 +47,14 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 public class BossFightService {
     private final BossFightProvider provider;
     private final CapybaraService capybaraService;
-    private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService userRateLimiterService;
     private final TimedActionService timedActionService;
-    private final StateMachineFactory<BossFightStates, BossFightEvents> stateMachineFactory;
+    private final BossFightMessageSender messageSender;
+    private final BossFightFormatter bossFightFormatter;
+
+    @Setter(onMethod = @__({@Lazy, @Autowired}))
+    private BossFightService self;
 
     public String joinFight(CapybaraContext ctx, String username) {
         Capybara capybara = capybaraService.getFightCapybara(ctx.chatId(), ctx.userId());
@@ -64,9 +67,9 @@ public class BossFightService {
     }
 
     public String startFight(Long chatId) {
-        StateMachine<BossFightStates, BossFightEvents> sm = stateMachineFactory.getStateMachine(chatId.toString());
-        Optional<StateMachine<BossFightStates, BossFightEvents>> optional = provider.getFight(chatId);
-        throwIf(optional.isPresent(), () -> new CapybaraException("Файт уже идет"));
+        Optional<BossFightState> optional = provider.getFight(chatId);
+        throwIf(optional.isPresent(), () -> new CapybaraException("Fight already in progress"));
+
         BossFightState fight = new BossFightState();
         BossType bossType = RandomUtils.geetRandomBoss();
         BossFightState.BossState bossState = BossFightState.BossState.builder()
@@ -93,40 +96,28 @@ public class BossFightService {
                     .specials(1)
                     .build();
             fight.getPlayers().put(user.userId(), ps);
-
-            sm.startReactively()
-                    .then(Mono.defer(() -> {
-                        sm.getExtendedState().getVariables().put("fight", fight);
-                        sm.getExtendedState().getVariables().put("chatId", chatId);
-                        return Mono.empty();
-                    }))
-                    .subscribe();
         });
 
-        provider.startFight(chatId, sm);
-        return "Бой начинается!⚔️\nBoss: " + bossType.getName() + " hp: " + bossType.getHp();
+        provider.startFight(chatId, fight);
+        return bossFightFormatter.getStartMessage(bossType);
     }
 
     public String getUsers(CapybaraContext ctx) {
         Set<UserDto> users = provider.getPreparedUsers(ctx.chatId());
-        return "Ты уверен? Ваша команда - " + users.size() + " капибар:\n" + users.stream()
-                .map(UserDto::username)
-                .collect(Collectors.joining("\n"));
+        return bossFightFormatter.getUsersMessage(users);
     }
 
     public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
         long chatId = query.maybeInaccessibleMessage().chat().id();
 
         return provider.getFight(chatId)
-                .map(sm -> {
-                    BossFightState fight = sm.getExtendedState().get("fight", BossFightState.class);
+                .map(fight -> {
                     long playerId = userDto.userId();
                     BossFightState.PlayerState ps = fight.getPlayers().get(playerId);
                     Integer messageId = query.maybeInaccessibleMessage().messageId();
-                    sm.getExtendedState().getVariables().put("messageId", messageId);
 
                     if (ps == null || !ps.isAlive()) {
-                        return Response.of(new SendMessage(chatId, "Твоя капибара без сознания или не участвует!"));
+                        return Response.of(new SendMessage(chatId, bossFightFormatter.getCantActMessage()));
                     }
 
                     ps.setLastAction(action);
@@ -138,53 +129,50 @@ public class BossFightService {
                             .allMatch(p -> p.getLastAction() != null);
 
                     if (allChosen) {
+                        if (!userRateLimiterService.tryLock(chatId)) {
+                            return Response.of(new AnswerCallbackQuery(query.id()).text("Секунду, считаем ход..."));
+                        }
+
                         return Response.of(new AnswerCallbackQuery(query.id()))
                                 .andThen(bot -> {
-                                    fight.getPlayers().values()
-                                            .forEach(p -> userRateLimiterService.lock(p.getUserId()));
-                                    CompletableFuture<Void> future = new CompletableFuture<>();
-
-                                    sm.getExtendedState().getVariables().put("responseFuture", future);
-                                    sm.getExtendedState().getVariables().put("bot", bot);
-                                    sendEvents(sm, fight);
-
-                                    return future;
-                                })
-                                .andThen(bot -> {
-                                    fight.getPlayers().values()
-                                            .forEach(p -> userRateLimiterService.unlock(p.getUserId()));
-                                    return new CompletableFuture<>();
+                                    try {
+                                        self.processTurnLogic(chatId, messageId, fight, bot);
+                                    } finally {
+                                        userRateLimiterService.unlock(chatId);
+                                    }
                                 });
                     }
-                    String text = ((Message) query.maybeInaccessibleMessage())
-                            .caption() + "\n==========================\n" + ps.getUsername() + " выбрал " + action.getLabel() +
-                            "\n==========================\n⌛ Ждём действий от всех игроков";
+                    String caption = ((Message) query.maybeInaccessibleMessage()).caption();
+                    String text = bossFightFormatter.getPlayerChoseMessage(caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
-                            .replyMarkup(inlineKeyboardCreator.fightKeyboard());
+                            .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
                     return Response.of(message);
                 }).orElseGet(() -> Response.of(new SendMessage(chatId, "⚠️ Бой не найден."))
                         .andThen(Response.of(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()))));
     }
 
-    private void sendEvents(StateMachine<BossFightStates, BossFightEvents> sm, BossFightState fight) {
-        sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.PLAYERS_CHOSE).build()))
-                .thenMany(Flux.defer(() -> {
-                    boolean bossDead = fight.getBossState().getBossHp() <= 0;
-                    if (bossDead) {
-                        return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.BATTLE_FINISHED).build()));
-                    }
-                    return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.PLAYERS_DONE).build()));
-                }))
-                .thenMany(sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.BOSS_DONE).build())))
-                .thenMany(Flux.defer(() -> {
-                    boolean allPlayersDead = fight.getPlayers().values().stream()
-                            .noneMatch(BossFightState.PlayerState::isAlive);
-                    if (allPlayersDead) {
-                        return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.BATTLE_FINISHED).build()));
-                    }
-                    return sm.sendEvent(Mono.just(MessageBuilder.withPayload(BossFightEvents.TURN_FINISHED).build()));
-                })).subscribe();
+    @Transactional
+    public void processTurnLogic(long chatId, Integer messageId, BossFightState fight, TelegramBot bot) {
+        doPlayerAction(fight);
+
+        boolean bossDead = fight.getBossState().getBossHp() <= 0;
+        if (bossDead) {
+            int reward = finishFight(chatId, fight, true);
+            messageSender.sendFinishMessage(fight.getActionLogs(), true, chatId, bot, messageId, reward);
+            return;
+        }
+
+        doBossAction(fight);
+
+        boolean allDead = fight.getPlayers().values().stream().noneMatch(BossFightState.PlayerState::isAlive);
+        if (allDead) {
+            finishFight(chatId, fight, false);
+            messageSender.sendFinishMessage(fight.getActionLogs(), false, chatId, bot, messageId, 0);
+            return;
+        }
+
+        messageSender.sendMessages(chatId, messageId, fight, bot);
     }
 
     public void doBossAction(BossFightState fight) {

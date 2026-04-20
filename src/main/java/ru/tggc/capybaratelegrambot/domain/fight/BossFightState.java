@@ -114,7 +114,7 @@ public class BossFightState {
         private double baseHeal;
         private double baseDefend;
         private double critChance;
-        private double damageReflection;
+        private double critMultiplier;
         private Set<Effect> effects;
     }
 }

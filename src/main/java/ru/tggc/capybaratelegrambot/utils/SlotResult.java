@@ -1,10 +1,10 @@
 package ru.tggc.capybaratelegrambot.utils;
 
 public enum SlotResult {
-    JACKPOT(5.0),     // три "семь"
-    TRIPLE(3.0),      // три одинаковых
-    DOUBLE(1.85),     // первые два одинаковых
-    LOSE(-1.0);       // проигрыш
+    JACKPOT(5.0),
+    TRIPLE(3.0),
+    DOUBLE(1.85),
+    LOSE(0.0);
 
     private final double multiplier;
 

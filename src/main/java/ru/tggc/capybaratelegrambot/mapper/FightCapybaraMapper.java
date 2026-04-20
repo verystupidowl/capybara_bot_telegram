@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 public class FightCapybaraMapper {
 
-    public FightCapybaraDto toDto(Fight fight) {
+    public FightCapybaraDto toDto(Fight fight, long chatId) {
         return FightCapybaraDto.builder()
                 .canFight(fight.getFightAction().canPerform())
                 .fightTime(Utils.formatDuration(fight.getFightAction().timeUntilNext()))
@@ -20,6 +20,7 @@ public class FightCapybaraMapper {
                         fight.getHeal(),
                         fight.getSpecial()
                 ))
+                .chatId(chatId)
                 .build();
     }
 }

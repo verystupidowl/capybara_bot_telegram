@@ -29,6 +29,7 @@ public abstract class AbstractWorkService implements WorkService {
         List<String> messages = new ArrayList<>();
         messages.add("Ты забрал капибару с работы. Она получила целых " + salary + " арбузных долек!");
 
+        work.setRise(work.getRise() + 1);
         if (checkRise(capybara)) {
             messages.add("Ух ты! Твоя капибара так усердно работала, что смогла получить повышение!" +
                     "\nПлюс 150 арбузных долек!!!");
@@ -75,7 +76,7 @@ public abstract class AbstractWorkService implements WorkService {
 
     protected boolean checkRise(Capybara capybara) {
         Work work = capybara.getWork();
-        if (work.getRise() + 1 >= 10 * (work.getIndex() + 1) && work.getIndex() <= 5) {
+        if (work.getRise() >= 10 * (work.getIndex() + 1) && work.getIndex() <= 5) {
             capybara.getWork().setRise(1);
             capybara.getWork().setIndex(capybara.getWork().getIndex() + 1);
             capybara.setCurrency(capybara.getCurrency() + 150);

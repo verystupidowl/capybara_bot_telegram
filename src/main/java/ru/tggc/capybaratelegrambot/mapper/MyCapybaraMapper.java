@@ -8,7 +8,7 @@ import ru.tggc.capybaratelegrambot.domain.model.timedaction.WorkAction;
 
 import java.util.function.Function;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 
 @Component
 public class MyCapybaraMapper {
@@ -33,12 +33,12 @@ public class MyCapybaraMapper {
                 .happinessMaxLevel((100 + ((capybara.getLevel().getValue() / 10) * 10 * 2)))
                 .wins(capybara.getRace().getWins())
                 .defeats(capybara.getRace().getDefeats())
-                .canGoWork(getOr(capybara.getWork().getWorkAction(), WorkAction::canPerform, false))
-                .canTakeFromWork(getOr(capybara.getWork().getWorkAction(), WorkAction::canTakeFrom, false))
+                .canGoWork(getOrElse(capybara.getWork().getWorkAction(), WorkAction::canPerform, false))
+                .canTakeFromWork(getOrElse(capybara.getWork().getWorkAction(), WorkAction::canTakeFrom, false))
                 .canHappy(capybara.getHappiness().canPerform())
                 .canSatiety(capybara.getSatiety().canPerform())
                 .hasWork(capybara.getWork().getWorkType() != WorkType.NONE)
-                .photo(getOr(capybara.getPhoto().getFileId(), Function.identity(), capybara.getPhoto().getUrl()))
+                .photo(getOrElse(capybara.getPhoto().getFileId(), Function.identity(), capybara.getPhoto().getUrl()))
                 .build();
     }
 }

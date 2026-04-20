@@ -5,20 +5,17 @@ import lombok.Getter;
 import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.fight.effect.positive.AegisEffect;
 
-import java.util.function.Consumer;
-
 @AllArgsConstructor
 @Getter
 public enum FightBuffSpecial implements FightBuffEnum {
-    NONE("none", "none", 0, player -> {
-    }),
+    NONE("none", "none", 0, BuffEffect.empty()),
     AEGIS("Аегис", "В разработке. Пока ничего не дает", 500, stats ->
             stats.getEffects().add(new AegisEffect()));
 
     private final String title;
     private final String description;
     private final int cost;
-    private final Consumer<BossFightState.PlayerStats> effect;
+    private final BuffEffect effect;
 
     @Override
     public void apply(BossFightState.PlayerStats player) {

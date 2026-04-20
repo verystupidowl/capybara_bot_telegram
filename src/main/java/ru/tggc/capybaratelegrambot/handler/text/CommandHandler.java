@@ -10,7 +10,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.TopCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.utils.Text;
 import ru.tggc.capybaratelegrambot.utils.TextBuilder;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommandHandler extends TextHandler {
     private final CapybaraService capybaraService;
-    private final InlineKeyboardCreator inlineCreator;
+    private final KeyboardFactory keyboardFactory;
 
     @MessageHandle(value = "/start", canPrivate = true, canPublic = false)
     public Response start(@ChatId long chatId) {
@@ -45,7 +46,7 @@ public class CommandHandler extends TextHandler {
         PhotoDto photoDto = PhotoDto.builder()
                 .url(dto.photo())
                 .caption(TextBuilder.getMyCapybara(dto))
-                .markup(inlineCreator.myCapybaraKeyboard(dto))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.MY_CAPYBARA, dto))
                 .chatId(ctx.chatId())
                 .build();
         return sendSimplePhoto(photoDto);

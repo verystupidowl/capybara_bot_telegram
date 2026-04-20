@@ -21,8 +21,7 @@ public class StunEffect extends AbstractExpiringEffect {
 
     @Override
     public void onTurnEnd(BossFightState.PlayerState ps) {
-        doEffect(() -> {
-        });
+        decreaseTurnsLeft();
     }
 
     @Override

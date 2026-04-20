@@ -27,6 +27,7 @@ public class CriminalWorkService extends AbstractWorkService {
         if (salary != -1) {
             capybara.setCurrency(capybara.getCurrency() + salary);
             messages.add("Ты забрал капибару с работы. Она получила целых " + salary + " арбузных долек!");
+            work.setRise(work.getRise() + 1);
             if (checkRise(capybara)) {
                 messages.add("Ух ты! Твоя капибара так усердно работала, что смогла получить повышение!" +
                         "\nПлюс 150 арбузных долек!!!");

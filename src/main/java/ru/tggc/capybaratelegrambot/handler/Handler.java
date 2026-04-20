@@ -3,11 +3,11 @@ package ru.tggc.capybaratelegrambot.handler;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
-import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
+import ru.tggc.capybaratelegrambot.domain.response.ResponseBuilder;
 
 import java.util.List;
 
@@ -16,10 +16,9 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 public abstract class Handler {
 
     public Response sendSimplePhoto(PhotoDto photo) {
-        SendPhoto sp = new SendPhoto(photo.getChatId(), photo.getUrl());
-        sp.caption(photo.getCaption());
-        ifPresent(photo.getMarkup(), sp::replyMarkup);
-        return Response.of(sp);
+        return ResponseBuilder.create()
+                .photo(photo)
+                .build();
     }
 
     public Response sendSimplePhotos(List<PhotoDto> photos) {
@@ -104,8 +103,8 @@ public abstract class Handler {
     }
 
     public Response editSimpleMessage(long chatId, int messageId, String text, InlineKeyboardMarkup markup) {
-        EditMessageText sm = new EditMessageText(chatId, messageId, text);
-        ifPresent(markup, sm::replyMarkup);
-        return Response.of(sm);
+        return ResponseBuilder.to(chatId)
+                .edit(messageId, text, markup)
+                .build();
     }
 }

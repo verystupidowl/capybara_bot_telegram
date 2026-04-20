@@ -40,15 +40,16 @@ import ru.tggc.capybaratelegrambot.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraNotFoundException;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraInfoMapper;
 import ru.tggc.capybaratelegrambot.mapper.CapybaraTeaMapper;
 import ru.tggc.capybaratelegrambot.mapper.FightCapybaraMapper;
 import ru.tggc.capybaratelegrambot.mapper.MyCapybaraMapper;
-import ru.tggc.capybaratelegrambot.service.factory.WorkServiceFactory;
 import ru.tggc.capybaratelegrambot.repository.CapybaraRepository;
 import ru.tggc.capybaratelegrambot.repository.ChatRepository;
 import ru.tggc.capybaratelegrambot.repository.TeaRepository;
+import ru.tggc.capybaratelegrambot.service.factory.WorkServiceFactory;
 import ru.tggc.capybaratelegrambot.utils.CapybaraBuilder;
 import ru.tggc.capybaratelegrambot.utils.RandomUtils;
 import ru.tggc.capybaratelegrambot.utils.Text;
@@ -73,7 +74,7 @@ public class CapybaraService {
     private final TimedActionService timedActionService;
     private final MyCapybaraMapper myCapybaraMapper;
     private final CapybaraInfoMapper capybaraInfoMapper;
-    private final InlineKeyboardCreator inlineKeyboardCreator;
+    private final KeyboardFactory keyboardFactory;
     private final ChatRepository chatRepository;
     private final FightCapybaraMapper fightCapybaraMapper;
 
@@ -147,7 +148,7 @@ public class CapybaraService {
                 .caption(happinessThing.getLabel())
                 .chatId(ctx.chatId())
                 .url(happinessThing.getPhotoUrl())
-                .markup(inlineKeyboardCreator.toMainMenu())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         messages.addAll(self.checkNewLevel(capybara));
         capybaraRepository.save(capybara);
@@ -163,7 +164,7 @@ public class CapybaraService {
                 .caption("Твоя капибара успешно покушала, возвращайся через 2 часа!")
                 .chatId(ctx.chatId())
                 .url("https://vk.com/photo-209917797_457245510")
-                .markup(inlineKeyboardCreator.toMainMenu())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         return messages;
     }
@@ -182,7 +183,7 @@ public class CapybaraService {
                         Возвращайся через 2 часа!""")
                 .url("https://vk.com/photo-209917797_457246187")
                 .chatId(ctx.chatId())
-                .markup(inlineKeyboardCreator.toMainMenu())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         return messages;
     }
@@ -233,7 +234,7 @@ public class CapybaraService {
         return List.of(PhotoDto.builder()
                 .url("https://vk.com/photo-209917797_457246193")
                 .chatId(ctx.chatId())
-                .markup(inlineKeyboardCreator.teaKeyboard())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TEA))
                 .caption("Твоя капибара ждет собеседника для чаепития!")
                 .build());
     }
@@ -263,7 +264,7 @@ public class CapybaraService {
                 .caption("Теперь у тебя есть капибара!\nПоздравляю!!!" +
                         "\nЕё имя: " + capybara.getName() + ". \nНо ты всегда можешь поменять его!")
                 .url(capybara.getPhoto().getUrl())
-                .markup(inlineKeyboardCreator.toMainMenu())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build();
     }
 
@@ -353,6 +354,7 @@ public class CapybaraService {
         capybaraRepository.save(capybara);
     }
 
+    @Transactional
     public void transferMoney(CapybaraContext ctx, String targetUsername, Long amount) {
         Capybara sourcecapybara = getCapybaraByContext(ctx);
         throwIf(sourcecapybara.getCurrency() < amount, CapybaraHasNoMoneyException::new);
@@ -503,7 +505,7 @@ public class CapybaraService {
 
     public FightCapybaraDto getFightInfo(CapybaraContext ctx) {
         Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
-        return fightCapybaraMapper.toDto(fightCapybara.getFight());
+        return fightCapybaraMapper.toDto(fightCapybara.getFight(), ctx.chatId());
     }
 
     public void buyBuff(CapybaraContext ctx, String buff, BuffType buffType) {

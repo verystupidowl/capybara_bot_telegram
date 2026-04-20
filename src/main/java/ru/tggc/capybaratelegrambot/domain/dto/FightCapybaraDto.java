@@ -6,5 +6,5 @@ import ru.tggc.capybaratelegrambot.domain.model.enums.fight.FightBuffEnum;
 import java.util.List;
 
 @Builder
-public record FightCapybaraDto(boolean canFight, String fightTime, List<FightBuffEnum> buffs) {
+public record FightCapybaraDto(boolean canFight, String fightTime, List<FightBuffEnum> buffs, Long chatId) {
 }

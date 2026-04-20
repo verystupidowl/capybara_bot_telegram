@@ -1,5 +1,6 @@
 package ru.tggc.capybaratelegrambot.handler.callback;
 
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
@@ -13,7 +14,8 @@ import ru.tggc.capybaratelegrambot.domain.dto.CapybaraInfoDto;
 import ru.tggc.capybaratelegrambot.domain.dto.MyCapybaraDto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardFactory;
+import ru.tggc.capybaratelegrambot.keyboard.KeyboardKey;
 import ru.tggc.capybaratelegrambot.service.CapybaraService;
 import ru.tggc.capybaratelegrambot.service.CasinoService;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
@@ -29,19 +31,21 @@ import static ru.tggc.capybaratelegrambot.utils.HistoryType.CHANGE_PHOTO;
 public class CapybaraCallbackHandler extends CallbackHandler {
     private final HistoryService historyService;
     private final CapybaraService capybaraService;
-    private final InlineKeyboardCreator inlineCreator;
+    private final KeyboardFactory keyboardFactory;
     private final CasinoService casinoService;
 
     @CallbackHandle("set_name")
     public Response setName(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_NAME);
-        return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_NAME, inlineCreator.notChange());
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE);
+        return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_NAME, markup);
     }
 
     @CallbackHandle("set_photo")
     public Response setPhoto(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_PHOTO);
-        return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_PHOTO, inlineCreator.notChange());
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE);
+        return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_PHOTO, markup);
     }
 
     @CallbackHandle("exactly_delete")
@@ -78,7 +82,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("feed_fatten")
     public Response feedFatten(@MessageId int messageId, @ChatId long chatId) {
-        return editMessageCaption(chatId, messageId, Text.FEED_FATTEN, inlineCreator.feedKeyboard());
+        return editMessageCaption(chatId, messageId, Text.FEED_FATTEN, keyboardFactory.getKeyboardInline(KeyboardKey.FEED));
     }
 
     @CallbackHandle("set_default_photo")
@@ -100,7 +104,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
                 ctx.chatId(),
                 ctx.messageId(),
                 TextBuilder.getMyCapybara(capybara),
-                inlineCreator.myCapybaraKeyboard(capybara)
+                keyboardFactory.getKeyboardInline(KeyboardKey.MY_CAPYBARA, capybara)
         );
     }
 
@@ -111,7 +115,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
                 ctx.chatId(),
                 ctx.messageId(),
                 Text.getInfo(info),
-                inlineCreator.infoKeyboard(info)
+                keyboardFactory.getKeyboardInline(KeyboardKey.INFO, info)
         );
     }
 

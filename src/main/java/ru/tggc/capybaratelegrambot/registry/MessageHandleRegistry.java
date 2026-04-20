@@ -10,7 +10,7 @@ import ru.tggc.capybaratelegrambot.annotation.handle.MessageHandle;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
-import ru.tggc.capybaratelegrambot.keyboard.InlineKeyboardCreator;
+import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
 import ru.tggc.capybaratelegrambot.service.HistoryService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
@@ -21,7 +21,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ru.tggc.capybaratelegrambot.utils.Utils.getOr;
+import static ru.tggc.capybaratelegrambot.utils.Utils.getOrElse;
 
 @Component
 @Slf4j
@@ -29,27 +29,27 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
     private final HistoryService historyService;
 
     protected MessageHandleRegistry(ListableBeanFactory beanFactory,
-                                    InlineKeyboardCreator inlineKeyboardCreator,
                                     UserService userService,
                                     HistoryService historyService,
-                                    UserRateLimiterService rateLimiterService) {
-        super(beanFactory, inlineKeyboardCreator, userService, rateLimiterService);
+                                    UserRateLimiterService rateLimiterService,
+                                    ExceptionHandler exceptionHandler) {
+        super(beanFactory, userService, rateLimiterService, exceptionHandler);
         this.historyService = historyService;
     }
 
     @Override
     protected boolean canRequestBePublic(Method method) {
-        return getOr(method.getAnnotation(MessageHandle.class), MessageHandle::canPublic, true);
+        return getOrElse(method.getAnnotation(MessageHandle.class), MessageHandle::canPublic, true);
     }
 
     @Override
     protected boolean canRequestBePrivate(Method method) {
-        return getOr(method.getAnnotation(MessageHandle.class), MessageHandle::canPrivate, false);
+        return getOrElse(method.getAnnotation(MessageHandle.class), MessageHandle::canPrivate, false);
     }
 
     @Override
     protected UserRole[] getRequiredRoles(Method method) {
-        return getOr(
+        return getOrElse(
                 method.getAnnotation(MessageHandle.class),
                 MessageHandle::requiredRoles,
                 new UserRole[0]
@@ -63,6 +63,9 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
 
     @Override
     public Response dispatch(Message message) {
+        if (message.text() == null) {
+            return null;
+        }
         String text = message.text().toLowerCase();
         Method method = methods.values().stream()
                 .filter(m -> {

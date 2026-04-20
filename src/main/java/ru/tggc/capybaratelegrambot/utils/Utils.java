@@ -17,8 +17,12 @@ public class Utils {
         return Optional.ofNullable(t).map(function).orElse(null);
     }
 
-    public static <T, R> R getOr(T t, Function<T, R> function, R orElse) {
+    public static <T, R> R getOrElse(T t, Function<T, R> function, R orElse) {
         return Optional.ofNullable(t).map(function).orElse(orElse);
+    }
+
+    public static <T, R> R getOrElseGet(T t, Function<T, R> function, Supplier<R> orElse) {
+        return Optional.ofNullable(t).map(function).orElseGet(orElse);
     }
 
     public static <T> void ifPresent(T t, Consumer<T> consumer) {

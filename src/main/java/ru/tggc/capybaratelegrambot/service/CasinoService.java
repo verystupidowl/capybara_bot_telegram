@@ -28,10 +28,6 @@ import ru.tggc.capybaratelegrambot.utils.SlotType;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
@@ -42,8 +38,8 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIfNull;
 public class CasinoService {
     private final HistoryService historyService;
     private final CapybaraService capybaraService;
+    private final TelegramBotService telegramBotService;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private final Cache<CapybaraContext, CasinoCtx> map = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofMinutes(5))
             .maximumSize(10_000)
@@ -115,6 +111,9 @@ public class CasinoService {
                 });
         checkBet(ctx, bet, capybara);
 
+        capybara.setCurrency(capybara.getCurrency() - bet);
+        capybaraService.save(capybara);
+
         return bot -> {
             Message response = bot.execute(new SendDice(ctx.chatId()).slotMachine()).message();
             int diceValue = response.dice().value() - 1;
@@ -127,12 +126,10 @@ public class CasinoService {
 
             SlotResult slotResult = getResult(result);
 
-            map.invalidate(ctx);
             long win = (long) (bet * slotResult.multiplier());
             capybara.setCurrency(capybara.getCurrency() + win);
             capybaraService.save(capybara);
-            CompletableFuture<Void> future = new CompletableFuture<>();
-            scheduler.schedule(() -> {
+            telegramBotService.sendDelayed(tb -> {
                 long chatId = ctx.chatId();
                 SendPhoto sendPhoto;
                 if (slotResult == SlotResult.LOSE) {
@@ -142,10 +139,9 @@ public class CasinoService {
                     sendPhoto = new SendPhoto(chatId, WIN_PHOTO_URL);
                     sendPhoto.caption("Твоя капибара выиграла " + win);
                 }
-                bot.execute(sendPhoto);
-                future.complete(null);
-            }, 2000, TimeUnit.MILLISECONDS);
-            return future;
+                tb.execute(sendPhoto);
+                map.invalidate(ctx);
+            }, 2000L);
         };
     }
 

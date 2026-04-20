@@ -5,13 +5,10 @@ import lombok.Getter;
 import ru.tggc.capybaratelegrambot.domain.fight.BossFightState;
 import ru.tggc.capybaratelegrambot.domain.fight.effect.positive.VampirismEffect;
 
-import java.util.function.Consumer;
-
 @Getter
 @AllArgsConstructor
 public enum FightBuffWeapon implements FightBuffEnum {
-    NONE("none", "none", 0, stats -> {
-    }),
+    NONE("none", "none", 0, BuffEffect.empty()),
     FIRE_CARROT("Огненная морковка🥕🔥", "Атаки наносит на 25% больше урона", 100,
             stats -> stats.setBaseDamage(stats.getBaseDamage() * 1.25)),
     DAGGER("Кровавый кинжал \uD83E\uDE78", "Атаки восстанавливают 50% от нанесенного урона. Урон снижен на 10%", 250,
@@ -25,7 +22,7 @@ public enum FightBuffWeapon implements FightBuffEnum {
     private final String title;
     private final String description;
     private final int cost;
-    private final Consumer<BossFightState.PlayerStats> effect;
+    private final BuffEffect effect;
 
     @Override
     public void apply(BossFightState.PlayerStats player) {
