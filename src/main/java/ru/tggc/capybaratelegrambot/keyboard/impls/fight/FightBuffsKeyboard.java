@@ -41,7 +41,11 @@ public class FightBuffsKeyboard extends AbstractInlineKeyboardCreator<BuffType> 
 
     private List<List<InlineKeyboardButton>> getBuffs(FightBuffEnum[] values) {
         return Arrays.stream(values)
-                .map(v -> List.of(new InlineKeyboardButton(v.getTitle()).callbackData("buy_buff_" + v.name() + "_" + v.getBuffType())))
+                .map(this::getBuffs)
                 .toList();
+    }
+
+    private List<InlineKeyboardButton> getBuffs(FightBuffEnum v) {
+        return List.of(btn(v.getTitle(), "buy_buff_" + v.name() + "_" + v.getBuffType()));
     }
 }

@@ -17,4 +17,9 @@ public class HealthCheckController {
         log.debug("health checked");
         return ResponseEntity.status(HttpStatus.OK).body("ok");
     }
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
+    }
 }

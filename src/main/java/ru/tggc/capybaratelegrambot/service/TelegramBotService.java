@@ -2,7 +2,6 @@ package ru.tggc.capybaratelegrambot.service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
@@ -14,30 +13,30 @@ import java.util.function.Consumer;
 @Service
 @RequiredArgsConstructor
 public class TelegramBotService {
-    private final ApplicationEventPublisher eventPublisher;
     private final TaskScheduler taskScheduler;
+    private final TelegramBot telegramBot;
 
     public void send(Response response) {
-        eventPublisher.publishEvent(response);
+        response.accept(telegramBot);
     }
 
     public void sendToAdmin(String text) {
         Response response = ResponseBuilder.toAdmin()
                 .message(text)
                 .build();
-        eventPublisher.publishEvent(response);
+        response.accept(telegramBot);
     }
 
     public void sendDelayed(Response response, int delayMillis) {
         taskScheduler.schedule(
-                () -> eventPublisher.publishEvent(response),
+                () -> response.accept(telegramBot),
                 Instant.now().plusMillis(delayMillis)
         );
     }
 
     public void sendDelayed(Consumer<TelegramBot> task, long delayMillis) {
         taskScheduler.schedule(
-                () -> eventPublisher.publishEvent(task),
+                () -> task.accept(telegramBot),
                 Instant.now().plusMillis(delayMillis)
         );
     }

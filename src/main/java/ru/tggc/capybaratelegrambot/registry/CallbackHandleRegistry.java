@@ -76,7 +76,7 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
             SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, message);
             return Response.ofAll(sendMessageToAdmin, sendMessageToUser);
         }
-
+        log.info("message {} from {}", query.data(), from.username());
 
         String template = method.getAnnotation(CallbackHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;

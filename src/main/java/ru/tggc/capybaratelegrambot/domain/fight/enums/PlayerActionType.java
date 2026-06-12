@@ -30,11 +30,11 @@ public enum PlayerActionType {
         );
         return log.append(text).toString();
     }),
-    DEFEND("Защита", (fight, ps) -> {
+    DEFEND("Защита", (_, ps) -> {
         ps.setDefending(true);
         return String.format(RandomUtils.getRandomFromList(DEFEND_TEXTS), ps.getUsername());
     }),
-    HEAL("Лечение", (fight, ps) -> {
+    HEAL("Лечение", (_, ps) -> {
         BossFightState.PlayerStats stats = ps.getPlayerStats();
         int heal = (int) RandomUtils.getRandomStat(stats.getBaseHeal());
         DamageEvent damageEvent = ps.applyHeal(heal);

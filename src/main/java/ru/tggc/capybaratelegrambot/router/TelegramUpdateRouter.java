@@ -7,6 +7,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.AnswerCallbackQuery;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
@@ -19,6 +20,7 @@ import ru.tggc.capybaratelegrambot.service.UserService;
 
 import java.util.Arrays;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramUpdateRouter {
@@ -31,8 +33,10 @@ public class TelegramUpdateRouter {
 
     public Response route(Update update) {
         if (update.message() != null) {
+            log.info("message {} from {}", update.message().text(), update.message().from().username());
             return handleMessage(update.message());
         } else if (update.callbackQuery() != null) {
+            log.info("callback {} from {}", update.callbackQuery().data(), update.callbackQuery().from().username());
             return handleCallback(update.callbackQuery());
         }
         return Response.empty();
