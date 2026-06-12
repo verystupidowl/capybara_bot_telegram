@@ -7,6 +7,7 @@ import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.SendAnimation;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
+import com.pengrad.telegrambot.response.SendResponse;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,12 +131,14 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
             int messageId;
             String caption = "\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName();
             if (fileDto.getType() == FileType.PHOTO) {
-                messageId = bot.execute(new SendPhoto(chatId, fileDto.getUrl())
-                                .caption(caption))
-                        .message().messageId();
+                messageId = bot.execute(new SendPhoto(chatId, fileDto.getUrl()).caption(caption))
+                        .message()
+                        .messageId();
             } else {
-                messageId = bot.execute(new SendAnimation(chatId, fileDto.getUrl()).caption(caption))
-                        .message().messageId();
+                SendResponse execute = bot.execute(new SendAnimation(chatId, fileDto.getUrl()).caption(caption));
+                messageId = execute
+                        .message()
+                        .messageId();
             }
 
             int need = 100 + (((c1.getLevel().getValue() + c2.getLevel().getValue()) / 2) / 10) * 10;
@@ -209,11 +212,10 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public void sendMessages(Capybara winner, Capybara loser, RaceStepContext ctx) {
-        ctx.bot.execute(new EditMessageCaption(ctx.chatId,
-                ctx.messageId)
+        telegramBotService.send(Response.of(new EditMessageCaption(ctx.chatId, ctx.messageId)
                 .caption("🏆Выиграла капибара " + winner.getName() +
                         "\nСчастье + " + winner.getImprovement().getImprovementValue().getWinHappiness() +
-                        ", проигравшая - " + loser.getImprovement().getImprovementValue().getLoseHappiness()));
+                        ", проигравшая - " + loser.getImprovement().getImprovementValue().getLoseHappiness())));
     }
 
     @Transactional

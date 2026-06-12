@@ -93,7 +93,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry<Message> {
             }
             return response;
         }
-
+        log.info("message {} from {}", message.text(), from.username());
 
         String template = method.getAnnotation(MessageHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(text) : null;

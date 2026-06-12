@@ -16,9 +16,7 @@ public interface Response extends Consumer<TelegramBot> {
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(List<Rq> requests) {
         return bot -> requests.forEach(request -> {
             Rs rs = bot.execute(request);
-            if (!rs.isOk()) {
-                throw new SendException("Exception while sending request " + rs.description());
-            }
+            checkResponse(rs);
         });
     }
 
@@ -26,18 +24,14 @@ public interface Response extends Consumer<TelegramBot> {
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(Rq... requests) {
         return bot -> Arrays.stream(requests).forEach(request -> {
             Rs rs = bot.execute(request);
-            if (!rs.isOk()) {
-                throw new SendException("Exception while sending request " + rs.description());
-            }
+            checkResponse(rs);
         });
     }
 
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response of(BaseRequest<Rq, Rs> request) {
         return bot -> {
             Rs rs = bot.execute(request);
-            if (!rs.isOk()) {
-                throw new SendException("Exception while sending request " + rs.description());
-            }
+            checkResponse(rs);
         };
     }
 
@@ -54,7 +48,7 @@ public interface Response extends Consumer<TelegramBot> {
     }
 
     static Response empty() {
-        return bot -> {
+        return _ -> {
         };
     }
 
@@ -63,5 +57,13 @@ public interface Response extends Consumer<TelegramBot> {
             this.accept(bot);
             after.accept(bot);
         };
+    }
+
+    static <Rs extends BaseResponse> void checkResponse(Rs rs) {
+        if (!rs.isOk()) {
+            if (rs.description() != null && !rs.description().contains("Too Many Requests")) {
+                throw new SendException("Exception while sending request " + rs.description());
+            }
+        }
     }
 }

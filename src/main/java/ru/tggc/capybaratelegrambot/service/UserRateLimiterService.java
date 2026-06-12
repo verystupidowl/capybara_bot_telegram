@@ -27,12 +27,12 @@ public class UserRateLimiterService {
     private static final int MAX_REQUESTS = 10;
 
     public void lock(long userId) {
-        AtomicBoolean locked = lockCache.get(userId, id -> new AtomicBoolean(true));
+        AtomicBoolean locked = lockCache.get(userId, _ -> new AtomicBoolean(true));
         locked.set(true);
     }
 
     public boolean tryLock(long id) {
-        AtomicBoolean locked = lockCache.get(id, i -> new  AtomicBoolean(true));
+        AtomicBoolean locked = lockCache.get(id, _ -> new  AtomicBoolean(true));
         return locked.compareAndSet(false, true);
     }
 
@@ -41,12 +41,9 @@ public class UserRateLimiterService {
         if (locked != null) locked.set(false);
     }
 
-    public Response checkUser(User from,
-                              Chat chat) {
-        log.info(lockCache.asMap().toString());
-        AtomicBoolean locked = lockCache.get(from.id(), id -> new AtomicBoolean(false));
+    public Response checkUser(User from, Chat chat) {
+        AtomicBoolean locked = lockCache.get(from.id(), _ -> new AtomicBoolean(false));
         if (locked.get()) {
-            log.info("asd");
             return Response.empty();
         }
         Integer count = countOfUpdates.getIfPresent(from.id());

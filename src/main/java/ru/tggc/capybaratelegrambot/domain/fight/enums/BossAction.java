@@ -14,7 +14,7 @@ import java.util.function.BiFunction;
 
 @Getter
 public enum BossAction {
-    TAIL_ON_THE_WATER((fight, alivePlayers) -> {
+    TAIL_ON_THE_WATER((_, alivePlayers) -> {
         StringBuilder log = new StringBuilder("Босс бьёт по воде хвостом!🌊");
         alivePlayers.forEach(ps -> {
             int damage = RandomUtils.getRandomInt(30) + 10;
@@ -25,7 +25,7 @@ public enum BossAction {
         });
         return log.toString();
     }),
-    BITE((fight, alivePlayers) -> {
+    BITE((_, alivePlayers) -> {
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(30) + 50;
         DamageEvent damageEvent = ps.applyDamage(damage);
@@ -33,14 +33,14 @@ public enum BossAction {
                 " на " + damageEvent.getDamage() +
                 " урона";
     }),
-    STUN((fight, alivePlayers) -> {
+    STUN((_, alivePlayers) -> {
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(30) + 1;
         DamageEvent damageEvent = ps.applyDamage(damage);
         ps.getPlayerStats().getEffects().add(new StunEffect(1));
         return "💥 Босс застанил " + ps.getUsername() + " на " + damageEvent.getDamage();
     }),
-    AOE_DAMAGE((fight, alivePlayers) -> {
+    AOE_DAMAGE((_, alivePlayers) -> {
         StringBuilder log = new StringBuilder("🌊 Босс поднял волну и ударил всех!\n");
         alivePlayers.forEach(ps -> {
             int damage = RandomUtils.getRandomInt(10) + 10;
@@ -51,10 +51,10 @@ public enum BossAction {
         });
         return log.toString();
     }),
-    AOE_STUN((fight, alivePlayers) -> {
+    AOE_STUN((_, alivePlayers) -> {
         StringBuilder log = new StringBuilder("⚡ Босс издал рёв, сотрясая землю!\n");
         alivePlayers.stream()
-                .filter(ps -> RandomUtils.chance(0.5))
+                .filter(_ -> RandomUtils.chance(0.5))
                 .forEach(ps -> {
                     int damage = RandomUtils.getRandomInt(10);
                     DamageEvent damageEvent = ps.applyDamage(damage);
@@ -64,11 +64,11 @@ public enum BossAction {
                 });
         return log.toString();
     }),
-    HEAL((fight, alivePlayers) -> {
+    HEAL((_, _) -> {
         int heal = RandomUtils.getRandomInt(30) + 10;
         return "🩸 Босс втянул силы из земли и восстановил " + heal;
     }),
-    FOCUSED_STRIKE((fight, alivePlayers) -> {
+    FOCUSED_STRIKE((_, alivePlayers) -> {
         StringBuilder log = new StringBuilder();
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(30) + 20;
@@ -82,7 +82,7 @@ public enum BossAction {
                 .append(" урона")
                 .toString();
     }),
-    POISON_BITE((fight, alivePlayers) -> {
+    POISON_BITE((_, alivePlayers) -> {
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(50) + 10;
         ps.getPlayerStats().getEffects().add(new PoisonEffect());
@@ -90,7 +90,7 @@ public enum BossAction {
         return "\uD83D\uDCA6 Босс сделал ядовитый укус! по " + ps.getUsername() +
                 " на " + damageEvent.getDamage() + "! Теперь ему нужно противоядие\uD83E\uDDEA";
     }),
-    TAIL_SLAM_DUST((fight, alivePlayers) -> {
+    TAIL_SLAM_DUST((_, alivePlayers) -> {
         BossFightState.PlayerState ps = RandomUtils.getRandomFromList(alivePlayers);
         int damage = RandomUtils.getRandomInt(10) + 5;
         ps.getPlayerStats().getEffects().add(new BlindnessEffect(0.25, 10));
@@ -99,7 +99,7 @@ public enum BossAction {
                 ps.getUsername() + ", заставляя его промахиваться и наносит ему " +
                 damageEvent.getDamage() + " урона! Капибаре нужно 10 ходов, чтобы оправиться";
     }),
-    TAIL_MUD_SPLASH((fight, alivePlayers) -> {
+    TAIL_MUD_SPLASH((_, alivePlayers) -> {
         StringBuilder log = new StringBuilder("Босс бьет хвостом по грязи и заливает всем капибарам глаза\n")
                 .append("Им нужно 3 хода, чтобы оправиться, а пока их урон уменьшен вдвое!");
         int damage = RandomUtils.getRandomInt(10) + 5;

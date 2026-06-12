@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import lombok.Getter;
 import ru.tggc.capybaratelegrambot.exceptions.CapybaraException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -34,7 +35,9 @@ public abstract class AbstractInlineKeyboardCreator<T> implements KeyboardCreato
     }
 
     protected List<List<InlineKeyboardButton>> rows(InlineKeyboardButton... buttons) {
-        return List.of(List.of(buttons));
+        return Arrays.stream(buttons)
+                .map(List::of)
+                .toList();
     }
 
     protected InlineKeyboardButton btn(String text, String callbackData) {

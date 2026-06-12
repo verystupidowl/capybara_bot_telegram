@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 public interface BuffEffect extends Consumer<BossFightState.PlayerStats> {
 
     static BuffEffect empty() {
-        return ps -> {
+        return _ -> {
         };
     }
 }
