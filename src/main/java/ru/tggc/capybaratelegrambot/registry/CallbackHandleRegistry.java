@@ -2,6 +2,7 @@ package ru.tggc.capybaratelegrambot.registry;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 
 @Component
 @Slf4j
-public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery> {
+public class CallbackHandleRegistry extends AbstractHandleRegistry {
     private final ExceptionHandler exceptionHandler;
 
     protected CallbackHandleRegistry(ListableBeanFactory beanFactory,
@@ -53,7 +54,8 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
     }
 
     @Override
-    public Response dispatch(CallbackQuery query) {
+    public Response dispatch(Update update) {
+        CallbackQuery query = update.callbackQuery();
         String data = query.data();
         Method method = methods.values().stream()
                 .filter(m -> {
@@ -69,6 +71,8 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
         long chatId = chat.id();
         int messageId = query.maybeInaccessibleMessage().messageId();
 
+        saveOrUpdateUser(from, chat);
+
         if (method == null) {
             log.warn("Unknown callback: {}", data);
             String message = exceptionHandler.buildMessageToAdmin("Unknown callback: " + data, chat, from);
@@ -81,7 +85,12 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry<CallbackQuery
         String template = method.getAnnotation(CallbackHandle.class).value();
         Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;
 
-        Object[] args = buildArgs(method, query, chatId, from, messageId, matcher, query);
+        Object[] args = buildArgs(method, query, chatId, from, messageId, matcher);
         return invokeWithCatch(from, method, beans.get(template), args, chat);
+    }
+
+    @Override
+    public boolean canHandle(Update update) {
+        return update.callbackQuery() != null;
     }
 }

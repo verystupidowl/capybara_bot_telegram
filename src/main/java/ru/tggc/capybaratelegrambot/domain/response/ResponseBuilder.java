@@ -2,6 +2,7 @@ package ru.tggc.capybaratelegrambot.domain.response;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageText;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
@@ -59,15 +60,40 @@ public class ResponseBuilder {
     }
 
     public ResponseBuilder message(String text) {
-        actions.add(bot -> bot.execute(new SendMessage(chatId, text)));
+        return message(text, null);
+    }
+
+    public ResponseBuilder message(String text, InlineKeyboardMarkup markup) {
+        actions.add(bot -> {
+            SendMessage sendMessage = new SendMessage(chatId, text);
+            ifPresent(markup, sendMessage::setReplyMarkup);
+            bot.execute(sendMessage);
+        });
+        return this;
+    }
+
+    public ResponseBuilder messages(Collection<String> messages) {
+        messages.forEach(this::message);
         return this;
     }
 
     public ResponseBuilder photo(PhotoDto photo) {
-        SendPhoto sp = new SendPhoto(photo.getChatId(), photo.getUrl());
-        sp.caption(photo.getCaption());
-        ifPresent(photo.getMarkup(), sp::replyMarkup);
-        actions.add(bot -> bot.execute(sp));
+        actions.add(bot -> {
+            SendPhoto sp = new SendPhoto(photo.getChatId(), photo.getUrl());
+            ifPresent(photo.getCaption(), sp::setCaption);
+            ifPresent(photo.getMarkup(), sp::replyMarkup);
+            bot.execute(sp);
+        });
+        return this;
+    }
+
+    public ResponseBuilder photos(Collection<PhotoDto> photos) {
+        photos.forEach(p -> {
+            SendPhoto sp = new SendPhoto(p.getChatId(), p.getUrl());
+            ifPresent(p.getMarkup(), sp::replyMarkup);
+            ifPresent(p.getCaption(), sp::caption);
+            actions.add(bot -> bot.execute(sp));
+        });
         return this;
     }
 
@@ -75,13 +101,29 @@ public class ResponseBuilder {
         return edit(messageId, text, null);
     }
 
+    public ResponseBuilder edit(List<PhotoDto> photos, Integer messageId) {
+        PhotoDto first = photos.getFirst();
+        actions.add(bot -> bot.execute(new DeleteMessage(first.getChatId(), messageId)));
+        return photos(photos);
+    }
+
     public ResponseBuilder edit(int messageId, String newText, InlineKeyboardMarkup markup) {
         actions.add(bot -> {
             EditMessageText ed = new EditMessageText(chatId, messageId, newText);
             ifPresent(markup, ed::replyMarkup);
-            bot.execute(new EditMessageText(chatId, messageId, newText));
+            bot.execute(ed);
         });
         return this;
+    }
+
+    public ResponseBuilder editPhoto(Integer messageId, String photoUrl, String caption) {
+        actions.add(bot -> bot.execute(new DeleteMessage(chatId, messageId)));
+        PhotoDto photo = PhotoDto.builder()
+                .url(photoUrl)
+                .caption(caption)
+                .chatId(chatId)
+                .build();
+        return photo(photo);
     }
 
     public ResponseBuilder exceptionally(Function<Exception, Response> exceptionHandler) {
