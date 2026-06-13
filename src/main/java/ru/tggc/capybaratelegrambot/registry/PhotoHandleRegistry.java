@@ -2,6 +2,7 @@ package ru.tggc.capybaratelegrambot.registry;
 
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -21,7 +22,7 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIfNull;
 
 @Component
 @Slf4j
-public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
+public class PhotoHandleRegistry extends AbstractHandleRegistry {
 
     protected PhotoHandleRegistry(ListableBeanFactory beanFactory,
                                   UserService userService,
@@ -55,7 +56,9 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
     }
 
     @Override
-    public Response dispatch(Message message) {
+    public Response dispatch(Update update) {
+        Message message = update.message();
+
         if (message.photo() == null || message.photo().length == 0) {
             log.warn("PhotoHandleRegistry.dispatch called, but no photo in message");
             return null;
@@ -71,10 +74,20 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry<Message> {
 
         Chat chat = message.chat();
         User from = message.from();
+
+        saveOrUpdateUser(from, chat);
+
         throwIfNull(method, IllegalStateException::new);
 
         String template = method.getAnnotation(PhotoHandle.class).value();
-        Object[] args = buildArgs(method, message, chat.id(), from, 0, null, message);
+        Object[] args = buildArgs(method, message, chat.id(), from, 0, null);
         return invokeWithCatch(from, method, beans.get(template), args, chat);
+    }
+
+    @Override
+    public boolean canHandle(Update update) {
+        return update.message() != null
+                && update.message().photo() != null
+                && update.message().photo().length > 0;
     }
 }

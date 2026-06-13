@@ -1,17 +1,11 @@
 package ru.tggc.capybaratelegrambot.handler;
 
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import com.pengrad.telegrambot.request.DeleteMessage;
-import com.pengrad.telegrambot.request.EditMessageCaption;
-import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.request.SendPhoto;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.domain.response.ResponseBuilder;
 
 import java.util.List;
-
-import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 
 public abstract class Handler {
 
@@ -22,15 +16,9 @@ public abstract class Handler {
     }
 
     public Response sendSimplePhotos(List<PhotoDto> photos) {
-        List<SendPhoto> list = photos.stream()
-                .map(p -> {
-                    SendPhoto sp = new SendPhoto(p.getChatId(), p.getUrl());
-                    ifPresent(p.getCaption(), sp::caption);
-                    ifPresent(p.getMarkup(), sp::replyMarkup);
-                    return sp;
-                })
-                .toList();
-        return Response.ofAll(list);
+        return ResponseBuilder.create()
+                .photos(photos)
+                .build();
     }
 
     public Response sendSimpleMessage(long chatId, String text) {
@@ -38,64 +26,33 @@ public abstract class Handler {
     }
 
     public Response sendSimpleMessage(long chatId, String text, InlineKeyboardMarkup markup) {
-        SendMessage sm = new SendMessage(chatId, text);
-        ifPresent(markup, sm::replyMarkup);
-        return Response.of(sm);
+        return ResponseBuilder.to(chatId)
+                .message(text, markup)
+                .build();
     }
 
     public Response sendSimpleMessages(long chatId, List<String> texts) {
-        List<SendMessage> responses = texts.stream()
-                .map(text -> new SendMessage(chatId, text))
-                .toList();
-        return Response.ofAll(responses);
+        return ResponseBuilder.to(chatId)
+                .messages(texts)
+                .build();
     }
 
     public Response editMessageCaption(long chatId, Integer messageId, String caption, InlineKeyboardMarkup markup) {
-        EditMessageCaption emc = new EditMessageCaption(chatId, messageId);
-        emc.caption(caption);
-        ifPresent(markup, emc::replyMarkup);
-        return Response.of(emc);
-    }
-
-    public Response editMessageCaption(List<PhotoDto> photos, Integer messageId) {
-        PhotoDto first = photos.getFirst();
-        EditMessageCaption emc = new EditMessageCaption(first.getChatId(), messageId);
-        emc.caption(first.getCaption());
-        ifPresent(first.getMarkup(), emc::replyMarkup);
-        Response response = Response.of(emc);
-        List<SendPhoto> sendPhotos = photos.stream()
-                .map(p -> {
-                    SendPhoto sp = new SendPhoto(p.getChatId(), p.getUrl());
-                    ifPresent(p.getMarkup(), sp::replyMarkup);
-                    ifPresent(p.getCaption(), sp::caption);
-                    return sp;
-                })
-                .toList();
-        return response.andThen(Response.ofAll(sendPhotos));
+        return ResponseBuilder.to(chatId)
+                .edit(messageId, caption, markup)
+                .build();
     }
 
     public Response editPhotos(Integer messageId, List<PhotoDto> photos) {
-        PhotoDto first = photos.getFirst();
-        DeleteMessage dm = new DeleteMessage(first.getChatId(), messageId);
-        List<SendPhoto> photosToSend = photos.stream()
-                .map(p -> {
-                    long chatId = p.getChatId();
-                    SendPhoto sp = new SendPhoto(chatId, p.getUrl());
-                    ifPresent(p.getCaption(), sp::caption);
-                    ifPresent(p.getMarkup(), sp::replyMarkup);
-                    return sp;
-                })
-                .toList();
-        return Response.ofAll(photosToSend).andThen(Response.of(dm));
+        return ResponseBuilder.create()
+                .edit(photos, messageId)
+                .build();
     }
 
     public Response editPhoto(long chatId, Integer messageId, String photoUrl, String caption) {
-        DeleteMessage dm = new DeleteMessage(chatId, messageId);
-        return sendSimplePhoto(PhotoDto.builder()
-                .url(photoUrl)
-                .caption(caption)
-                .chatId(chatId)
-                .build()).andThen(Response.of(dm));
+        return ResponseBuilder.to(chatId)
+                .editPhoto(messageId, photoUrl, caption)
+                .build();
     }
 
     public Response editSimpleMessage(long chatId, int messageId, String text) {

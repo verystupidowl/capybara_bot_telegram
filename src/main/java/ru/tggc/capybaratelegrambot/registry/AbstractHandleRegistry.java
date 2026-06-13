@@ -19,6 +19,8 @@ import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
 import ru.tggc.capybaratelegrambot.annotation.params.UserId;
 import ru.tggc.capybaratelegrambot.annotation.params.Username;
 import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
+import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
+import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
@@ -39,7 +41,7 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
+public abstract class AbstractHandleRegistry implements HandleRegistry {
     protected final Map<String, Method> methods = new ConcurrentHashMap<>();
     protected final Map<String, Object> beans = new ConcurrentHashMap<>();
     protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
@@ -78,8 +80,7 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
                     throwIf(defaultMethod != null, () -> new IllegalStateException("Должен быть только один @DefaultMessageHandle"));
                     defaultMethod = method;
                     defaultBean = bean;
-                    log.info("Registered default message handler: {}.{}",
-                            bean.getClass().getSimpleName(), method.getName());
+                    log.info("Registered default message handler: {}.{}", bean.getClass().getSimpleName(), method.getName());
                 }
             }
         }
@@ -95,7 +96,7 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
         } catch (Exception e) {
             return exceptionHandler.handleException(e, chat, from);
         }
-        return response.andThen(bot -> rateLimiter.unlock(from.id()));
+        return response.andThen(_ -> rateLimiter.unlock(from.id()));
     }
 
     @Nullable
@@ -119,16 +120,19 @@ public abstract class AbstractHandleRegistry<U> implements HandleRegistry<U> {
 
     protected abstract UserRole[] getRequiredRoles(Method method);
 
+    protected void saveOrUpdateUser(User from, Chat chat) {
+        userService.saveOrUpdate(new UserDto(from.id(), from.username()), new ChatDto(chat.id(), chat.title()));
+    }
+
     protected Object[] buildArgs(Method method,
-                                 Object update,
+                                 Object param,
                                  long chatId,
                                  User from,
                                  int messageId,
-                                 Matcher matcher,
-                                 U param) {
+                                 Matcher matcher) {
         return Arrays.stream(method.getParameters())
                 .map(parameter -> switch (parameter) {
-                    case Parameter p when p.getType().isAssignableFrom(update.getClass()) -> update;
+                    case Parameter p when p.getType().isAssignableFrom(param.getClass()) -> param;
                     case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
                     case Parameter p when p.isAnnotationPresent(UserId.class) -> from.id();
                     case Parameter p when p.isAnnotationPresent(Username.class) -> from.username();

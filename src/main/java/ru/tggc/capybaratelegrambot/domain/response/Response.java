@@ -1,10 +1,13 @@
 package ru.tggc.capybaratelegrambot.domain.response;
 
+import com.pengrad.telegrambot.Callback;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.response.BaseResponse;
-import ru.tggc.capybaratelegrambot.exceptions.SendException;
+import ru.tggc.capybaratelegrambot.exceptions.RetryableWithSecsException;
+import ru.tggc.capybaratelegrambot.utils.SendUtils;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -14,25 +17,16 @@ import java.util.function.Consumer;
 public interface Response extends Consumer<TelegramBot> {
 
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(List<Rq> requests) {
-        return bot -> requests.forEach(request -> {
-            Rs rs = bot.execute(request);
-            checkResponse(rs);
-        });
+        return bot -> requests.forEach(request -> bot.execute(request, checkResponse()));
     }
 
     @SafeVarargs
     static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response ofAll(Rq... requests) {
-        return bot -> Arrays.stream(requests).forEach(request -> {
-            Rs rs = bot.execute(request);
-            checkResponse(rs);
-        });
+        return bot -> Arrays.stream(requests).forEach(request -> bot.execute(request, checkResponse()));
     }
 
-    static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response of(BaseRequest<Rq, Rs> request) {
-        return bot -> {
-            Rs rs = bot.execute(request);
-            checkResponse(rs);
-        };
+    static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Response of(Rq request) {
+        return bot -> bot.execute(request, checkResponse());
     }
 
     static Response of(Consumer<TelegramBot> consumer) {
@@ -59,11 +53,17 @@ public interface Response extends Consumer<TelegramBot> {
         };
     }
 
-    static <Rs extends BaseResponse> void checkResponse(Rs rs) {
-        if (!rs.isOk()) {
-            if (rs.description() != null && !rs.description().contains("Too Many Requests")) {
-                throw new SendException("Exception while sending request " + rs.description());
+    private static <Rq extends BaseRequest<Rq, Rs>, Rs extends BaseResponse> Callback<Rq, Rs> checkResponse() {
+        return new Callback<>() {
+            @Override
+            public void onResponse(Rq rq, Rs rs) {
+                SendUtils.checkRequestAndResponse(rs);
             }
-        }
+
+            @Override
+            public void onFailure(Rq rq, IOException e) {
+                throw new RetryableWithSecsException("Exception while sending request " + e.getMessage());
+            }
+        };
     }
 }
