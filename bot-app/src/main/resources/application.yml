@@ -1,0 +1,29 @@
+server:
+  port: 8080
+spring:
+  liquibase:
+    enabled: true
+  datasource:
+    url: jdbc:postgresql:///capybara_tg_bot
+    username: root
+    password: root
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: false
+    hibernate:
+#          ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  messages:
+    basename: i18n/common,i18n/fight/messages,i18n/shop/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+
+bot:
+  token: 7728598019:AAGOBoNpmK6OUJ3TJjw6YF7a6W6vKTfaxF0
+  webhook_url: https://sphinx-charting-lego.ngrok-free.dev/telegram/webhook
+  admin-id: 428873987
