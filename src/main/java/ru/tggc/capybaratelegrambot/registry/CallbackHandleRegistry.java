@@ -6,17 +6,19 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.CallbackHandle;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
+import ru.tggc.capybaratelegrambot.registry.resolver.HandlerArgumentResolver;
+import ru.tggc.capybaratelegrambot.registry.resolver.HandlerCtx;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,13 +26,16 @@ import java.util.regex.Pattern;
 @Slf4j
 public class CallbackHandleRegistry extends AbstractHandleRegistry {
     private final ExceptionHandler exceptionHandler;
+    private final HandlerArgumentResolver handlerArgumentResolver;
 
-    protected CallbackHandleRegistry(ListableBeanFactory beanFactory,
+    protected CallbackHandleRegistry(HandlerScanner handlerScanner,
                                      UserService userService,
                                      UserRateLimiterService rateLimiterService,
-                                     ExceptionHandler exceptionHandler) {
-        super(beanFactory, userService, rateLimiterService, exceptionHandler);
+                                     ExceptionHandler exceptionHandler,
+                                     HandlerArgumentResolver handlerArgumentResolver) {
+        super(handlerScanner, userService, rateLimiterService, exceptionHandler);
         this.exceptionHandler = exceptionHandler;
+        this.handlerArgumentResolver = handlerArgumentResolver;
     }
 
     @Override
@@ -57,11 +62,12 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
     public Response dispatch(Update update) {
         CallbackQuery query = update.callbackQuery();
         String data = query.data();
-        Method method = methods.values().stream()
+        Method method = handlerMap.values().stream()
+                .map(RegisteredHandler::getMethod)
                 .filter(m -> {
                     String template = m.getAnnotation(CallbackHandle.class).value();
                     if (template.equals(data)) return true;
-                    Pattern p = patterns.get(template);
+                    Pattern p = handlerMap.get(template).getPattern();
                     return p != null && p.matcher(data).matches();
                 })
                 .findFirst()
@@ -83,10 +89,20 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
         log.info("message {} from {}", query.data(), from.username());
 
         String template = method.getAnnotation(CallbackHandle.class).value();
-        Matcher matcher = patterns.containsKey(template) ? patterns.get(template).matcher(data) : null;
+        Matcher matcher = Optional.ofNullable(handlerMap.get(template))
+                .map(RegisteredHandler::getPattern)
+                .map(p -> p.matcher(data))
+                .orElse(null);
 
-        Object[] args = buildArgs(method, query, chatId, from, messageId, matcher);
-        return invokeWithCatch(from, method, beans.get(template), args, chat);
+        HandlerCtx ctx = new HandlerCtx(
+                update,
+                chatId,
+                from,
+                messageId,
+                matcher
+        );
+        Object[] args = handlerArgumentResolver.resolve(method, ctx);
+        return invokeWithCatch(from, method, handlerMap.get(template).getBean(), args, chat);
     }
 
     @Override

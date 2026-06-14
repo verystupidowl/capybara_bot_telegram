@@ -3,20 +3,18 @@ package ru.tggc.capybaratelegrambot.domain.response;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.DeleteMessage;
-import com.pengrad.telegrambot.request.EditMessageText;
+import com.pengrad.telegrambot.request.EditMessageCaption;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.domain.dto.PhotoDto;
-import ru.tggc.capybaratelegrambot.exceptions.SendException;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 
@@ -25,7 +23,6 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.ifPresent;
 public class ResponseBuilder {
     private long chatId;
     private final List<Consumer<TelegramBot>> actions = new ArrayList<>();
-    private Function<Exception, Response> exceptionHandler = null;
 
     private static long adminId;
 
@@ -109,7 +106,8 @@ public class ResponseBuilder {
 
     public ResponseBuilder edit(int messageId, String newText, InlineKeyboardMarkup markup) {
         actions.add(bot -> {
-            EditMessageText ed = new EditMessageText(chatId, messageId, newText);
+            EditMessageCaption ed = new EditMessageCaption(chatId, messageId);
+            ed.caption(newText);
             ifPresent(markup, ed::replyMarkup);
             bot.execute(ed);
         });
@@ -126,20 +124,7 @@ public class ResponseBuilder {
         return photo(photo);
     }
 
-    public ResponseBuilder exceptionally(Function<Exception, Response> exceptionHandler) {
-        this.exceptionHandler = exceptionHandler;
-        return this;
-    }
-
     public Response build() {
-        if (exceptionHandler != null) {
-            try {
-                return Response.ofAllConsumers(actions);
-            } catch (SendException ex) {
-                return exceptionHandler.apply(ex);
-            }
-        } else {
-            return Response.ofAllConsumers(actions);
-        }
+        return Response.ofAllConsumers(actions);
     }
 }

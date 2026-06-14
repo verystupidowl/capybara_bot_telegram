@@ -5,12 +5,13 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.stereotype.Component;
 import ru.tggc.capybaratelegrambot.annotation.handle.PhotoHandle;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
 import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
+import ru.tggc.capybaratelegrambot.registry.resolver.HandlerArgumentResolver;
+import ru.tggc.capybaratelegrambot.registry.resolver.HandlerCtx;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.service.UserService;
 
@@ -23,12 +24,15 @@ import static ru.tggc.capybaratelegrambot.utils.Utils.throwIfNull;
 @Component
 @Slf4j
 public class PhotoHandleRegistry extends AbstractHandleRegistry {
+    private final HandlerArgumentResolver handlerArgumentResolver;
 
-    protected PhotoHandleRegistry(ListableBeanFactory beanFactory,
-                                  UserService userService,
+    protected PhotoHandleRegistry(UserService userService,
                                   UserRateLimiterService rateLimiterService,
-                                  ExceptionHandler exceptionHandler) {
-        super(beanFactory, userService, rateLimiterService, exceptionHandler);
+                                  ExceptionHandler exceptionHandler,
+                                  HandlerScanner handlerScanner,
+                                  HandlerArgumentResolver handlerArgumentResolver) {
+        super(handlerScanner, userService, rateLimiterService, exceptionHandler);
+        this.handlerArgumentResolver = handlerArgumentResolver;
     }
 
     @Override
@@ -64,7 +68,8 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry {
             return null;
         }
 
-        Method method = methods.values().stream()
+        Method method = handlerMap.values().stream()
+                .map(RegisteredHandler::getMethod)
                 .filter(m -> {
                     String template = m.getAnnotation(PhotoHandle.class).value();
                     return template.equals("update_photo");
@@ -80,8 +85,16 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry {
         throwIfNull(method, IllegalStateException::new);
 
         String template = method.getAnnotation(PhotoHandle.class).value();
-        Object[] args = buildArgs(method, message, chat.id(), from, 0, null);
-        return invokeWithCatch(from, method, beans.get(template), args, chat);
+
+        HandlerCtx ctx = new HandlerCtx(
+                update,
+                chat.id(),
+                from,
+                0,
+                null
+        );
+        Object[] args = handlerArgumentResolver.resolve(method, ctx);
+        return invokeWithCatch(from, method, handlerMap.get(template).getBean(), args, chat);
     }
 
     @Override

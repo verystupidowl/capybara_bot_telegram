@@ -44,7 +44,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     @CallbackHandle("set_photo")
     public Response setPhoto(@Ctx CapybaraContext ctx) {
         historyService.setHistory(ctx, CHANGE_PHOTO);
-        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE);
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.DEFAULT_PHOTO);
         return sendSimpleMessage(ctx.chatId(), Text.START_CHANGE_PHOTO, markup);
     }
 

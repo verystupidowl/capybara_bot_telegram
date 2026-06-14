@@ -4,21 +4,8 @@ import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.User;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.beans.factory.ListableBeanFactory;
-import ru.tggc.capybaratelegrambot.annotation.handle.BotHandler;
-import ru.tggc.capybaratelegrambot.annotation.handle.DefaultMessageHandle;
-import ru.tggc.capybaratelegrambot.annotation.params.CallbackParam;
-import ru.tggc.capybaratelegrambot.annotation.params.ChatId;
-import ru.tggc.capybaratelegrambot.annotation.params.Ctx;
-import ru.tggc.capybaratelegrambot.annotation.params.HandleParam;
-import ru.tggc.capybaratelegrambot.annotation.params.MessageId;
-import ru.tggc.capybaratelegrambot.annotation.params.MessageParam;
-import ru.tggc.capybaratelegrambot.annotation.params.UserId;
-import ru.tggc.capybaratelegrambot.annotation.params.Username;
-import ru.tggc.capybaratelegrambot.domain.dto.CapybaraContext;
 import ru.tggc.capybaratelegrambot.domain.dto.ChatDto;
 import ru.tggc.capybaratelegrambot.domain.dto.UserDto;
 import ru.tggc.capybaratelegrambot.domain.model.enums.UserRole;
@@ -26,27 +13,18 @@ import ru.tggc.capybaratelegrambot.domain.response.Response;
 import ru.tggc.capybaratelegrambot.exceptions.handler.ExceptionHandler;
 import ru.tggc.capybaratelegrambot.service.UserRateLimiterService;
 import ru.tggc.capybaratelegrambot.service.UserService;
-import ru.tggc.capybaratelegrambot.utils.ParamConverter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static ru.tggc.capybaratelegrambot.utils.Utils.throwIf;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractHandleRegistry implements HandleRegistry {
-    protected final Map<String, Method> methods = new ConcurrentHashMap<>();
-    protected final Map<String, Object> beans = new ConcurrentHashMap<>();
-    protected final Map<String, Pattern> patterns = new ConcurrentHashMap<>();
+    protected Map<String, RegisteredHandler> handlerMap = new ConcurrentHashMap<>();
 
-    protected final ListableBeanFactory beanFactory;
+    private final HandlerScanner handlerScanner;
     private final UserService userService;
     private final UserRateLimiterService rateLimiter;
     private final ExceptionHandler exceptionHandler;
@@ -58,32 +36,12 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
     protected static final long ADMIN_ID = 428873987;
 
     @PostConstruct
-    @SneakyThrows
     public void init() {
-        Map<String, Object> handlerBeans = beanFactory.getBeansWithAnnotation(BotHandler.class);
-        for (Object bean : handlerBeans.values()) {
-            for (Method method : bean.getClass().getDeclaredMethods()) {
-                if (method.isAnnotationPresent(getHandleAnnotation())) {
-                    Annotation ann = method.getAnnotation(getHandleAnnotation());
-                    String key = (String) ann.annotationType()
-                            .getMethod("value")
-                            .invoke(ann);
-                    methods.put(key, method);
-                    beans.put(key, bean);
-                    if (key.contains("${")) {
-                        String regex = key.replaceAll("\\$\\{(\\w+)}", "(?<$1>.+)");
-                        patterns.put(key, Pattern.compile(regex));
-                    }
-                    log.info("Registered handler '{}' -> {}.{}",
-                            key, bean.getClass().getSimpleName(), method.getName());
-                } else if (method.isAnnotationPresent(DefaultMessageHandle.class)) {
-                    throwIf(defaultMethod != null, () -> new IllegalStateException("Должен быть только один @DefaultMessageHandle"));
-                    defaultMethod = method;
-                    defaultBean = bean;
-                    log.info("Registered default message handler: {}.{}", bean.getClass().getSimpleName(), method.getName());
-                }
-            }
-        }
+        HandlerRegistryData data = handlerScanner.scan(getHandleAnnotation());
+
+        handlerMap.putAll(data.registeredHandlers());
+        defaultMethod = data.defaultMethod();
+        defaultBean = data.defaultBean();
     }
 
     protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
@@ -97,6 +55,10 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
             return exceptionHandler.handleException(e, chat, from);
         }
         return response.andThen(_ -> rateLimiter.unlock(from.id()));
+    }
+
+    protected void saveOrUpdateUser(User from, Chat chat) {
+        userService.saveOrUpdate(new UserDto(from.id(), from.username()), new ChatDto(chat.id(), chat.title()));
     }
 
     @Nullable
@@ -119,38 +81,6 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
     protected abstract boolean canRequestBePrivate(Method method);
 
     protected abstract UserRole[] getRequiredRoles(Method method);
-
-    protected void saveOrUpdateUser(User from, Chat chat) {
-        userService.saveOrUpdate(new UserDto(from.id(), from.username()), new ChatDto(chat.id(), chat.title()));
-    }
-
-    protected Object[] buildArgs(Method method,
-                                 Object param,
-                                 long chatId,
-                                 User from,
-                                 int messageId,
-                                 Matcher matcher) {
-        return Arrays.stream(method.getParameters())
-                .map(parameter -> switch (parameter) {
-                    case Parameter p when p.getType().isAssignableFrom(param.getClass()) -> param;
-                    case Parameter p when p.isAnnotationPresent(ChatId.class) -> chatId;
-                    case Parameter p when p.isAnnotationPresent(UserId.class) -> from.id();
-                    case Parameter p when p.isAnnotationPresent(Username.class) -> from.username();
-                    case Parameter p when p.isAnnotationPresent(Ctx.class) ->
-                            new CapybaraContext(chatId, from.id(), messageId);
-                    case Parameter p when p.isAnnotationPresent(CallbackParam.class)
-                            || p.isAnnotationPresent(MessageParam.class) -> param;
-                    case Parameter p when p.isAnnotationPresent(MessageId.class) -> messageId;
-                    case Parameter p when p.isAnnotationPresent(HandleParam.class)
-                            && matcher != null && matcher.matches() -> {
-                        String name = p.getAnnotation(HandleParam.class).value();
-                        String raw = matcher.group(name);
-                        yield ParamConverter.convert(raw, p.getType());
-                    }
-                    default -> null;
-                })
-                .toArray();
-    }
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
 }
