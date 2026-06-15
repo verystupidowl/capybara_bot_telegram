@@ -1,4 +1,4 @@
-package ru.tggc.botapp.handler;
+package ru.tggc.telegrambotframework.handler;
 
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import ru.tggc.telegrambotframework.dto.PhotoDto;

@@ -2,6 +2,7 @@ package ru.tggc.botapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.model.Chat;
 import ru.tggc.botapp.domain.model.User;
@@ -16,6 +17,7 @@ import ru.tggc.telegrambotframework.service.UserService;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class UserServiceImpl implements UserService {
     private final ChatRepository chatRepository;
 
     @Transactional
-    public void saveOrUpdate(UserDto dto, ChatDto chatDto) {
+    public User saveOrUpdate(UserDto dto, ChatDto chatDto) {
         Chat chat = chatRepository.findById(chatDto.id())
                 .orElseGet(() -> chatRepository.save(Chat.builder()
                         .name(chatDto.title())
@@ -45,7 +47,7 @@ public class UserServiceImpl implements UserService {
 
         user.setLastTimeUpdatedAt(LocalDateTime.now());
 
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
@@ -64,5 +66,19 @@ public class UserServiceImpl implements UserService {
     public boolean checkRoles(Long id, UserRole[] requiredRoles) {
         return userRepository.findById(id).stream()
                 .anyMatch(u -> Arrays.stream(requiredRoles).toList().contains(u.getUserRole()));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> getBlockReason(String username) {
+        return userRepository.findBlockedReasonByUsername(username);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void blockUser(String username, String reason) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User with username " + username + " not found"));
+        user.setBlocked(true);
+        user.setBlockedReason(reason);
+        userRepository.save(user);
     }
 }

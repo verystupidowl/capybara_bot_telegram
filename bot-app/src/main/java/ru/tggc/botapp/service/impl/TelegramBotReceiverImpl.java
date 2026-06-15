@@ -17,7 +17,7 @@ import java.util.Optional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TelegramBotServiceImpl implements TelegramBotReceiver {
+public class TelegramBotReceiverImpl implements TelegramBotReceiver {
     private final Cache<Integer, Boolean> cachedUpdates = Caffeine.newBuilder()
             .maximumSize(100_000)
             .expireAfterWrite(Duration.ofMinutes(5))

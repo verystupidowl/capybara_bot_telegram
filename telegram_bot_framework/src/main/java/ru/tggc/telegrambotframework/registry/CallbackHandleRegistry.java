@@ -7,14 +7,13 @@ import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
 import ru.tggc.telegrambotframework.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UserRole;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
-import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -28,29 +27,14 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
     private final ExceptionHandler exceptionHandler;
     private final HandlerArgumentResolver handlerArgumentResolver;
 
-    protected CallbackHandleRegistry(HandlerScanner handlerScanner,
-                                     UserService userService,
-                                     UserRateLimiterService rateLimiterService,
-                                     ExceptionHandler exceptionHandler,
-                                     HandlerArgumentResolver handlerArgumentResolver) {
-        super(handlerScanner, userService, rateLimiterService, exceptionHandler);
+    public CallbackHandleRegistry(HandlerScanner handlerScanner,
+                                  UserRateLimiterService rateLimiter,
+                                  ExceptionHandler exceptionHandler,
+                                  GlobalAccessChecker globalAccessChecker,
+                                  HandlerArgumentResolver handlerArgumentResolver) {
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
         this.exceptionHandler = exceptionHandler;
         this.handlerArgumentResolver = handlerArgumentResolver;
-    }
-
-    @Override
-    protected boolean canRequestBePublic(Method method) {
-        return method.getAnnotation(CallbackHandle.class).canPublic();
-    }
-
-    @Override
-    protected boolean canRequestBePrivate(Method method) {
-        return method.getAnnotation(CallbackHandle.class).canPrivate();
-    }
-
-    @Override
-    protected UserRole[] getRequiredRoles(Method method) {
-        return method.getAnnotation(CallbackHandle.class).requiredRoles();
     }
 
     @Override
@@ -77,8 +61,6 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
         long chatId = chat.id();
         int messageId = query.maybeInaccessibleMessage().messageId();
 
-        saveOrUpdateUser(from, chat);
-
         if (method == null) {
             log.warn("Unknown callback: {}", data);
             String message = exceptionHandler.buildMessageToAdmin("Unknown callback: " + data, chat, from);
@@ -96,7 +78,7 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
 
         HandlerCtx ctx = new HandlerCtx(
                 update,
-                chatId,
+                chat,
                 from,
                 messageId,
                 matcher

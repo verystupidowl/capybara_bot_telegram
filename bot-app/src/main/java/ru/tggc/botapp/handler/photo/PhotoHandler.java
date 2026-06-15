@@ -3,7 +3,7 @@ package ru.tggc.botapp.handler.photo;
 import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.tggc.botapp.handler.Handler;
+import ru.tggc.telegrambotframework.handler.Handler;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;

@@ -5,14 +5,10 @@ import com.pengrad.telegrambot.model.User;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
-import ru.tggc.telegrambotframework.dto.ChatDto;
+import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
 import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UserDto;
-import ru.tggc.telegrambotframework.dto.UserRole;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
-import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -25,9 +21,9 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
     protected Map<String, RegisteredHandler> handlerMap = new ConcurrentHashMap<>();
 
     private final HandlerScanner handlerScanner;
-    private final UserService userService;
     private final UserRateLimiterService rateLimiter;
     private final ExceptionHandler exceptionHandler;
+    private final GlobalAccessChecker globalAccessChecker;
 
     protected Method defaultMethod;
     protected Object defaultBean;
@@ -45,42 +41,21 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
     }
 
     protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
-        Response response;
+        Response response = Response.empty();
         try {
-            Response checkedRequest = checkRequest(from, method, chat);
-            if (checkedRequest != null) return checkedRequest;
+            Response checkedRequest = globalAccessChecker.check(from, method, chat);
+            if (checkedRequest != null) {
+                return checkedRequest;
+            }
             rateLimiter.lock(from.id());
             response = (Response) method.invoke(bean, args);
         } catch (Exception e) {
             return exceptionHandler.handleException(e, chat, from);
+        } finally {
+            response = response.andThen(_ -> rateLimiter.unlock(from.id()));
         }
-        return response.andThen(_ -> rateLimiter.unlock(from.id()));
+        return response;
     }
-
-    protected void saveOrUpdateUser(User from, Chat chat) {
-        userService.saveOrUpdate(new UserDto(from.id(), from.username()), new ChatDto(chat.id(), chat.title()));
-    }
-
-    @Nullable
-    private Response checkRequest(User from, Method method, Chat chat) {
-        UserRole[] requiredRoles = getRequiredRoles(method);
-        if (requiredRoles.length != 0 && !userService.checkRoles(from.id(), requiredRoles)) {
-            return Response.empty();
-        }
-        boolean isPrivateMessage = from.id().equals(chat.id());
-        boolean canRequestBePrivate = canRequestBePrivate(method);
-        boolean canRequestBePublic = canRequestBePublic(method);
-        if ((isPrivateMessage && canRequestBePrivate) || (!isPrivateMessage && canRequestBePublic)) {
-            return rateLimiter.checkUser(from, chat);
-        }
-        return Response.empty();
-    }
-
-    protected abstract boolean canRequestBePublic(Method method);
-
-    protected abstract boolean canRequestBePrivate(Method method);
-
-    protected abstract UserRole[] getRequiredRoles(Method method);
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
 }

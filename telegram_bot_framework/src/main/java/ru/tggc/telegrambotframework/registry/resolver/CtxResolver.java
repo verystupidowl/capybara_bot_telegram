@@ -17,7 +17,7 @@ public class CtxResolver implements ParameterResolver<UpdateContext> {
     @Override
     public UpdateContext resolve(Parameter parameter, HandlerCtx ctx) {
         return new UpdateContext(
-                ctx.chatId(),
+                ctx.chat().id(),
                 ctx.from().id(),
                 ctx.messageId()
         );

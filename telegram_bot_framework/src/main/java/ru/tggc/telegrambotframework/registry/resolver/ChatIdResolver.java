@@ -15,6 +15,6 @@ public class ChatIdResolver implements ParameterResolver<Long> {
 
     @Override
     public Long resolve(Parameter parameter, HandlerCtx ctx) {
-        return ctx.chatId();
+        return ctx.chat().id();
     }
 }

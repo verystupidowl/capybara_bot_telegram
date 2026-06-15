@@ -7,14 +7,13 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
 import ru.tggc.telegrambotframework.annotation.handle.CommandHandle;
 import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UserRole;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
-import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -32,11 +31,11 @@ public class CommandRegistry extends AbstractHandleRegistry {
     private final HandlerArgumentResolver handlerArgumentResolver;
 
     public CommandRegistry(HandlerScanner handlerScanner,
-                           UserService userService,
                            UserRateLimiterService rateLimiter,
                            ExceptionHandler exceptionHandler,
+                           GlobalAccessChecker globalAccessChecker,
                            HandlerArgumentResolver handlerArgumentResolver) {
-        super(handlerScanner, userService, rateLimiter, exceptionHandler);
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
         this.handlerArgumentResolver = handlerArgumentResolver;
     }
 
@@ -62,8 +61,6 @@ public class CommandRegistry extends AbstractHandleRegistry {
         Chat chat = message.chat();
         User from = message.from();
 
-        saveOrUpdateUser(from, chat);
-
         if (method == null) {
             log.warn("Unknown message: {}", command);
             throw new IllegalArgumentException("Unknown message: " + command);
@@ -78,28 +75,13 @@ public class CommandRegistry extends AbstractHandleRegistry {
 
         HandlerCtx ctx = new HandlerCtx(
                 update,
-                chat.id(),
+                chat,
                 from,
                 0,
                 matcher
         );
         Object[] args = handlerArgumentResolver.resolve(method, ctx);
         return invokeWithCatch(from, method, handlerMap.get(template).getBean(), args, chat);
-    }
-
-    @Override
-    protected boolean canRequestBePublic(Method method) {
-        return method.getAnnotation(CommandHandle.class).canPublic();
-    }
-
-    @Override
-    protected boolean canRequestBePrivate(Method method) {
-        return method.getAnnotation(CommandHandle.class).canPrivate();
-    }
-
-    @Override
-    protected UserRole[] getRequiredRoles(Method method) {
-        return method.getAnnotation(CommandHandle.class).requiredRoles();
     }
 
     @Override
@@ -110,6 +92,7 @@ public class CommandRegistry extends AbstractHandleRegistry {
     @Override
     public boolean canHandle(Update update) {
         return update.message() != null
+                && update.message().entities() != null
                 && Arrays.stream(update.message().entities())
                 .anyMatch(en -> en.type() == MessageEntity.Type.bot_command);
     }

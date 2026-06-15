@@ -16,12 +16,16 @@ import ru.tggc.botapp.util.TextBuilder;
 import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
 import ru.tggc.telegrambotframework.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotframework.annotation.params.ChatId;
+import ru.tggc.telegrambotframework.annotation.params.ChatInfo;
 import ru.tggc.telegrambotframework.annotation.params.Ctx;
 import ru.tggc.telegrambotframework.annotation.params.HandleParam;
 import ru.tggc.telegrambotframework.annotation.params.MessageId;
+import ru.tggc.telegrambotframework.annotation.params.UserInfo;
+import ru.tggc.telegrambotframework.dto.ChatDto;
 import ru.tggc.telegrambotframework.dto.PhotoDto;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotframework.dto.UserDto;
 
 import static ru.tggc.botapp.util.HistoryType.CHANGE_NAME;
 import static ru.tggc.botapp.util.HistoryType.CHANGE_PHOTO;
@@ -127,8 +131,10 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     }
 
     @CallbackHandle("take_capybara")
-    public Response takeCapybara(@Ctx UpdateContext ctx) {
-        PhotoDto photoDto = capybaraService.saveCapybara(ctx);
+    public Response takeCapybara(@Ctx UpdateContext ctx,
+                                 @UserInfo UserDto userDto,
+                                 @ChatInfo ChatDto chatDto) {
+        PhotoDto photoDto = capybaraService.saveCapybara(ctx, userDto, chatDto);
         return sendSimplePhoto(photoDto)
                 .andThen(Response.of(new DeleteMessage(ctx.chatId(), ctx.messageId())));
     }

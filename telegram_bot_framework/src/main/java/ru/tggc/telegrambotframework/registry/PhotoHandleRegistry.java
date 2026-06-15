@@ -6,19 +6,17 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
 import ru.tggc.telegrambotframework.annotation.handle.PhotoHandle;
 import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UserRole;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
-import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
 import static ru.tggc.telegrambotframework.util.Utils.throwIfNull;
 
 @Component
@@ -26,32 +24,13 @@ import static ru.tggc.telegrambotframework.util.Utils.throwIfNull;
 public class PhotoHandleRegistry extends AbstractHandleRegistry {
     private final HandlerArgumentResolver handlerArgumentResolver;
 
-    protected PhotoHandleRegistry(UserService userService,
-                                  UserRateLimiterService rateLimiterService,
+    protected PhotoHandleRegistry(HandlerScanner handlerScanner,
+                                  UserRateLimiterService rateLimiter,
                                   ExceptionHandler exceptionHandler,
-                                  HandlerScanner handlerScanner,
+                                  GlobalAccessChecker globalAccessChecker,
                                   HandlerArgumentResolver handlerArgumentResolver) {
-        super(handlerScanner, userService, rateLimiterService, exceptionHandler);
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
         this.handlerArgumentResolver = handlerArgumentResolver;
-    }
-
-    @Override
-    protected boolean canRequestBePublic(Method method) {
-        return method.getAnnotation(PhotoHandle.class).canPublic();
-    }
-
-    @Override
-    protected boolean canRequestBePrivate(Method method) {
-        return method.getAnnotation(PhotoHandle.class).canPrivate();
-    }
-
-    @Override
-    protected UserRole[] getRequiredRoles(Method method) {
-        return getOrElse(
-                method.getAnnotation(PhotoHandle.class),
-                PhotoHandle::requiredRoles,
-                new UserRole[0]
-        );
     }
 
     @Override
@@ -80,15 +59,13 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry {
         Chat chat = message.chat();
         User from = message.from();
 
-        saveOrUpdateUser(from, chat);
-
         throwIfNull(method, IllegalStateException::new);
 
         String template = method.getAnnotation(PhotoHandle.class).value();
 
         HandlerCtx ctx = new HandlerCtx(
                 update,
-                chat.id(),
+                chat,
                 from,
                 0,
                 null

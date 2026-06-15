@@ -6,17 +6,16 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
 import ru.tggc.telegrambotframework.annotation.handle.MessageHandle;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.ResponseBuilder;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.dto.UserRole;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.HistoryService;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
-import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -25,8 +24,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
 
 
 @Component
@@ -37,34 +34,15 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
     private final HistoryService historyService;
     private final HandlerArgumentResolver handlerArgumentResolver;
 
-    protected MessageHandleRegistry(UserService userService,
-                                    HistoryService historyService,
-                                    UserRateLimiterService rateLimiterService,
+    protected MessageHandleRegistry(HandlerScanner handlerScanner,
+                                    UserRateLimiterService rateLimiter,
                                     ExceptionHandler exceptionHandler,
-                                    HandlerScanner handlerScanner,
-                                    HandlerArgumentResolver handlerArgumentResolver) {
-        super(handlerScanner, userService, rateLimiterService, exceptionHandler);
+                                    GlobalAccessChecker globalAccessChecker,
+                                    HandlerArgumentResolver handlerArgumentResolver,
+                                    HistoryService historyService) {
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
         this.historyService = historyService;
         this.handlerArgumentResolver = handlerArgumentResolver;
-    }
-
-    @Override
-    protected boolean canRequestBePublic(Method method) {
-        return getOrElse(method.getAnnotation(MessageHandle.class), MessageHandle::canPublic, true);
-    }
-
-    @Override
-    protected boolean canRequestBePrivate(Method method) {
-        return getOrElse(method.getAnnotation(MessageHandle.class), MessageHandle::canPrivate, false);
-    }
-
-    @Override
-    protected UserRole[] getRequiredRoles(Method method) {
-        return getOrElse(
-                method.getAnnotation(MessageHandle.class),
-                MessageHandle::requiredRoles,
-                new UserRole[0]
-        );
     }
 
     @Override
@@ -95,8 +73,6 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
         User from = message.from();
         Response response = Response.empty();
 
-        saveOrUpdateUser(from, chat);
-
         if (isBotAdded(message)) {
             return handleGreetings(message);
         }
@@ -109,7 +85,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
                 if (historyService.contains(ctx)) {
                     HandlerCtx handlerCtx = new HandlerCtx(
                             update,
-                            chat.id(),
+                            chat,
                             from,
                             0,
                             null
@@ -130,7 +106,7 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
 
         HandlerCtx ctx = new HandlerCtx(
                 update,
-                chat.id(),
+                chat,
                 from,
                 0,
                 matcher

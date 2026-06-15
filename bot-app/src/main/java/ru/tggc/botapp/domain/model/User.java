@@ -43,6 +43,8 @@ public class User {
     @ToString.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<Chat> chats;
+    private boolean blocked;
+    private String blockedReason;
 
     @Override
     public boolean equals(Object o) {
