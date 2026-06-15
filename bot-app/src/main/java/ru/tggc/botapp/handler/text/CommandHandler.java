@@ -11,14 +11,10 @@ import ru.tggc.botapp.util.TextBuilder;
 import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
 import ru.tggc.telegrambotframework.annotation.handle.CommandHandle;
 import ru.tggc.telegrambotframework.annotation.params.ChatId;
-import ru.tggc.telegrambotframework.annotation.params.ChatInfo;
 import ru.tggc.telegrambotframework.annotation.params.Ctx;
-import ru.tggc.telegrambotframework.annotation.params.UserInfo;
-import ru.tggc.telegrambotframework.dto.ChatDto;
 import ru.tggc.telegrambotframework.dto.PhotoDto;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.dto.UserDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,7 +40,7 @@ public class CommandHandler extends TextHandler {
         return sendSimpleMessage(chatId, Text.LIST_OF_COMMANDS);
     }
 
-    @CommandHandle("/my_capybara")
+    @CommandHandle("my_capybara")
     public Response myCapybara(@Ctx UpdateContext ctx) {
         MyCapybaraDto dto = capybaraService.getMyCapybara(ctx);
         PhotoDto photoDto = PhotoDto.builder()
@@ -67,10 +63,8 @@ public class CommandHandler extends TextHandler {
     }
 
     @CommandHandle("take_capybara")
-    public Response takeCapybara(@Ctx UpdateContext ctx,
-                                 @UserInfo UserDto userDto,
-                                 @ChatInfo ChatDto chatDto) {
-        PhotoDto photoDto = capybaraService.saveCapybara(ctx, userDto, chatDto);
+    public Response takeCapybara(@Ctx UpdateContext ctx) {
+        PhotoDto photoDto = capybaraService.saveCapybara(ctx);
         return sendSimplePhoto(photoDto);
     }
 }

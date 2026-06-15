@@ -16,6 +16,7 @@ import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.TelegramBotSender;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -34,8 +35,10 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
                                   UserRateLimiterService rateLimiter,
                                   ExceptionHandler exceptionHandler,
                                   GlobalAccessChecker globalAccessChecker,
-                                  HandlerArgumentResolver handlerArgumentResolver, TelegramBotSender telegramBotSender) {
-        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
+                                  HandlerArgumentResolver handlerArgumentResolver,
+                                  TelegramBotSender telegramBotSender,
+                                  UserService userService) {
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker, userService);
         this.exceptionHandler = exceptionHandler;
         this.handlerArgumentResolver = handlerArgumentResolver;
         this.telegramBotSender = telegramBotSender;
@@ -66,6 +69,8 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
         User from = query.from();
         long chatId = chat.id();
         int messageId = query.maybeInaccessibleMessage().messageId();
+
+        saveOrUpdateUser(from, chat);
 
         if (method == null) {
             log.warn("Unknown callback: {}", data);

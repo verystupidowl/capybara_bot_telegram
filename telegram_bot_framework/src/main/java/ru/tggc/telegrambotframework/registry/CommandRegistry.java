@@ -14,6 +14,7 @@ import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -34,8 +35,9 @@ public class CommandRegistry extends AbstractHandleRegistry {
                            UserRateLimiterService rateLimiter,
                            ExceptionHandler exceptionHandler,
                            GlobalAccessChecker globalAccessChecker,
-                           HandlerArgumentResolver handlerArgumentResolver) {
-        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
+                           HandlerArgumentResolver handlerArgumentResolver,
+                           UserService userService) {
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker, userService);
         this.handlerArgumentResolver = handlerArgumentResolver;
     }
 
@@ -60,6 +62,8 @@ public class CommandRegistry extends AbstractHandleRegistry {
 
         Chat chat = message.chat();
         User from = message.from();
+
+        saveOrUpdateUser(from, chat);
 
         if (method == null) {
             log.warn("Unknown message: {}", command);

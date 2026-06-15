@@ -13,6 +13,7 @@ import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -24,12 +25,13 @@ import static ru.tggc.telegrambotframework.util.Utils.throwIfNull;
 public class PhotoHandleRegistry extends AbstractHandleRegistry {
     private final HandlerArgumentResolver handlerArgumentResolver;
 
-    protected PhotoHandleRegistry(HandlerScanner handlerScanner,
-                                  UserRateLimiterService rateLimiter,
-                                  ExceptionHandler exceptionHandler,
-                                  GlobalAccessChecker globalAccessChecker,
-                                  HandlerArgumentResolver handlerArgumentResolver) {
-        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
+    public PhotoHandleRegistry(HandlerScanner handlerScanner,
+                               UserRateLimiterService rateLimiter,
+                               ExceptionHandler exceptionHandler,
+                               GlobalAccessChecker globalAccessChecker,
+                               UserService userService,
+                               HandlerArgumentResolver handlerArgumentResolver) {
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker, userService);
         this.handlerArgumentResolver = handlerArgumentResolver;
     }
 
@@ -58,6 +60,8 @@ public class PhotoHandleRegistry extends AbstractHandleRegistry {
 
         Chat chat = message.chat();
         User from = message.from();
+
+        saveOrUpdateUser(from, chat);
 
         throwIfNull(method, IllegalStateException::new);
 

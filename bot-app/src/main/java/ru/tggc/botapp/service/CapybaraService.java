@@ -51,11 +51,9 @@ import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.CapybaraBuilder;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.botapp.util.Text;
-import ru.tggc.telegrambotframework.dto.ChatDto;
 import ru.tggc.telegrambotframework.dto.FileType;
 import ru.tggc.telegrambotframework.dto.PhotoDto;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.dto.UserDto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -250,13 +248,13 @@ public class CapybaraService {
     }
 
     @Transactional
-    public PhotoDto saveCapybara(UpdateContext ctx, UserDto userDto, ChatDto chatDto) {
+    public PhotoDto saveCapybara(UpdateContext ctx) {
         long chatId = ctx.chatId();
         long userId = ctx.userId();
         Boolean capybaraExists = capybaraRepository.existsCapybaraByUserIdAndChatId(userId, chatId);
         throwIf(capybaraExists, CapybaraAlreadyExistsException::new);
 
-        User user = userService.saveOrUpdate(userDto, chatDto);
+        User user = userService.getUserById(userId);
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(IllegalArgumentException::new);
 

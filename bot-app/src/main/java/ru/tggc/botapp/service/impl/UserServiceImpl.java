@@ -29,8 +29,8 @@ public class UserServiceImpl implements UserService {
     private final ChatRepository chatRepository;
     private final BlockRepository blockRepository;
 
-    @Transactional
-    public User saveOrUpdate(UserDto dto, ChatDto chatDto) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void saveOrUpdate(UserDto dto, ChatDto chatDto) {
         Chat chat = chatRepository.findById(chatDto.id())
                 .orElseGet(() -> chatRepository.save(Chat.builder()
                         .name(chatDto.title())
@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
 
         user.setLastTimeUpdatedAt(LocalDateTime.now());
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)

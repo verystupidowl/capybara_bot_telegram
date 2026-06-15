@@ -16,6 +16,7 @@ import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
 import ru.tggc.telegrambotframework.service.HistoryService;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -39,8 +40,9 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
                                     ExceptionHandler exceptionHandler,
                                     GlobalAccessChecker globalAccessChecker,
                                     HandlerArgumentResolver handlerArgumentResolver,
-                                    HistoryService historyService) {
-        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
+                                    HistoryService historyService,
+                                    UserService userService) {
+        super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker, userService);
         this.historyService = historyService;
         this.handlerArgumentResolver = handlerArgumentResolver;
     }
@@ -72,6 +74,8 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
         Chat chat = message.chat();
         User from = message.from();
         Response response = Response.empty();
+
+        saveOrUpdateUser(from, chat);
 
         if (isBotAdded(message)) {
             return handleGreetings(message);

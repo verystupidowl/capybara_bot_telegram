@@ -7,7 +7,6 @@ import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.BossFightService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
-import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
 import ru.tggc.telegrambotframework.annotation.handle.MessageHandle;
 import ru.tggc.telegrambotframework.annotation.params.Ctx;
@@ -24,7 +23,6 @@ public class CommandTextHandler extends TextHandler {
     private final CasinoService casinoService;
     private final BossFightService bossFightService;
     private final KeyboardFactory keyboardFactory;
-    private final UserServiceImpl userServiceImpl;
 
     @MessageHandle("уволиться с работы")
     public Response dismissal(@Ctx UpdateContext ctx) {

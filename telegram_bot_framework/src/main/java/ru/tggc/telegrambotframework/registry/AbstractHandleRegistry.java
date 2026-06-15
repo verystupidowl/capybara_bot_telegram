@@ -6,9 +6,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
+import ru.tggc.telegrambotframework.dto.ChatDto;
 import ru.tggc.telegrambotframework.dto.Response;
+import ru.tggc.telegrambotframework.dto.UserDto;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -24,6 +27,7 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
     private final UserRateLimiterService rateLimiter;
     private final ExceptionHandler exceptionHandler;
     private final GlobalAccessChecker globalAccessChecker;
+    private final UserService userService;
 
     protected Method defaultMethod;
     protected Object defaultBean;
@@ -41,20 +45,25 @@ public abstract class AbstractHandleRegistry implements HandleRegistry {
     }
 
     protected Response invokeWithCatch(User from, Method method, Object bean, Object[] args, Chat chat) {
-        Response response = Response.empty();
-        try {
-            Response checkedRequest = globalAccessChecker.check(from, method, chat);
-            if (checkedRequest != null) {
-                return checkedRequest;
-            }
-            rateLimiter.lock(from.id());
-            response = (Response) method.invoke(bean, args);
-        } catch (Exception e) {
-            return exceptionHandler.handleException(e, chat, from);
-        } finally {
-            response = response.andThen(_ -> rateLimiter.unlock(from.id()));
+        Response response;
+        Response checkedRequest = globalAccessChecker.check(from, method, chat);
+        if (checkedRequest != null) {
+            return checkedRequest;
         }
-        return response;
+        rateLimiter.lock(from.id());
+        try {
+            response = (Response) method.invoke(bean, args);
+            return response.andThen(_ -> rateLimiter.unlock(from.id()));
+        } catch (Exception e) {
+            return exceptionHandler.handleException(e, chat, from)
+                    .andThen(_ -> rateLimiter.unlock(from.id()));
+        }
+    }
+
+    protected void saveOrUpdateUser(User from, Chat chat) {
+        UserDto userDto = new UserDto(from.id(), from.username());
+        ChatDto chatDto = new ChatDto(chat.id(), chat.title());
+        userService.saveOrUpdate(userDto, chatDto);
     }
 
     protected abstract Class<? extends Annotation> getHandleAnnotation();
