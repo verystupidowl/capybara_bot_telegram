@@ -22,7 +22,7 @@ public class ChatTypeAccessChecker implements AccessChecker {
     public AccessResult check(User from, Method method, Chat chat) {
         HandleMeta annotationMeta = factory.getAnnotationMeta(method);
 
-        boolean isPrivateMessage = from.id().equals(chat.id());
+        boolean isPrivateMessage = chat.type() == Chat.Type.Private;
 
         boolean canRequestBePrivate = annotationMeta.canPrivate();
         boolean canRequestBePublic = annotationMeta.canPublic();

@@ -1,6 +1,7 @@
 package ru.tggc.botapp.util;
 
 import lombok.experimental.UtilityClass;
+import ru.tggc.botapp.domain.dto.AdminStats;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 
 import java.util.Map;
@@ -26,5 +27,13 @@ public class TextBuilder {
                 "happiness", capybara.happinessLevel() + "/" + capybara.happinessMaxLevel()
         );
         return getText(Text.MY_CAPYBARA, params);
+    }
+
+    public static String adminMenu(AdminStats stats) {
+        return String.format("""
+                Stats:
+                All user count: %s
+                Blocked user count: %s
+                All capybara count: %s""", stats.userCount(), stats.blockedUsers(), stats.capybaraCount());
     }
 }

@@ -24,7 +24,7 @@ public class UserBlockedAccessChecker implements AccessChecker {
         return userService.getBlockReason(from.username())
                 .map(result -> {
                     Response response = ResponseBuilder.to(chat.id())
-                            .message("Пользователь " + from.username() + " заблокирован по причине: \n" + result)
+                            .message("Пользователь " + from.username() + " заблокирован пользователем " + result.getReporter() + " по причине: \n" + result.getReason())
                             .build();
                     return AccessResult.deny(response);
                 })

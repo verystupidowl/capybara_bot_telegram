@@ -6,5 +6,6 @@ public enum HistoryType {
     CASINO_SET_TARGET,
     SLOTS_SET_BET,
     CHANGE_PHOTO,
+    BROADCAST,
     START_RACE
 }

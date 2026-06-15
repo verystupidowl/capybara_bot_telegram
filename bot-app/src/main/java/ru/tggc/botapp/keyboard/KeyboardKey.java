@@ -33,4 +33,5 @@ public record KeyboardKey<T>(KeyboardType type, Class<T> dataType) {
     public static final KeyboardKey<BuffType> FIGHT_BUFFS = new KeyboardKey<>(KeyboardType.FIGHT_BUFFS, BuffType.class);
     public static final KeyboardKey<Void> LEAVE_FIGHT = new KeyboardKey<>(KeyboardType.LEAVE_FIGHT, Void.class);
     public static final KeyboardKey<Void> MAYBE_START_FIGHT = new KeyboardKey<>(KeyboardType.MAYBE_START_FIGHT, Void.class);
+    public static final KeyboardKey<Void> ADMIN_MENU = new KeyboardKey<>(KeyboardType.ADMIN_MENU, Void.class);
 }

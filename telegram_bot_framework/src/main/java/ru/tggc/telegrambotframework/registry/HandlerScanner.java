@@ -43,7 +43,7 @@ public class HandlerScanner {
                     handler.setBean(bean);
 
                     if (key.contains("${")) {
-                        String regex = key.replaceAll("\\$\\{(\\w+)}", "(?<$1>.+)");
+                        String regex = key.replaceAll("\\$\\{(\\w+)}", "(?<$1>\\\\S+)");
                         handler.setPattern(Pattern.compile(regex));
                     }
 

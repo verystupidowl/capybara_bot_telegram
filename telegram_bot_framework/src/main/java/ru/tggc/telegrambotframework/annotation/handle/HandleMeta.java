@@ -19,4 +19,8 @@ public record HandleMeta(UserRole[] requiredRoles, boolean canPublic, boolean ca
     public static HandleMeta from(CommandHandle a) {
         return new HandleMeta(a.requiredRoles(), a.canPublic(), a.canPrivate());
     }
+
+    public static HandleMeta fromDefault() {
+        return new HandleMeta(new UserRole[0], true, true);
+    }
 }

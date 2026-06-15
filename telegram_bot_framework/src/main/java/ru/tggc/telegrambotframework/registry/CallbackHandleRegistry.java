@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.User;
+import com.pengrad.telegrambot.request.AnswerCallbackQuery;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerCtx;
+import ru.tggc.telegrambotframework.service.TelegramBotSender;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
 
 import java.lang.annotation.Annotation;
@@ -26,15 +28,17 @@ import java.util.regex.Pattern;
 public class CallbackHandleRegistry extends AbstractHandleRegistry {
     private final ExceptionHandler exceptionHandler;
     private final HandlerArgumentResolver handlerArgumentResolver;
+    private final TelegramBotSender telegramBotSender;
 
     public CallbackHandleRegistry(HandlerScanner handlerScanner,
                                   UserRateLimiterService rateLimiter,
                                   ExceptionHandler exceptionHandler,
                                   GlobalAccessChecker globalAccessChecker,
-                                  HandlerArgumentResolver handlerArgumentResolver) {
+                                  HandlerArgumentResolver handlerArgumentResolver, TelegramBotSender telegramBotSender) {
         super(handlerScanner, rateLimiter, exceptionHandler, globalAccessChecker);
         this.exceptionHandler = exceptionHandler;
         this.handlerArgumentResolver = handlerArgumentResolver;
+        this.telegramBotSender = telegramBotSender;
     }
 
     @Override
@@ -45,6 +49,8 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
     @Override
     public Response dispatch(Update update) {
         CallbackQuery query = update.callbackQuery();
+        telegramBotSender.send(Response.of(new AnswerCallbackQuery(query.id())));
+
         String data = query.data();
         Method method = handlerMap.values().stream()
                 .map(RegisteredHandler::getMethod)
@@ -68,7 +74,7 @@ public class CallbackHandleRegistry extends AbstractHandleRegistry {
             SendMessage sendMessageToAdmin = new SendMessage(ADMIN_ID, message);
             return Response.ofAll(sendMessageToAdmin, sendMessageToUser);
         }
-        log.info("message {} from {}", query.data(), from.username());
+        log.info("callback {} from {}", query.data(), from.username());
 
         String template = method.getAnnotation(CallbackHandle.class).value();
         Matcher matcher = Optional.ofNullable(handlerMap.get(template))

@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -44,6 +46,11 @@ public class AsyncConfig implements AsyncConfigurer {
     @Bean
     public TaskScheduler taskScheduler() {
         return new ConcurrentTaskScheduler(new ScheduledThreadPoolExecutor(10));
+    }
+
+    @Bean
+    public ScheduledExecutorService scheduler() {
+        return Executors.newSingleThreadScheduledExecutor();
     }
 
     @Override

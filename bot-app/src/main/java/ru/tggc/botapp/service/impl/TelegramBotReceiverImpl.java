@@ -38,7 +38,9 @@ public class TelegramBotReceiverImpl implements TelegramBotReceiver {
 
     public boolean isNew(Update update) {
         Integer id = update.updateId();
-        if (id == null) return true;
+        if (id == null) {
+            return true;
+        }
 
         Boolean exists = cachedUpdates.getIfPresent(id);
         if (exists != null) {

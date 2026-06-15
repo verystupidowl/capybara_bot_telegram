@@ -4,6 +4,7 @@ import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.service.RaceService;
@@ -24,6 +25,7 @@ public class DefaultMessageHandler extends TextHandler {
     private final KeyboardFactory keyboardFactory;
     private final CapybaraService capybaraService;
     private final RaceService raceService;
+    private final AdminService adminService;
 
     @DefaultMessageHandle
     public Response handleDefaultMessages(@MessageParam Message message) {
@@ -41,11 +43,18 @@ public class DefaultMessageHandler extends TextHandler {
             case CHANGE_NAME -> changeName(historyDto, text);
             case SLOTS_SET_BET -> slots(historyDto, text);
             case START_RACE -> race(historyDto, text);
+            case BROADCAST -> broadcast(historyDto, text);
             default -> null;
         };
 
         historyService.removeFromHistory(historyDto);
         return response;
+    }
+
+    private Response broadcast(UpdateContext historyDto, String text) {
+        adminService.startBroadcast(historyDto.chatId(), text);
+        historyService.removeFromHistory(historyDto);
+        return sendSimpleMessage(historyDto.chatId(), "Началось");
     }
 
     private Response race(UpdateContext ctx, String text) {
