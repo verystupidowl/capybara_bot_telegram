@@ -1,14 +1,8 @@
 package ru.tggc.botapp.service;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.SendDice;
 import com.pengrad.telegrambot.request.SendPhoto;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -27,10 +21,9 @@ import ru.tggc.telegrambotframework.dto.PhotoDto;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
 import ru.tggc.telegrambotframework.service.TelegramBotSender;
+import ru.tggc.telegrambotframework.util.Utils;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
 import static ru.tggc.telegrambotframework.util.Utils.throwIf;
@@ -43,11 +36,6 @@ public class CasinoService {
     private final CapybaraService capybaraService;
     private final TelegramBotSender sender;
 
-    private final Cache<UpdateContext, CasinoCtx> map = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofMinutes(5))
-            .maximumSize(10_000)
-            .build();
-
     private static final String WIN_PHOTO_URL = "https://vk.com/photo-209917797_457246197";
     private static final String LOSE_PHOTO_URL = "https://vk.com/photo-209917797_457246192";
 
@@ -56,30 +44,26 @@ public class CasinoService {
     }
 
     public void setBet(UpdateContext historyDto, String bet) {
-        Long longBet = Long.parseLong(bet);
-        CasinoCtx ctx = CasinoCtx.builder()
-                .bet(longBet)
-                .build();
-        if (map.getIfPresent(historyDto) != null) {
-            throw new CapybaraException("ошибка!");
-        }
-        map.put(historyDto, ctx);
+        bet = Utils.checkNumber(bet);
+        throwIf(!historyService.isEmpty(historyDto), () -> new CapybaraException("Error"));
+        historyService.putData(historyDto, "bet", bet);
     }
 
     @Transactional
-    public PhotoDto casino(UpdateContext historyDto, CasinoTargetType type) {
-        long chatId = historyDto.chatId();
-        Capybara capybara = capybaraService.findCapybara(historyDto)
+    public PhotoDto casino(UpdateContext ctx, CasinoTargetType type) {
+        long chatId = ctx.chatId();
+        Capybara capybara = capybaraService.findCapybara(ctx)
                 .orElseThrow(() -> {
-                    map.invalidate(historyDto);
+                    historyService.removeFromHistory(ctx);
                     return new CapybaraNotFoundException();
                 });
 
-        throwIfNull(map.getIfPresent(historyDto), () -> new CapybaraException("Ты не играешь"));
-        CasinoCtx ctx = map.get(historyDto, _ -> new CasinoCtx());
-        Long betAmount = Objects.requireNonNull(ctx).getBet();
+        throwIfNull(historyService.getFromHistory(ctx), () -> new CapybaraException("Ты не играешь"));
+        Long betAmount = historyService.getData(ctx, "bet")
+                .map(Long::parseLong)
+                .orElseThrow();
 
-        checkBet(historyDto, betAmount, capybara);
+        checkBet(ctx, betAmount, capybara);
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         PhotoDto response = PhotoDto.builder()
@@ -97,7 +81,7 @@ public class CasinoService {
             response.setUrl(LOSE_PHOTO_URL);
         }
 
-        map.invalidate(historyDto);
+        historyService.removeFromHistory(ctx);
 
         capybaraService.save(capybara);
         return response;
@@ -105,17 +89,16 @@ public class CasinoService {
 
     @Transactional
     public Response slots(UpdateContext ctx, long bet) {
-        throwIfNull(map.getIfPresent(ctx), () -> new CapybaraException("Ты не играешь!"));
+        throwIfNull(historyService.getFromHistory(ctx), () -> new CapybaraException("Ты не играешь!"));
 
         Capybara capybara = capybaraService.findCapybara(ctx)
                 .orElseThrow(() -> {
-                    map.invalidate(ctx);
+                    historyService.removeFromHistory(ctx);
                     return new CapybaraNotFoundException();
                 });
         checkBet(ctx, bet, capybara);
 
         capybara.setCurrency(capybara.getCurrency() - bet);
-        capybaraService.save(capybara);
 
         return bot -> {
             Message response = bot.execute(new SendDice(ctx.chatId()).slotMachine()).message();
@@ -143,20 +126,20 @@ public class CasinoService {
                     sendPhoto.caption("Твоя капибара выиграла " + win);
                 }
                 tb.execute(sendPhoto);
-                map.invalidate(ctx);
+                historyService.removeFromHistory(ctx);
             }, 2000L);
         };
     }
 
     private void checkBet(UpdateContext ctx, long bet, Capybara capybara) {
         throwIf(capybara.getCurrency() < bet, () -> {
-            map.invalidate(ctx);
+            historyService.removeFromHistory(ctx);
             return new CapybaraHasNoMoneyException();
         });
         long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
 
         throwIf(bet < minBetAmount, () -> {
-            map.invalidate(ctx);
+            historyService.removeFromHistory(ctx);
             return new CapybaraException("Минимальная твоя ставка - " + minBetAmount);
         });
     }
@@ -175,16 +158,6 @@ public class CasinoService {
     }
 
     public void startSlots(UpdateContext ctx) {
-        map.put(ctx, new CasinoCtx(null, null));
         historyService.setHistory(ctx, HistoryType.SLOTS_SET_BET);
-    }
-
-    @Builder
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    static class CasinoCtx {
-        private Long bet;
-        private CasinoTargetType target;
     }
 }

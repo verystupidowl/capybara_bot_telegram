@@ -57,6 +57,11 @@ public class Utils {
                 + (int) percent + "%";
     }
 
+    public String checkNumber(String number) {
+        long longNumber = Long.parseLong(number);
+        return String.valueOf(longNumber);
+    }
+
     public static String formatDuration(Duration duration) {
         long hours = duration.toHours();
         long minutes = duration.toMinutesPart();

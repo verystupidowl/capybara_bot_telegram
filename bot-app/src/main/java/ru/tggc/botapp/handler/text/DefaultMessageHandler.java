@@ -38,7 +38,7 @@ public class DefaultMessageHandler extends TextHandler {
             return null;
         }
 
-        Response response = switch (historyType) {
+        return switch (historyType) {
             case CASINO_SET_BET -> casinoSetBet(historyDto, text);
             case CHANGE_NAME -> changeName(historyDto, text);
             case SLOTS_SET_BET -> slots(historyDto, text);
@@ -46,9 +46,6 @@ public class DefaultMessageHandler extends TextHandler {
             case BROADCAST -> broadcast(historyDto, text);
             default -> null;
         };
-
-        historyService.removeFromHistory(historyDto);
-        return response;
     }
 
     private Response broadcast(UpdateContext historyDto, String text) {
@@ -71,9 +68,10 @@ public class DefaultMessageHandler extends TextHandler {
         return casinoService.slots(historyDto, Long.parseLong(bet));
     }
 
-    private Response changeName(UpdateContext historyDto, String text) {
-        capybaraService.changeName(historyDto, text);
-        return sendSimpleMessage(historyDto.chatId(), "Твою капибару теперь зовут " + text + ", отличное имя!");
+    private Response changeName(UpdateContext ctx, String text) {
+        capybaraService.changeName(ctx, text);
+        historyService.removeFromHistory(ctx);
+        return sendSimpleMessage(ctx.chatId(), "Твою капибару теперь зовут " + text + ", отличное имя!");
     }
 
     private Response casinoSetBet(UpdateContext historyDto, String text) {
