@@ -1,0 +1,567 @@
+package ru.tggc.botapp.service;
+
+import com.pengrad.telegrambot.model.Animation;
+import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.PhotoSize;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.tggc.botapp.domain.dto.CapybaraInfoDto;
+import ru.tggc.botapp.domain.dto.CapybaraTeaDto;
+import ru.tggc.botapp.domain.dto.FightCapybaraDto;
+import ru.tggc.botapp.domain.dto.HappinessThings;
+import ru.tggc.botapp.domain.dto.MyCapybaraDto;
+import ru.tggc.botapp.domain.dto.TopCapybaraDto;
+import ru.tggc.botapp.domain.model.Capybara;
+import ru.tggc.botapp.domain.model.Chat;
+import ru.tggc.botapp.domain.model.Improvement;
+import ru.tggc.botapp.domain.model.Level;
+import ru.tggc.botapp.domain.model.Photo;
+import ru.tggc.botapp.domain.model.User;
+import ru.tggc.botapp.domain.model.Work;
+import ru.tggc.botapp.domain.model.enums.ImprovementValue;
+import ru.tggc.botapp.domain.model.enums.Type;
+import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.fight.BuffType;
+import ru.tggc.botapp.domain.model.enums.fight.FightBuffHeal;
+import ru.tggc.botapp.domain.model.enums.fight.FightBuffShield;
+import ru.tggc.botapp.domain.model.enums.fight.FightBuffSpecial;
+import ru.tggc.botapp.domain.model.enums.fight.FightBuffWeapon;
+import ru.tggc.botapp.domain.model.timedaction.Happiness;
+import ru.tggc.botapp.domain.model.timedaction.Satiety;
+import ru.tggc.botapp.domain.model.timedaction.Tea;
+import ru.tggc.botapp.exceptions.CapybaraAlreadyExistsException;
+import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
+import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
+import ru.tggc.botapp.keyboard.KeyboardFactory;
+import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.mapper.CapybaraInfoMapper;
+import ru.tggc.botapp.mapper.CapybaraTeaMapper;
+import ru.tggc.botapp.mapper.FightCapybaraMapper;
+import ru.tggc.botapp.mapper.MyCapybaraMapper;
+import ru.tggc.botapp.repository.CapybaraRepository;
+import ru.tggc.botapp.repository.ChatRepository;
+import ru.tggc.botapp.repository.TeaRepository;
+import ru.tggc.botapp.service.factory.WorkServiceFactory;
+import ru.tggc.botapp.service.impl.UserServiceImpl;
+import ru.tggc.botapp.util.CapybaraBuilder;
+import ru.tggc.botapp.util.RandomUtils;
+import ru.tggc.botapp.util.Text;
+import ru.tggc.telegrambotframework.dto.FileType;
+import ru.tggc.telegrambotframework.dto.PhotoDto;
+import ru.tggc.telegrambotframework.dto.UpdateContext;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static java.lang.Math.max;
+import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+
+@Service
+@RequiredArgsConstructor
+public class CapybaraService {
+    private final CapybaraRepository capybaraRepository;
+    private final UserServiceImpl userService;
+    private final TeaRepository teaRepository;
+    private final CapybaraTeaMapper capybaraTeaMapper;
+    private final WorkServiceFactory workServiceFactory;
+    private final TimedActionService timedActionService;
+    private final MyCapybaraMapper myCapybaraMapper;
+    private final CapybaraInfoMapper capybaraInfoMapper;
+    private final KeyboardFactory keyboardFactory;
+    private final ChatRepository chatRepository;
+    private final FightCapybaraMapper fightCapybaraMapper;
+
+    @Setter(onMethod_ = {@Autowired, @Lazy})
+    private CapybaraService self;
+
+    @Transactional(readOnly = true)
+    public Optional<Capybara> findCapybara(UpdateContext ctx) {
+        return capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
+    }
+
+    public boolean existsCapybara(UpdateContext ctx) {
+        return capybaraRepository.existsCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId());
+    }
+
+    @Transactional(readOnly = true)
+    public Capybara getCapybara(Long id) {
+        return capybaraRepository.findById(id)
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    public Capybara getCapybaraByUserId(long userId, long chatId) {
+        return self.getCapybara(userId, chatId);
+    }
+
+    public Capybara getCapybaraByContext(UpdateContext ctx) {
+        return getCapybaraByUserId(ctx.userId(), ctx.chatId());
+    }
+
+    @Transactional(readOnly = true)
+    public MyCapybaraDto getMyCapybara(UpdateContext ctx) {
+        Capybara capybara = capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        return myCapybaraMapper.toDto(capybara);
+    }
+
+    @Transactional(readOnly = true)
+    public CapybaraInfoDto getInfo(UpdateContext ctx) {
+        Capybara capybara = capybaraRepository.findInfoCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        return capybaraInfoMapper.toDto(capybara);
+    }
+
+    @Transactional
+    public String setDefaultPhoto(UpdateContext ctx) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        checkCurrency(capybara, 25);
+        capybara.setPhoto(RandomUtils.getRandomDefaultPhoto());
+        capybara.setCurrency(capybara.getCurrency() - 25);
+        capybaraRepository.save(capybara);
+        return "Выбрано случайное фото. Со счета капибры списано 25 арбузных долек";
+    }
+
+    @Transactional
+    public List<PhotoDto> makeHappy(UpdateContext ctx) {
+        List<PhotoDto> messages = new ArrayList<>();
+        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        Happiness happiness = capybara.getHappiness();
+
+        throwIf(!happiness.canPerform(), () -> {
+            String message = "Ты сможешь сделать хорошие дела для вашей капибары только " +
+                    timedActionService.getStatus(happiness);
+            return new CapybaraException(message);
+        });
+
+        HappinessThings happinessThing = RandomUtils.getRandomHappinessThing();
+        happiness.setLevel(max(0, happiness.getLevel() + happinessThing.getLevel()));
+        happiness.setLastHappy(LocalDateTime.now());
+        messages.add(PhotoDto.builder()
+                .caption(happinessThing.getLabel())
+                .chatId(ctx.chatId())
+                .url(happinessThing.getPhotoUrl())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
+                .build());
+        messages.addAll(self.checkNewLevel(capybara));
+        capybaraRepository.save(capybara);
+        return messages;
+    }
+
+    @Transactional
+    public List<PhotoDto> feed(UpdateContext ctx) {
+        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        List<PhotoDto> messages = self.feed(capybara, 5);
+        messages.add(PhotoDto.builder()
+                .caption("Твоя капибара успешно покушала, возвращайся через 2 часа!")
+                .chatId(ctx.chatId())
+                .url("https://vk.com/photo-209917797_457245510")
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
+                .build());
+        return messages;
+    }
+
+    @Transactional
+    public List<PhotoDto> fatten(UpdateContext ctx) {
+        Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        checkCurrency(capybara, 50);
+        List<PhotoDto> messages = self.feed(capybara, 50);
+        capybara.setCurrency(capybara.getCurrency() - 50);
+        messages.add(PhotoDto.builder()
+                .caption("""
+                        Твоя капибара съела целый арбуз!
+                        Её сытость увеличилась на 50!
+                        Возвращайся через 2 часа!""")
+                .url("https://vk.com/photo-209917797_457246187")
+                .chatId(ctx.chatId())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
+                .build());
+        return messages;
+    }
+
+    @Transactional
+    public List<PhotoDto> goTea(UpdateContext ctx) {
+        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        Tea tea = capybara.getTea();
+
+        throwIf(!tea.canPerform(), () -> {
+            String message = "Твоя капибара сможет пойти на чаепитие только через " +
+                    timedActionService.getStatus(tea);
+            return new CapybaraException(message);
+        });
+
+        throwIf(tea.isWaiting(), () -> new CapybaraException("Твоя капибара и так ждет собеседника!"));
+
+        List<Tea> byIsWaiting = teaRepository.findByIsWaiting(true);
+        if (!byIsWaiting.isEmpty()) {
+            Tea incerlocutorTea = byIsWaiting.getFirst();
+            Capybara interlocutor = incerlocutorTea.getCapybara();
+            String photo = interlocutor.getPhoto().getUrl();
+            CapybaraTeaDto myDto = capybaraTeaMapper.toDto(capybara);
+            CapybaraTeaDto interlocutorDto = capybaraTeaMapper.toDto(interlocutor);
+            self.updateTea(tea);
+            self.updateTea(incerlocutorTea);
+            capybara.getHappiness().setLevel(capybara.getHappiness().getLevel() + 10);
+            interlocutor.getHappiness().setLevel(interlocutor.getHappiness().getLevel() + 10);
+            List<PhotoDto> photosToReturn = new ArrayList<>(self.checkNewLevel(capybara));
+            photosToReturn.addAll(self.checkNewLevel(interlocutor));
+            capybaraRepository.save(interlocutor);
+            capybaraRepository.save(capybara);
+            photosToReturn.add(PhotoDto.builder()
+                    .url(photo)
+                    .chatId(ctx.chatId())
+                    .caption(Text.getTea(myDto, interlocutorDto))
+                    .build());
+            photosToReturn.add(PhotoDto.builder()
+                    .url(capybara.getPhoto().getUrl())
+                    .caption(Text.getTea(interlocutorDto, myDto))
+                    .chatId(interlocutor.getChat().getId())
+                    .build());
+            return photosToReturn;
+        }
+        tea.setWaiting(true);
+        capybaraRepository.save(capybara);
+        return List.of(PhotoDto.builder()
+                .url("https://vk.com/photo-209917797_457246193")
+                .chatId(ctx.chatId())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TEA))
+                .caption("Твоя капибара ждет собеседника для чаепития!")
+                .build());
+    }
+
+    public void takeFromTea(UpdateContext ctx) {
+        Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+        capybara.getTea().setWaiting(false);
+        capybaraRepository.save(capybara);
+    }
+
+    @Transactional
+    public PhotoDto saveCapybara(UpdateContext ctx) {
+        long chatId = ctx.chatId();
+        long userId = ctx.userId();
+        Boolean capybaraExists = capybaraRepository.existsCapybaraByUserIdAndChatId(userId, chatId);
+        throwIf(capybaraExists, CapybaraAlreadyExistsException::new);
+
+        User user = userService.getUserById(userId);
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(IllegalArgumentException::new);
+
+        int size = capybaraRepository.countByChatId(chatId);
+        Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
+        capybaraRepository.save(capybara);
+        return PhotoDto.builder()
+                .chatId(chatId)
+                .caption("Теперь у тебя есть капибара!\nПоздравляю!!!" +
+                        "\nЕё имя: " + capybara.getName() + ". \nНо ты всегда можешь поменять его!")
+                .url(capybara.getPhoto().getUrl())
+                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
+                .build();
+    }
+
+    public boolean hasWork(UpdateContext ctx) {
+        return capybaraRepository.findByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .map(Capybara::getWork)
+                .map(Work::getWorkType)
+                .map(jt -> jt != WorkType.NONE)
+                .orElse(false);
+    }
+
+    public String setJob(UpdateContext ctx, WorkType workType) {
+        Capybara capybara = getCapybaraByContext(ctx);
+
+        WorkService workService = workServiceFactory.getJobProvider(workType);
+        String photoUrl = workService.setWork(capybara);
+        capybaraRepository.save(capybara);
+        return photoUrl;
+    }
+
+    public void goJob(UpdateContext ctx) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        WorkService workService = workServiceFactory.getJobProvider(capybara.getWork().getWorkType());
+        workService.goWork(capybara);
+        capybaraRepository.save(capybara);
+    }
+
+    public List<String> takeFromWork(UpdateContext ctx) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        WorkService workService = workServiceFactory.getJobProvider(capybara.getWork().getWorkType());
+        List<String> messages = workService.takeFromWork(capybara);
+        capybaraRepository.save(capybara);
+        return messages;
+    }
+
+    public void doMassage(UpdateContext ctx) {
+        Capybara capybara = self.getRaceCapybara(ctx);
+        if (capybara.getCurrency() <= 50) {
+            throw new CapybaraHasNoMoneyException();
+        }
+        capybara.setCurrency(capybara.getCurrency() - 50);
+        capybara.getRace().getRaceAction().setCharges(capybara.getRace().getRaceAction().getMaxCharges());
+
+        capybaraRepository.save(capybara);
+    }
+
+    @Transactional
+    public void setImprovement(UpdateContext ctx, ImprovementValue improvementValue) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        throwIf(capybara.getCurrency() <= 50, CapybaraHasNoMoneyException::new);
+
+        Improvement improvement = capybara.getImprovement();
+        if (improvement.getImprovementValue() == ImprovementValue.NONE) {
+            improvement.setImprovementValue(improvementValue);
+            capybara.setImprovement(improvement);
+            capybara.setCurrency(capybara.getCurrency() - 50);
+            capybaraRepository.save(capybara);
+        }
+    }
+
+    public Capybara getCapybaraById(Long id) {
+        return capybaraRepository.findById(id)
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    @Transactional
+    public void deleteCapybara(UpdateContext ctx) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        capybaraRepository.delete(capybara);
+    }
+
+    public List<TopCapybaraDto> getTopCapybaras() {
+        return capybaraRepository.findTop10ByOrderByLevelValueDesc().stream()
+                .map(c -> {
+                    PhotoDto photo = PhotoDto.builder()
+                            .url(c.getPhoto().getUrl())
+                            .build();
+                    return new TopCapybaraDto(c.getName(), photo, c.getLevel().getValue());
+                })
+                .toList();
+    }
+
+    public void dismissal(UpdateContext ctx) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        WorkService workService = workServiceFactory.getJobProvider(capybara.getWork().getWorkType());
+        workService.dismissal(capybara);
+        capybaraRepository.save(capybara);
+    }
+
+    @Transactional
+    public void transferMoney(UpdateContext ctx, String targetUsername, Long amount) {
+        Capybara sourcecapybara = getCapybaraByContext(ctx);
+        throwIf(sourcecapybara.getCurrency() < amount, CapybaraHasNoMoneyException::new);
+
+        User user = userService.getUserByUsername(targetUsername);
+        Capybara targetCapybara = self.getCapybara(user.getId());
+
+        targetCapybara.setCurrency(targetCapybara.getCurrency() + amount);
+        sourcecapybara.setCurrency(sourcecapybara.getCurrency() - amount);
+
+        capybaraRepository.saveAll(List.of(sourcecapybara, targetCapybara));
+    }
+
+    public void save(Capybara capybara) {
+        capybaraRepository.save(capybara);
+    }
+
+    @Transactional(readOnly = true)
+    public Capybara getCapybara(long userId, long chatId) {
+        return capybaraRepository.findMyCapybaraByUserIdAndChatId(userId, chatId)
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    @Transactional
+    public List<PhotoDto> checkNewLevel(Capybara capybara) {
+        List<PhotoDto> messages = new ArrayList<>();
+        if (capybara.getHappiness().getLevel() >= capybara.getHappiness().getMaxLevel()) {
+            capybara.getHappiness().setLevel(0);
+            capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
+            messages.add(PhotoDto.builder()
+                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
+                    .url("https://vk.com/photo-209917797_457246194")
+                    .build());
+            self.checkNewType(capybara).ifPresent(messages::add);
+            capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
+            capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
+        }
+        if (capybara.getSatiety().getLevel() >= capybara.getSatiety().getMaxLevel()) {
+            capybara.getSatiety().setLevel(0);
+            capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
+            messages.add(PhotoDto.builder()
+                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
+                    .url("https://vk.com/photo-209917797_457246194")
+                    .build());
+            self.checkNewType(capybara).ifPresent(messages::add);
+            capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
+            capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
+        }
+        return messages;
+    }
+
+    @Transactional
+    public List<PhotoDto> feed(Capybara capybara, Integer feed) {
+        Satiety satiety = capybara.getSatiety();
+        throwIf(!satiety.canPerform(), () -> {
+            String message = "Ты сможешь покормить капибару только через " +
+                    timedActionService.getStatus(satiety);
+            return new CapybaraException(message);
+        });
+        satiety.setLevel(satiety.getLevel() + feed);
+        satiety.setLastFed(LocalDateTime.now());
+        List<PhotoDto> messages = new ArrayList<>(self.checkNewLevel(capybara));
+        capybaraRepository.save(capybara);
+        return messages;
+    }
+
+    @Transactional
+    public Optional<PhotoDto> checkNewType(Capybara capybara) {
+        Level level = capybara.getLevel();
+        if (level.getValue() >= level.getMaxValue()) {
+            return Arrays.stream(Type.values()).
+                    filter(type -> type.getLevel().equals(level.getMaxValue()))
+                    .findFirst()
+                    .map(type -> {
+                        capybara.getLevel().setType(type);
+                        capybara.getLevel().setMaxValue(self.calculateMaxLevel(level));
+                        capybara.setCurrency(capybara.getCurrency() + type.getGift());
+                        return PhotoDto.builder()
+                                .caption(Text.newType(type.getLabel(), type.getGift()))
+                                .url("/https://vk.com/photo-209917797_457246195")
+                                .build();
+                    });
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Transactional
+    public void updateTea(Tea tea) {
+        tea.setWaiting(false);
+        tea.setLastTea(LocalDateTime.now());
+    }
+
+    @Transactional
+    public Integer calculateMaxLevel(Level level) {
+        return switch (level.getValue()) {
+            case Integer i when i < 100 -> level.getMaxValue() + 10;
+            case Integer i when i < 150 -> 150;
+            default -> Integer.MAX_VALUE;
+        };
+    }
+
+    private void checkCurrency(Capybara capybara, Integer currency) {
+        throwIf(capybara.getCurrency() < currency, CapybaraHasNoMoneyException::new);
+    }
+
+    @Transactional
+    public void changeName(UpdateContext historyDto, String newName) {
+        if (newName.length() > 25 || newName.isEmpty()) {
+            throw new CapybaraException("Имя капибары должно быть меньше 25 символов!");
+        }
+        Capybara capybara = getCapybaraByContext(historyDto);
+        capybara.setName(newName);
+        capybaraRepository.save(capybara);
+    }
+
+    @Transactional(readOnly = true)
+    public Capybara getRaceCapybara(UpdateContext ctx) {
+        return capybaraRepository.findRaceCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    @Transactional
+    public void setPhoto(UpdateContext ctx, Message message) {
+        Capybara capybara = getCapybaraByContext(ctx);
+        if (message.photo() != null && message.photo().length != 0) {
+            PhotoSize photoSize = message.photo()[0];
+            Photo photo = capybara.getPhoto();
+            photo.setFileId(photoSize.fileId());
+            photo.setFileSize(photoSize.fileSize());
+            photo.setFileUniqueId(photo.getFileUniqueId());
+            photo.setType(FileType.PHOTO);
+        } else if (message.animation() != null) {
+            Animation animation = message.animation();
+            Photo photo = capybara.getPhoto();
+            photo.setFileId(animation.fileId());
+            photo.setFileSize(animation.fileSize());
+            photo.setFileUniqueId(photo.getFileUniqueId());
+            photo.setType(FileType.DOC);
+        }
+        capybaraRepository.save(capybara);
+    }
+
+    public Capybara getFightCapybara(Long chatId, Long userId) {
+        return capybaraRepository.findFightCapybaraByChatIdAndUserId(chatId, userId)
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
+    public FightCapybaraDto getFightInfo(UpdateContext ctx) {
+        Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
+        return fightCapybaraMapper.toDto(fightCapybara.getFight(), ctx.chatId());
+    }
+
+    public void buyBuff(UpdateContext ctx, String buff, BuffType buffType) {
+        Capybara fightCapybara = getFightCapybara(ctx.chatId(), ctx.userId());
+        switch (buffType) {
+            case ATTACK -> {
+                throwIf(
+                        fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 weapon!")
+                );
+                buyWeapon(fightCapybara, FightBuffWeapon.valueOf(buff));
+            }
+            case DEFEND -> {
+                throwIf(
+                        fightCapybara.getFight().getShield() != FightBuffShield.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 shield!")
+                );
+                buyShield(fightCapybara, FightBuffShield.valueOf(buff));
+            }
+            case HEAL -> {
+                throwIf(
+                        fightCapybara.getFight().getHeal() != FightBuffHeal.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 heal!")
+                );
+                buyHeal(fightCapybara, FightBuffHeal.valueOf(buff));
+            }
+            case SPECIAL -> {
+                throwIf(
+                        fightCapybara.getFight().getSpecial() != FightBuffSpecial.NONE,
+                        () -> new CapybaraException("Ur capy can only have 1 special!")
+                );
+                buySpecial(fightCapybara, FightBuffSpecial.valueOf(buff));
+            }
+        }
+        capybaraRepository.save(fightCapybara);
+    }
+
+    private void buySpecial(Capybara fightCapybara, FightBuffSpecial fightBuffSpecial) {
+        checkCurrency(fightCapybara, fightBuffSpecial.getCost());
+        fightCapybara.getFight().setSpecial(fightBuffSpecial);
+    }
+
+    private void buyHeal(Capybara fightCapybara, FightBuffHeal fightBuffHeal) {
+        checkCurrency(fightCapybara, fightBuffHeal.getCost());
+        fightCapybara.getFight().setHeal(fightBuffHeal);
+    }
+
+    private void buyShield(Capybara fightCapybara, FightBuffShield fightBuffShield) {
+        checkCurrency(fightCapybara, fightBuffShield.getCost());
+        fightCapybara.getFight().setShield(fightBuffShield);
+    }
+
+    private void buyWeapon(Capybara fightCapybara, FightBuffWeapon fightBuffWeapon) {
+        checkCurrency(fightCapybara, fightBuffWeapon.getCost());
+        fightCapybara.getFight().setWeapon(fightBuffWeapon);
+    }
+}

@@ -1,0 +1,22 @@
+package ru.tggc.botapp.repository;
+
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import ru.tggc.botapp.domain.model.Capybara;
+import ru.tggc.botapp.domain.model.RaceRequest;
+
+import java.util.Optional;
+
+@Repository
+public interface RaceRequestRepository extends JpaRepository<RaceRequest, Long> {
+    @EntityGraph(attributePaths = {
+            "challenger.improvement", "challenger.improvement.improvementValue",
+            "challenger.level",
+            "challenger.happiness",
+            "challenger.race"
+    })
+    Optional<RaceRequest> findByOpponentId(Long id);
+
+    boolean existsByChallengerOrOpponent(Capybara challenger, Capybara opponent);
+}
