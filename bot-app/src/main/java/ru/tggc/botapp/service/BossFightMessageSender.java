@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.dto.fight.BossFightState;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
@@ -31,10 +32,13 @@ public class BossFightMessageSender {
     private final TelegramBotSender sender;
     private final KeyboardFactory keyboardFactory;
 
+    @Value("${bot.photos.fight.animation}")
+    private String animation;
+
     public void sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
         List<AnimationStep> steps = getAnimationSteps(fight.getActionLogs());
         bot.execute(new DeleteMessage(chatId, oldMessageId));
-        int messageId = bot.execute(new SendPhoto(chatId, "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg")).message().messageId();
+        int messageId = bot.execute(new SendPhoto(chatId, animation)).message().messageId();
         for (int i = 1; i < steps.size() + 1; i++) {
             AnimationStep step = steps.get(i - 1);
             sender.sendDelayed(telegramBot -> {
@@ -69,7 +73,7 @@ public class BossFightMessageSender {
         return playersAction.stream()
                 .map(log -> new AnimationStep(
                         log + "\n==========================\n",
-                        "https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg"
+                        animation
                 ))
                 .toList();
     }

@@ -18,6 +18,6 @@ public class NotChangeKeyboard extends AbstractInlineKeyboardCreator<Void> {
 
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
-        return () -> singleBtn(btn("Не менять ничего", "not_change"));
+        return () -> singleBtn(btn("Отменить", "not_change"));
     }
 }

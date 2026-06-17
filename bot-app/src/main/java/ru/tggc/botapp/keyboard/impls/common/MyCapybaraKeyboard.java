@@ -75,7 +75,7 @@ public class MyCapybaraKeyboard extends AbstractInlineKeyboardCreator<MyCapybara
             List<InlineKeyboardButton> jobs = null;
 
             if (Boolean.TRUE.equals(capybara.canTakeFromWork())) {
-                InlineKeyboardButton job = btn("Забрать с работы", "take_from_job");
+                InlineKeyboardButton job = btn("Забрать с работы", "take_from_work");
                 jobs = new ArrayList<>();
                 jobs.add(job);
             } else if (Boolean.FALSE.equals(capybara.hasWork())) {

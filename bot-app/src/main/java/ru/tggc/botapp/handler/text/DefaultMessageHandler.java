@@ -2,6 +2,7 @@ package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.AdminService;
@@ -26,6 +27,9 @@ public class DefaultMessageHandler extends TextHandler {
     private final CapybaraService capybaraService;
     private final RaceService raceService;
     private final AdminService adminService;
+
+    @Value("${bot.photos.casino.set-bet}")
+    private String casinoSetBetPhoto;
 
     @DefaultMessageHandle
     public Response handleDefaultMessages(@MessageParam Message message) {
@@ -78,7 +82,7 @@ public class DefaultMessageHandler extends TextHandler {
         casinoService.setBet(historyDto, text);
         PhotoDto photoDto = PhotoDto.builder()
                 .caption("Введите цель")
-                .url("https://vk.com/photo-209917797_457246196")
+                .url(casinoSetBetPhoto)
                 .chatId(historyDto.chatId())
                 .markup(keyboardFactory.getKeyboardInline(KeyboardKey.CASINO_TARGET))
                 .build();

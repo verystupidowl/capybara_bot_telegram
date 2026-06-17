@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.model.PhotoSize;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ import ru.tggc.botapp.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
+import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
+import ru.tggc.botapp.formatter.FormatService;
+import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.mapper.CapybaraInfoMapper;
@@ -67,6 +71,17 @@ import static ru.tggc.telegrambotframework.util.Utils.throwIf;
 @Service
 @RequiredArgsConstructor
 public class CapybaraService {
+    @Value("${bot.photos.feed}")
+    private String feedPhoto;
+    @Value("${bot.photos.fatten}")
+    private String fattenPhoto;
+    @Value("${bot.photos.tea}")
+    private String teaPhoto;
+    @Value("${bot.photos.new-level}")
+    private String newLevelPhoto;
+    @Value("${bot.photos.new-type}")
+    private String newTypePhoto;
+
     private final CapybaraRepository capybaraRepository;
     private final UserServiceImpl userService;
     private final TeaRepository teaRepository;
@@ -78,6 +93,7 @@ public class CapybaraService {
     private final KeyboardFactory keyboardFactory;
     private final ChatRepository chatRepository;
     private final FightCapybaraMapper fightCapybaraMapper;
+    private final FormatService formatService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
@@ -126,7 +142,7 @@ public class CapybaraService {
         capybara.setPhoto(RandomUtils.getRandomDefaultPhoto());
         capybara.setCurrency(capybara.getCurrency() - 25);
         capybaraRepository.save(capybara);
-        return "Выбрано случайное фото. Со счета капибры списано 25 арбузных долек";
+        return formatService.get(CommonMsgKey.CAPYBARA_CHOSEN_RANDOM_PHOTO);
     }
 
     @Transactional
@@ -137,8 +153,8 @@ public class CapybaraService {
         Happiness happiness = capybara.getHappiness();
 
         throwIf(!happiness.canPerform(), () -> {
-            String message = "Ты сможешь сделать хорошие дела для вашей капибары только " +
-                    timedActionService.getStatus(happiness);
+            String status = timedActionService.getStatus(happiness);
+            String message = formatService.get(CommonMsgKey.CAPYBARA_HAPPINESS_COOLDOWN, status);
             return new CapybaraException(message);
         });
 
@@ -161,10 +177,11 @@ public class CapybaraService {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         List<PhotoDto> messages = self.feed(capybara, 5);
+        String caption = formatService.get(CommonMsgKey.CAPYBARA_FEED_SUCCESS);
         messages.add(PhotoDto.builder()
-                .caption("Твоя капибара успешно покушала, возвращайся через 2 часа!")
+                .caption(caption)
                 .chatId(ctx.chatId())
-                .url("https://vk.com/photo-209917797_457245510")
+                .url(feedPhoto)
                 .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
         return messages;
@@ -177,12 +194,11 @@ public class CapybaraService {
         checkCurrency(capybara, 50);
         List<PhotoDto> messages = self.feed(capybara, 50);
         capybara.setCurrency(capybara.getCurrency() - 50);
+
+        String caption = formatService.get(CommonMsgKey.CAPYBARA_FEED_FATTEN);
         messages.add(PhotoDto.builder()
-                .caption("""
-                        Твоя капибара съела целый арбуз!
-                        Её сытость увеличилась на 50!
-                        Возвращайся через 2 часа!""")
-                .url("https://vk.com/photo-209917797_457246187")
+                .caption(caption)
+                .url(fattenPhoto)
                 .chatId(ctx.chatId())
                 .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build());
@@ -196,12 +212,12 @@ public class CapybaraService {
         Tea tea = capybara.getTea();
 
         throwIf(!tea.canPerform(), () -> {
-            String message = "Твоя капибара сможет пойти на чаепитие только через " +
-                    timedActionService.getStatus(tea);
+            String status = timedActionService.getStatus(tea);
+            String message = formatService.get(ErrorMsgKey.CAPYBARA_TEA_COOLDOWN, status);
             return new CapybaraException(message);
         });
 
-        throwIf(tea.isWaiting(), () -> new CapybaraException("Твоя капибара и так ждет собеседника!"));
+        throwIf(tea.isWaiting(), () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_TEA_ALREADY_WAITING)));
 
         List<Tea> byIsWaiting = teaRepository.findByIsWaiting(true);
         if (!byIsWaiting.isEmpty()) {
@@ -233,10 +249,10 @@ public class CapybaraService {
         tea.setWaiting(true);
         capybaraRepository.save(capybara);
         return List.of(PhotoDto.builder()
-                .url("https://vk.com/photo-209917797_457246193")
+                .url(teaPhoto)
                 .chatId(ctx.chatId())
                 .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TEA))
-                .caption("Твоя капибара ждет собеседника для чаепития!")
+                .caption(formatService.get(CommonMsgKey.CAPYBARA_TEA_WAITING))
                 .build());
     }
 
@@ -261,10 +277,10 @@ public class CapybaraService {
         int size = capybaraRepository.countByChatId(chatId);
         Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
         capybaraRepository.save(capybara);
+        String caption = formatService.get(CommonMsgKey.CAPYBARA_CREATED, capybara.getName());
         return PhotoDto.builder()
                 .chatId(chatId)
-                .caption("Теперь у тебя есть капибара!\nПоздравляю!!!" +
-                        "\nЕё имя: " + capybara.getName() + ". \nНо ты всегда можешь поменять его!")
+                .caption(caption)
                 .url(capybara.getPhoto().getUrl())
                 .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
                 .build();
@@ -316,15 +332,18 @@ public class CapybaraService {
     @Transactional
     public void setImprovement(UpdateContext ctx, ImprovementValue improvementValue) {
         Capybara capybara = getCapybaraByContext(ctx);
-        throwIf(capybara.getCurrency() <= 50, CapybaraHasNoMoneyException::new);
+        checkCurrency(capybara, improvementValue.getCost());
 
         Improvement improvement = capybara.getImprovement();
-        if (improvement.getImprovementValue() == ImprovementValue.NONE) {
-            improvement.setImprovementValue(improvementValue);
-            capybara.setImprovement(improvement);
-            capybara.setCurrency(capybara.getCurrency() - 50);
-            capybaraRepository.save(capybara);
-        }
+        throwIf(improvement.getImprovementValue() != ImprovementValue.NONE, () -> {
+            String message = formatService.get(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT);
+            return new CapybaraException(message);
+        });
+
+        improvement.setImprovementValue(improvementValue);
+        capybara.setImprovement(improvement);
+        capybara.setCurrency(capybara.getCurrency() - improvementValue.getCost());
+        capybaraRepository.save(capybara);
     }
 
     public Capybara getCapybaraById(Long id) {
@@ -388,7 +407,7 @@ public class CapybaraService {
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
             messages.add(PhotoDto.builder()
                     .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
-                    .url("https://vk.com/photo-209917797_457246194")
+                    .url(newLevelPhoto)
                     .build());
             self.checkNewType(capybara).ifPresent(messages::add);
             capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
@@ -399,7 +418,7 @@ public class CapybaraService {
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
             messages.add(PhotoDto.builder()
                     .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
-                    .url("https://vk.com/photo-209917797_457246194")
+                    .url(newLevelPhoto)
                     .build());
             self.checkNewType(capybara).ifPresent(messages::add);
             capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
@@ -412,8 +431,8 @@ public class CapybaraService {
     public List<PhotoDto> feed(Capybara capybara, Integer feed) {
         Satiety satiety = capybara.getSatiety();
         throwIf(!satiety.canPerform(), () -> {
-            String message = "Ты сможешь покормить капибару только через " +
-                    timedActionService.getStatus(satiety);
+            String status = timedActionService.getStatus(satiety);
+            String message = formatService.get(ErrorMsgKey.CAPYBARA_FEED_COOLDOWN, status);
             return new CapybaraException(message);
         });
         satiety.setLevel(satiety.getLevel() + feed);
@@ -436,7 +455,7 @@ public class CapybaraService {
                         capybara.setCurrency(capybara.getCurrency() + type.getGift());
                         return PhotoDto.builder()
                                 .caption(Text.newType(type.getLabel(), type.getGift()))
-                                .url("/https://vk.com/photo-209917797_457246195")
+                                .url(newTypePhoto)
                                 .build();
                     });
         } else {
@@ -466,7 +485,7 @@ public class CapybaraService {
     @Transactional
     public void changeName(UpdateContext historyDto, String newName) {
         if (newName.length() > 25 || newName.isEmpty()) {
-            throw new CapybaraException("Имя капибары должно быть меньше 25 символов!");
+            throw new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_NAME_TOO_LONG));
         }
         Capybara capybara = getCapybaraByContext(historyDto);
         capybara.setName(newName);
@@ -482,6 +501,7 @@ public class CapybaraService {
     @Transactional
     public void setPhoto(UpdateContext ctx, Message message) {
         Capybara capybara = getCapybaraByContext(ctx);
+        checkCurrency(capybara, 50);
         if (message.photo() != null && message.photo().length != 0) {
             PhotoSize photoSize = message.photo()[0];
             Photo photo = capybara.getPhoto();
@@ -497,6 +517,7 @@ public class CapybaraService {
             photo.setFileUniqueId(photo.getFileUniqueId());
             photo.setType(FileType.DOC);
         }
+        capybara.setCurrency(capybara.getCurrency() - 50);
         capybaraRepository.save(capybara);
     }
 
@@ -516,28 +537,28 @@ public class CapybaraService {
             case ATTACK -> {
                 throwIf(
                         fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
-                        () -> new CapybaraException("Ur capy can only have 1 weapon!")
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "оружия"))
                 );
                 buyWeapon(fightCapybara, FightBuffWeapon.valueOf(buff));
             }
             case DEFEND -> {
                 throwIf(
                         fightCapybara.getFight().getShield() != FightBuffShield.NONE,
-                        () -> new CapybaraException("Ur capy can only have 1 shield!")
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "щита"))
                 );
                 buyShield(fightCapybara, FightBuffShield.valueOf(buff));
             }
             case HEAL -> {
                 throwIf(
                         fightCapybara.getFight().getHeal() != FightBuffHeal.NONE,
-                        () -> new CapybaraException("Ur capy can only have 1 heal!")
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "лечения"))
                 );
                 buyHeal(fightCapybara, FightBuffHeal.valueOf(buff));
             }
             case SPECIAL -> {
                 throwIf(
                         fightCapybara.getFight().getSpecial() != FightBuffSpecial.NONE,
-                        () -> new CapybaraException("Ur capy can only have 1 special!")
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "спец. оружия"))
                 );
                 buySpecial(fightCapybara, FightBuffSpecial.valueOf(buff));
             }

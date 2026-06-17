@@ -32,7 +32,6 @@ public class FightInfoKeyboard extends AbstractInlineKeyboardCreator<FightCapyba
             if (bossFightProvider.canStartFight(fightCapybaraDto.chatId())) {
                 rows.add(List.of(btn("Начать сражение", "start_fight")));
             }
-            rows.add(List.of(btn("Изменить класс капибары", "start_change_class")));
             rows.add(List.of(btn("Купить ништяки", "list_of_buffs")));
             rows.add(List.of(btn("Ничего", "go_to_main")));
 

@@ -1,12 +1,20 @@
 package ru.tggc.botapp.service.work;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.formatter.FormatService;
 
 import java.time.Duration;
 
 @Service
 public class CashierWorkService extends AbstractWorkService {
+    @Value("${bot.photos.work.cashier}")
+    private String photo;
+
+    public CashierWorkService(FormatService formatService) {
+        super(formatService);
+    }
 
     @Override
     public WorkType getJobType() {
@@ -15,7 +23,7 @@ public class CashierWorkService extends AbstractWorkService {
 
     @Override
     protected String getSetWorkPhoto() {
-        return "https://vk.com/photo-209917797_457242285";
+        return photo;
     }
 
     @Override

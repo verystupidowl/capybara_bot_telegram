@@ -21,7 +21,8 @@ import ru.tggc.botapp.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Fight;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.formatter.BossFightFormatter;
+import ru.tggc.botapp.formatter.FormatService;
+import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.provider.BossFightProvider;
@@ -52,7 +53,7 @@ public class BossFightService {
     private final UserRateLimiterService userRateLimiterService;
     private final TimedActionService timedActionService;
     private final BossFightMessageSender messageSender;
-    private final BossFightFormatter bossFightFormatter;
+    private final FormatService formatService;
 
     @Setter(onMethod = @__({@Lazy, @Autowired}))
     private BossFightService self;
@@ -100,12 +101,15 @@ public class BossFightService {
         });
 
         provider.startFight(chatId, fight);
-        return bossFightFormatter.getStartMessage(bossType);
+        return formatService.get(FightMsgKey.FIGHT_START_MESSAGE, bossType.getName(), bossType.getHp());
     }
 
     public String getUsers(UpdateContext ctx) {
         Set<UserDto> users = provider.getPreparedUsers(ctx.chatId());
-        return bossFightFormatter.getUsersMessage(users);
+        String usernames = users.stream()
+                .map(UserDto::username)
+                .collect(Collectors.joining("\n"));
+        return formatService.get(FightMsgKey.FIGHT_PREPARING_USERS, users.size(), usernames);
     }
 
     public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
@@ -118,9 +122,12 @@ public class BossFightService {
                     Integer messageId = query.maybeInaccessibleMessage().messageId();
 
                     if (ps == null || !ps.isAlive()) {
-                        return Response.of(new SendMessage(chatId, bossFightFormatter.getCantActMessage()));
+                        return Response.of(new SendMessage(chatId, formatService.get(FightMsgKey.FIGHT_CANT_ACT)));
                     }
 
+                    if (ps.getLastAction() != null) {
+                        return Response.empty();
+                    }
                     ps.setLastAction(action);
                     log.info("Игрок {} выбрал {}", ps.getUsername(), action);
 
@@ -131,7 +138,7 @@ public class BossFightService {
 
                     if (allChosen) {
                         if (!userRateLimiterService.tryLock(chatId)) {
-                            return Response.of(new AnswerCallbackQuery(query.id()).text("Секунду, считаем ход..."));
+                            return Response.of(new AnswerCallbackQuery(query.id()));
                         }
 
                         return Response.of(new AnswerCallbackQuery(query.id()))
@@ -144,7 +151,7 @@ public class BossFightService {
                                 });
                     }
                     String caption = ((Message) query.maybeInaccessibleMessage()).caption();
-                    String text = bossFightFormatter.getPlayerChoseMessage(caption, ps.getUsername(), action.getLabel());
+                    String text = formatService.get(FightMsgKey.FIGHT_PLAYER_CHOSE, caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
                             .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));

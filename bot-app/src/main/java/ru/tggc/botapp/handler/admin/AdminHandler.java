@@ -8,7 +8,6 @@ import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
-import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.botapp.util.TextBuilder;
 import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
@@ -30,7 +29,6 @@ public class AdminHandler extends CallbackHandler {
     private final AdminService adminService;
     private final KeyboardFactory keyboardFactory;
     private final HistoryServiceImpl historyService;
-    private final UserServiceImpl userServiceImpl;
 
     @CallbackHandle(value = "admin_menu", canPublic = false, canPrivate = true, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
     public Response adminMenu(@Ctx UpdateContext ctx) {
@@ -64,7 +62,7 @@ public class AdminHandler extends CallbackHandler {
                           @HandleParam("reason") String reason,
                           @HandleParam("username") String username,
                           @Username String reporterUsername) {
-        userServiceImpl.blockUser(username.toLowerCase(Locale.ROOT).replace("@", ""), reason, reporterUsername);
+        adminService.blockUser(username.toLowerCase(Locale.ROOT).replace("@", ""), reason, reporterUsername);
         return sendSimpleMessage(ctx.chatId(), "Пользователь " + username + " забанен по причине " + reason);
     }
 }

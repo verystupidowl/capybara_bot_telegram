@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import ru.tggc.telegrambotframework.access.checker.GlobalAccessChecker;
 import ru.tggc.telegrambotframework.annotation.handle.MessageHandle;
 import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.ResponseBuilder;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
 import ru.tggc.telegrambotframework.exception.ExceptionHandler;
 import ru.tggc.telegrambotframework.registry.resolver.HandlerArgumentResolver;
@@ -20,7 +19,6 @@ import ru.tggc.telegrambotframework.service.UserService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -30,8 +28,6 @@ import java.util.regex.Pattern;
 @Component
 @Slf4j
 public class MessageHandleRegistry extends AbstractHandleRegistry {
-    private static final long BOT_ID = 6653668731L;
-
     private final HistoryService historyService;
     private final HandlerArgumentResolver handlerArgumentResolver;
 
@@ -56,9 +52,6 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
     public Response dispatch(Update update) {
         Message message = update.message();
 
-        if (message.text() == null) {
-            return null;
-        }
         String text = message.text().toLowerCase();
         Method method = handlerMap.values().stream()
                 .map(RegisteredHandler::getMethod)
@@ -76,10 +69,6 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
         Response response = Response.empty();
 
         saveOrUpdateUser(from, chat);
-
-        if (isBotAdded(message)) {
-            return handleGreetings(message);
-        }
 
         if (method == null) {
             if (defaultMethod == null) {
@@ -119,20 +108,10 @@ public class MessageHandleRegistry extends AbstractHandleRegistry {
         return invokeWithCatch(from, method, handlerMap.get(template).getBean(), args, chat);
     }
 
-    private boolean isBotAdded(Message m) {
-        return m.newChatMembers() != null &&
-                Arrays.stream(m.newChatMembers()).anyMatch(u -> u.id().equals(BOT_ID));
-    }
-
-    private Response handleGreetings(Message m) {
-        return ResponseBuilder.to(m.chat().id())
-                .message("Hello, " + m.from().username() + "!")
-                .build();
-    }
-
     @Override
     public boolean canHandle(Update update) {
         return update.message() != null
+                && update.message().text() != null
                 && (update.message().photo() == null
                 || update.message().photo().length == 0);
     }

@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -28,11 +29,17 @@ public class HistoryServiceImpl implements HistoryService {
 
     private final KeyboardFactory keyboardFactory;
 
-    public void setHistory(UpdateContext ctx, HistoryType type) {
+    public void setHistory(UpdateContext ctx, HistoryType type, Consumer<DialogSession> failAction) {
         DialogSession prev = cache.asMap().putIfAbsent(ctx, new DialogSession(type, new HashMap<>()));
         if (prev != null) {
-            throw new CapybaraException("ur capy already doing " + type, keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
+            failAction.accept(prev);
         }
+    }
+
+    public void setHistory(UpdateContext ctx, HistoryType type) {
+        setHistory(ctx, type, prev -> {
+            throw new CapybaraException("Ты уже делаешь " + prev.state().getLabel(), keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE));
+        });
     }
 
     public void setHistory(UpdateContext ctx, HistoryType type, String key, String value) {
