@@ -1,5 +1,6 @@
 package ru.tggc.botapp.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.dto.RequestType;
@@ -23,6 +24,9 @@ import static ru.tggc.telegrambotframework.util.Utils.throwIf;
 public class WeddingService extends AbstractRequestService<WeddingRequest> {
     private final WeddingRequestRepository weddingRequestRepository;
     private final CapybaraService capybaraService;
+
+    @Value("${bot.photos.wedding}")
+    private String weddingPhoto;
 
     public WeddingService(CapybaraService capybaraService,
                           UserServiceImpl userService,
@@ -59,7 +63,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
         capybaraService.save(proposer);
         capybaraService.save(accepter);
         return PhotoDto.builder()
-                .url("https://vk.com/photo-209917797_457245520")
+                .url(weddingPhoto)
                 .caption(caption)
                 .chatId(ctx.chatId())
                 .build();

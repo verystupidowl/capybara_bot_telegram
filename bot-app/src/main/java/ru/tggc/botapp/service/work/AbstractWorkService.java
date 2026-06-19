@@ -6,6 +6,8 @@ import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.FormatService;
+import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.service.WorkService;
 
 import java.time.Duration;
@@ -17,6 +19,7 @@ import static ru.tggc.telegrambotframework.util.Utils.throwIf;
 
 @RequiredArgsConstructor
 public abstract class AbstractWorkService implements WorkService {
+    private final FormatService formatService;
 
     @Override
     public List<String> takeFromWork(Capybara capybara) {
@@ -28,12 +31,11 @@ public abstract class AbstractWorkService implements WorkService {
         capybara.setCurrency(capybara.getCurrency() + salary);
 
         List<String> messages = new ArrayList<>();
-        messages.add("Ты забрал капибару с работы. Она получила целых " + salary + " арбузных долек!");
+        messages.add(formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary));
 
         work.setRise(work.getRise() + 1);
         if (checkRise(capybara)) {
-            messages.add("Ух ты! Твоя капибара так усердно работала, что смогла получить повышение!" +
-                    "\nПлюс 150 арбузных долек!!!");
+            messages.add(formatService.get(WorkMsgKey.NEW_RISE));
         }
 
         return messages;
@@ -87,11 +89,17 @@ public abstract class AbstractWorkService implements WorkService {
     }
 
     protected void checkHasWork(Capybara capybara) {
-        throwIf(!checkWork(capybara), () -> new CapybaraException("Capybara has no work!"));
+        throwIf(!checkWork(capybara), () -> {
+            String message = formatService.get(WorkMsgKey.ERROR_HAS_NO_WORK);
+            return new CapybaraException(message);
+        });
     }
 
     protected void checkHasNoWork(Capybara capybara) {
-        throwIf(checkWork(capybara), () -> new CapybaraException("Capybara has no work!"));
+        throwIf(checkWork(capybara), () -> {
+            String message = formatService.get(WorkMsgKey.ERROR_ALREADY_HAS_WORK);
+            return new CapybaraException(message);
+        });
     }
 
     protected boolean checkWork(Capybara capybara) {

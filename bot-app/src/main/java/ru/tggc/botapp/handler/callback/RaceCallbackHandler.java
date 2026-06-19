@@ -3,6 +3,8 @@ package ru.tggc.botapp.handler.callback;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
+import ru.tggc.botapp.formatter.FormatService;
+import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.CapybaraService;
@@ -20,11 +22,12 @@ public class RaceCallbackHandler extends CallbackHandler {
     private final CapybaraService capybaraService;
     private final KeyboardFactory keyboardFactory;
     private final RaceService raceService;
+    private final FormatService formatService;
 
     @CallbackHandle("start_race")
     public Response startRace(@Ctx UpdateContext ctx) {
         raceService.startRace(ctx);
-        return sendSimpleMessage(ctx.chatId(), Text.START_RACE);
+        return sendSimpleMessage(ctx.chatId(), Text.START_RACE, keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE));
     }
 
     @CallbackHandle("improve_pills")
@@ -51,7 +54,7 @@ public class RaceCallbackHandler extends CallbackHandler {
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
             return editMessageCaption(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, keyboardFactory.getKeyboardInline(KeyboardKey.IMPROVEMENTS));
         }
-        return sendSimpleMessage(ctx.chatId(), "У твоей капибары уже есть улучшение!");
+        return sendSimpleMessage(ctx.chatId(), formatService.get(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT));
     }
 
     @CallbackHandle("do_massage")

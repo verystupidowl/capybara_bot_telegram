@@ -12,6 +12,8 @@ import ru.tggc.telegrambotframework.annotation.params.HandleParam;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
 
+import java.util.List;
+
 @BotHandler
 @RequiredArgsConstructor
 public class WorkCallbackHandler extends CallbackHandler {
@@ -20,7 +22,8 @@ public class WorkCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("take_from_work")
     public Response takeFromWork(@Ctx UpdateContext ctx) {
-        return sendSimpleMessages(ctx.chatId(), capybaraService.takeFromWork(ctx));
+        List<String> texts = capybaraService.takeFromWork(ctx);
+        return sendSimpleMessages(ctx.chatId(), texts);
 
     }
 

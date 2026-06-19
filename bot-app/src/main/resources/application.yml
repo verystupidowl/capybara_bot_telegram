@@ -4,26 +4,40 @@ spring:
   liquibase:
     enabled: true
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql:///capybara_tg_bot
+    username: root
+    password: root
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: false
     hibernate:
-#          ddl-auto: create
+    #          ddl-auto: create
     properties:
       hibernate:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
-  messages:
-    basename: i18n/common,i18n/fight/messages,i18n/shop/messages
-    encoding: UTF-8
-    fallback-to-system-locale: false
 
 bot:
-  token: ${BOT_TOKEN}
-  webhook_url: ${WEBHOOK_URL}
-  admin-id: ${ADMIN_ID}
+  id: 7728598019
+  token: 7728598019:AAGOBoNpmK6OUJ3TJjw6YF7a6W6vKTfaxF0
+  webhook_url: https://sphinx-charting-lego.ngrok-free.dev/telegram/webhook
+  admin-id: 428873987
+  photos:
+    work:
+      cashier: https://vk.com/photo-209917797_457242285
+      criminal: https://vk.com/photo-209917797_457242283
+      it: https://vk.com/photo-209917797_457242284
+    feed: https://vk.com/photo-209917797_457245510
+    fatten: https://vk.com/photo-209917797_457246187
+    tea: https://vk.com/photo-209917797_457246193
+    new-level: https://vk.com/photo-209917797_457246194
+    new-type: https://vk.com/photo-209917797_457246195
+    casino:
+      win: https://vk.com/photo-209917797_457246197
+      lose: https://vk.com/photo-209917797_457246192
+      set-bet: https://vk.com/photo-209917797_457246196
+    wedding: https://vk.com/photo-209917797_457245520
+    fight:
+      animation: https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg

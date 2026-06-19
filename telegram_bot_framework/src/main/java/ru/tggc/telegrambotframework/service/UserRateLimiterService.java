@@ -31,7 +31,7 @@ public class UserRateLimiterService {
     }
 
     public boolean tryLock(long id) {
-        AtomicBoolean locked = lockCache.get(id, _ -> new AtomicBoolean(true));
+        AtomicBoolean locked = lockCache.get(id, _ -> new AtomicBoolean(false));
         return locked.compareAndSet(false, true);
     }
 

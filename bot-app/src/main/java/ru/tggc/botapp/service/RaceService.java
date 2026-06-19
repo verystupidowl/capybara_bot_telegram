@@ -292,7 +292,9 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     public void startRace(UpdateContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         self.checkStamina(capybara);
-        historyService.setHistory(ctx, HistoryType.START_RACE);
+        historyService.setHistory(ctx, HistoryType.START_RACE, prev -> {
+            throw new CapybaraException("Ты уже делаешь " + prev.state().getLabel(), keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
+        });
     }
 
     public static class RaceStepContext {

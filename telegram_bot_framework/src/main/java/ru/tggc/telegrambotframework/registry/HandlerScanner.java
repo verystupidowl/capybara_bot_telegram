@@ -22,6 +22,9 @@ public class HandlerScanner {
 
     @SneakyThrows
     public HandlerRegistryData scan(Class<? extends Annotation> annotationClass) {
+        if (annotationClass == null) {
+            return null;
+        }
         Map<String, RegisteredHandler> handlers = new ConcurrentHashMap<>();
 
         Method defaultMethod = null;

@@ -5,6 +5,8 @@ import com.pengrad.telegrambot.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import ru.tggc.botapp.formatter.FormatService;
+import ru.tggc.botapp.formatter.msgkey.AdminMsgKey;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.telegrambotframework.access.checker.AccessChecker;
 import ru.tggc.telegrambotframework.dto.AccessResult;
@@ -18,13 +20,20 @@ import java.lang.reflect.Method;
 @RequiredArgsConstructor
 public class UserBlockedAccessChecker implements AccessChecker {
     private final UserServiceImpl userService;
+    private final FormatService formatService;
 
     @Override
     public AccessResult check(User from, Method method, Chat chat) {
         return userService.getBlockReason(from.username())
                 .map(result -> {
+                    String message = formatService.get(
+                            AdminMsgKey.BLOCK_MESSAGE,
+                            from.username(),
+                            result.getReporter(),
+                            result.getReason()
+                    );
                     Response response = ResponseBuilder.to(chat.id())
-                            .message("Пользователь " + from.username() + " заблокирован пользователем " + result.getReporter() + " по причине: \n" + result.getReason())
+                            .message(message)
                             .build();
                     return AccessResult.deny(response);
                 })

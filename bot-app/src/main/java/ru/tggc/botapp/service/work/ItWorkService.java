@@ -1,12 +1,20 @@
 package ru.tggc.botapp.service.work;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.formatter.FormatService;
 
 import java.time.Duration;
 
 @Service
 public class ItWorkService extends AbstractWorkService {
+    @Value("${bot.photos.work.it}")
+    private String photo;
+
+    public ItWorkService(FormatService formatService) {
+        super(formatService);
+    }
 
     @Override
     public WorkType getJobType() {
@@ -15,7 +23,7 @@ public class ItWorkService extends AbstractWorkService {
 
     @Override
     protected String getSetWorkPhoto() {
-        return "https://vk.com/photo-209917797_457242284";
+        return photo;
     }
 
     @Override
