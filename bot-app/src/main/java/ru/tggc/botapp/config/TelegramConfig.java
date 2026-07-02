@@ -6,8 +6,10 @@ import com.pengrad.telegrambot.request.SetWebhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ru.tggc.telegrambotframework.formatter.FormatService;
 
 @Slf4j
 @Configuration
@@ -23,5 +25,10 @@ public class TelegramConfig {
         log.info("Webhook info {}", response);
         bot.execute(new SendMessage(adminId, "Webhook has been set " + response));
         return bot;
+    }
+
+    @Bean
+    public FormatService formatService(MessageSource messageSource) {
+        return (key, args) -> messageSource.getMessage(key.getKey(), args, null);
     }
 }

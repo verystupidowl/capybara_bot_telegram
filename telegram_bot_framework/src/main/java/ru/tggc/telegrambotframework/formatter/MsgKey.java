@@ -1,4 +1,4 @@
-package ru.tggc.botapp.formatter.msgkey;
+package ru.tggc.telegrambotframework.formatter;
 
 public interface MsgKey {
 

@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
-import ru.tggc.botapp.formatter.FormatService;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
+import ru.tggc.telegrambotframework.formatter.FormatService;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -34,14 +34,14 @@ public class CriminalWorkService extends AbstractWorkService {
         List<String> messages = new ArrayList<>();
         if (salary != -1) {
             capybara.setCurrency(capybara.getCurrency() + salary);
-            messages.add(formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary));
+            messages.add(formatService.getMessage(WorkMsgKey.TAKE_FROM_WORK, salary));
             work.setRise(work.getRise() + 1);
             if (checkRise(capybara)) {
-                messages.add(formatService.get(WorkMsgKey.NEW_RISE));
+                messages.add(formatService.getMessage(WorkMsgKey.NEW_RISE));
             }
         } else {
             capybara.setCurrency(capybara.getCurrency() - capybara.getCurrency() / 10);
-            messages.add(formatService.get(WorkMsgKey.BUSTED));
+            messages.add(formatService.getMessage(WorkMsgKey.BUSTED));
         }
 
         return messages;

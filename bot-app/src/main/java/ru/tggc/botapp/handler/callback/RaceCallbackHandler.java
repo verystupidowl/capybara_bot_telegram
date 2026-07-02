@@ -3,7 +3,6 @@ package ru.tggc.botapp.handler.callback;
 import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
-import ru.tggc.botapp.formatter.FormatService;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
@@ -15,6 +14,7 @@ import ru.tggc.telegrambotframework.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotframework.annotation.params.Ctx;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotframework.formatter.FormatService;
 
 @BotHandler
 @RequiredArgsConstructor
@@ -54,7 +54,7 @@ public class RaceCallbackHandler extends CallbackHandler {
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
             return editMessageCaption(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, keyboardFactory.getKeyboardInline(KeyboardKey.IMPROVEMENTS));
         }
-        return sendSimpleMessage(ctx.chatId(), formatService.get(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT));
+        return sendSimpleMessage(ctx.chatId(), formatService.getMessage(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT));
     }
 
     @CallbackHandle("do_massage")

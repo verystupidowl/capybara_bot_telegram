@@ -15,7 +15,6 @@ import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
-import ru.tggc.botapp.formatter.FormatService;
 import ru.tggc.botapp.formatter.msgkey.CasinoMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
@@ -27,6 +26,7 @@ import ru.tggc.botapp.util.SlotType;
 import ru.tggc.telegrambotframework.dto.PhotoDto;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotframework.formatter.FormatService;
 import ru.tggc.telegrambotframework.service.TelegramBotSender;
 import ru.tggc.telegrambotframework.util.Utils;
 
@@ -86,11 +86,11 @@ public class CasinoService {
         if (wonType == type) {
             Long winAmount = type.getCalculateWin().apply(betAmount);
             capybara.setCurrency(capybara.getCurrency() + winAmount);
-            response.setCaption(formatService.get(CasinoMsgKey.CASINO_CASINO_WIN, wonType.getLabel(), winAmount));
+            response.setCaption(formatService.getMessage(CasinoMsgKey.CASINO_CASINO_WIN, wonType.getLabel(), winAmount));
             response.setUrl(winPhoto);
         } else {
             capybara.setCurrency(capybara.getCurrency() - betAmount);
-            response.setCaption(formatService.get(CasinoMsgKey.CASINO_CASINO_LOSE, wonType.getLabel(), betAmount));
+            response.setCaption(formatService.getMessage(CasinoMsgKey.CASINO_CASINO_LOSE, wonType.getLabel(), betAmount));
             response.setUrl(losePhoto);
         }
 
@@ -127,10 +127,10 @@ public class CasinoService {
                 SendPhoto sendPhoto;
                 if (slotResult == SlotResult.LOSE) {
                     sendPhoto = new SendPhoto(chatId, losePhoto);
-                    sendPhoto.caption(formatService.get(CasinoMsgKey.CASINO_SLOTS_LOSE, bet));
+                    sendPhoto.caption(formatService.getMessage(CasinoMsgKey.CASINO_SLOTS_LOSE, bet));
                 } else {
                     sendPhoto = new SendPhoto(chatId, winPhoto);
-                    sendPhoto.caption(formatService.get(CasinoMsgKey.CASINO_SLOTS_WIN, (win - bet)));
+                    sendPhoto.caption(formatService.getMessage(CasinoMsgKey.CASINO_SLOTS_WIN, (win - bet)));
                 }
                 tb.execute(sendPhoto);
                 historyService.removeFromHistory(ctx);
@@ -160,7 +160,7 @@ public class CasinoService {
 
         throwIf(bet < minBetAmount, () -> {
             historyService.removeFromHistory(ctx);
-            String message = formatService.get(ErrorMsgKey.CASINO_MIN_BET, minBetAmount);
+            String message = formatService.getMessage(ErrorMsgKey.CASINO_MIN_BET, minBetAmount);
             return new CapybaraException(message);
         });
     }
@@ -179,7 +179,7 @@ public class CasinoService {
     }
 
     private RuntimeException getNotPlayingException() {
-        String message = formatService.get(ErrorMsgKey.CASINO_NOT_PLAYING);
+        String message = formatService.getMessage(ErrorMsgKey.CASINO_NOT_PLAYING);
         return new CapybaraException(message);
     }
 }

@@ -12,12 +12,12 @@ import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.exceptions.UserNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.AdminMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
-import ru.tggc.botapp.formatter.FormatService;
 import ru.tggc.botapp.repository.BlockRepository;
 import ru.tggc.botapp.repository.CapybaraRepository;
 import ru.tggc.botapp.repository.ChatRepository;
 import ru.tggc.botapp.repository.UserRepository;
 import ru.tggc.telegrambotframework.dto.Response;
+import ru.tggc.telegrambotframework.formatter.FormatService;
 import ru.tggc.telegrambotframework.service.TelegramBotSender;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class AdminService {
         long userCount = userRepository.count();
         long blockedUsers = blockRepository.count();
         long capybaraCount = capybaraRepository.count();
-        String messageToSend = formatService.get(AdminMsgKey.ADMIN_STATS, userCount, blockedUsers, capybaraCount);
+        String messageToSend = formatService.getMessage(AdminMsgKey.ADMIN_STATS, userCount, blockedUsers, capybaraCount);
 
         return new AdminStats(
                 userCount,
@@ -59,7 +59,7 @@ public class AdminService {
                 //ignore
             }
         })).thenRun(() -> {
-            String message = formatService.get(AdminMsgKey.ADMIN_BROADCAST_ENDED, chatIds.size());
+            String message = formatService.getMessage(AdminMsgKey.ADMIN_BROADCAST_ENDED, chatIds.size());
             telegramBotSender.send(Response.of(new SendMessage(chatId, message)));
         });
     }
@@ -68,12 +68,12 @@ public class AdminService {
     public void blockUser(String username, String reason, String reporterUsername) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
-                    String message = formatService.get(ErrorMsgKey.USER_USERNAME_NOT_FOUND, username);
+                    String message = formatService.getMessage(ErrorMsgKey.USER_USERNAME_NOT_FOUND, username);
                     return new UserNotFoundException(message);
                 });
         User reporter = userRepository.findByUsername(reporterUsername)
                 .orElseThrow(() -> {
-                    String message = formatService.get(ErrorMsgKey.USER_USERNAME_NOT_FOUND, reporterUsername);
+                    String message = formatService.getMessage(ErrorMsgKey.USER_USERNAME_NOT_FOUND, reporterUsername);
                     return new UserNotFoundException(message);
                 });
 

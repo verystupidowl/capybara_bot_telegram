@@ -21,7 +21,6 @@ import ru.tggc.botapp.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Fight;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.formatter.FormatService;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
@@ -30,6 +29,7 @@ import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotframework.dto.Response;
 import ru.tggc.telegrambotframework.dto.UpdateContext;
 import ru.tggc.telegrambotframework.dto.UserDto;
+import ru.tggc.telegrambotframework.formatter.FormatService;
 import ru.tggc.telegrambotframework.service.UserRateLimiterService;
 
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class BossFightService {
         });
 
         provider.startFight(chatId, fight);
-        return formatService.get(FightMsgKey.FIGHT_START_MESSAGE, bossType.getName(), bossType.getHp());
+        return formatService.getMessage(FightMsgKey.FIGHT_START_MESSAGE, bossType.getName(), bossType.getHp());
     }
 
     public String getUsers(UpdateContext ctx) {
@@ -109,7 +109,7 @@ public class BossFightService {
         String usernames = users.stream()
                 .map(UserDto::username)
                 .collect(Collectors.joining("\n"));
-        return formatService.get(FightMsgKey.FIGHT_PREPARING_USERS, users.size(), usernames);
+        return formatService.getMessage(FightMsgKey.FIGHT_PREPARING_USERS, users.size(), usernames);
     }
 
     public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
@@ -122,7 +122,7 @@ public class BossFightService {
                     Integer messageId = query.maybeInaccessibleMessage().messageId();
 
                     if (ps == null || !ps.isAlive()) {
-                        return Response.of(new SendMessage(chatId, formatService.get(FightMsgKey.FIGHT_CANT_ACT)));
+                        return Response.of(new SendMessage(chatId, formatService.getMessage(FightMsgKey.FIGHT_CANT_ACT)));
                     }
 
                     if (ps.getLastAction() != null) {
@@ -151,7 +151,7 @@ public class BossFightService {
                                 });
                     }
                     String caption = ((Message) query.maybeInaccessibleMessage()).caption();
-                    String text = formatService.get(FightMsgKey.FIGHT_PLAYER_CHOSE, caption, ps.getUsername(), action.getLabel());
+                    String text = formatService.getMessage(FightMsgKey.FIGHT_PLAYER_CHOSE, caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
                             .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
