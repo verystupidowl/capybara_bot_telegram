@@ -8,7 +8,7 @@ import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 
 import java.util.function.Function;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
 
 @Component
 public class MyCapybaraMapper {

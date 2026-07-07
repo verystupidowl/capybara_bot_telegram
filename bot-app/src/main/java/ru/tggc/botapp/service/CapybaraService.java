@@ -54,10 +54,10 @@ import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.CapybaraBuilder;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.botapp.util.Text;
-import ru.tggc.telegrambotframework.dto.FileType;
-import ru.tggc.telegrambotframework.dto.PhotoDto;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.formatter.FormatService;
+import ru.tggc.telegrambotcore.dto.FileType;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.lang.Math.max;
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Service
 @RequiredArgsConstructor

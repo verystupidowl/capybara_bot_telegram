@@ -11,12 +11,12 @@ import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.service.RaceService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
-import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
-import ru.tggc.telegrambotframework.annotation.handle.DefaultMessageHandle;
-import ru.tggc.telegrambotframework.annotation.params.MessageParam;
-import ru.tggc.telegrambotframework.dto.PhotoDto;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
+import ru.tggc.telegrambotcore.annotation.handle.DefaultMessageHandle;
+import ru.tggc.telegrambotcore.annotation.params.MessageParam;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 @BotHandler
 @RequiredArgsConstructor

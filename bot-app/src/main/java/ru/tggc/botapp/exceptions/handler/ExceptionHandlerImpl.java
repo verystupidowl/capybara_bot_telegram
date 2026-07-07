@@ -15,9 +15,9 @@ import ru.tggc.botapp.exceptions.UserNotFoundException;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.util.Text;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.ResponseBuilder;
-import ru.tggc.telegrambotframework.exception.ExceptionHandler;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.ResponseBuilder;
+import ru.tggc.telegrambotcore.exception.ExceptionHandler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
@@ -25,8 +25,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
-import static ru.tggc.telegrambotframework.util.Utils.ifPresent;
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
+import static ru.tggc.telegrambotcore.util.Utils.ifPresent;
 
 @Slf4j
 @Component

@@ -8,13 +8,13 @@ import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.service.WorkService;
-import ru.tggc.telegrambotframework.formatter.FormatService;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 
 @RequiredArgsConstructor

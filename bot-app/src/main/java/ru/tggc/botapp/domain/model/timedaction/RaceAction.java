@@ -10,7 +10,7 @@ import ru.tggc.botapp.exceptions.CapybaraTiredException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import static ru.tggc.telegrambotframework.util.Utils.formatDuration;
+import static ru.tggc.telegrambotcore.util.Utils.formatDuration;
 
 
 @Embeddable

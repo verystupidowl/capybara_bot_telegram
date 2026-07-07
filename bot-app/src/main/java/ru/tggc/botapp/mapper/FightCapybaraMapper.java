@@ -3,7 +3,7 @@ package ru.tggc.botapp.mapper;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
 import ru.tggc.botapp.domain.model.Fight;
-import ru.tggc.telegrambotframework.util.Utils;
+import ru.tggc.telegrambotcore.util.Utils;
 
 import java.util.List;
 

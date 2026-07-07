@@ -9,7 +9,7 @@ import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.service.TimedActionService;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
 
 @Component
 @RequiredArgsConstructor

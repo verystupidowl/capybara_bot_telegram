@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import ru.tggc.telegrambotframework.router.TelegramUpdateRouter;
-import ru.tggc.telegrambotframework.service.TelegramBotReceiver;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.router.TelegramUpdateRouter;
+import ru.tggc.telegrambotcore.service.TelegramBotReceiver;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
 import java.time.Duration;
 import java.util.Optional;

@@ -5,7 +5,7 @@ import ru.tggc.botapp.domain.dto.HappinessThings;
 import ru.tggc.botapp.domain.dto.fight.enums.BossAction;
 import ru.tggc.botapp.domain.dto.fight.enums.BossType;
 import ru.tggc.botapp.domain.model.Photo;
-import ru.tggc.telegrambotframework.dto.FileDto;
+import ru.tggc.telegrambotcore.dto.FileDto;
 
 import java.util.List;
 import java.util.Map;

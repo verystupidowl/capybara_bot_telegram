@@ -10,8 +10,8 @@ import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.util.HistoryType;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.service.HistoryService;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.service.HistoryService;
 
 import java.time.Duration;
 import java.util.HashMap;

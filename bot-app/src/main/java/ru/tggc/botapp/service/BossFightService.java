@@ -26,11 +26,11 @@ import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.provider.BossFightProvider;
 import ru.tggc.botapp.util.RandomUtils;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.dto.UserDto;
-import ru.tggc.telegrambotframework.formatter.FormatService;
-import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.dto.UserDto;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,7 +41,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Service
 @Slf4j

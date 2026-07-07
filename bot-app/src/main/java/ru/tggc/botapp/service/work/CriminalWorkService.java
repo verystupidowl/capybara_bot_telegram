@@ -6,7 +6,7 @@ import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
-import ru.tggc.telegrambotframework.formatter.FormatService;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.Duration;
 import java.util.ArrayList;

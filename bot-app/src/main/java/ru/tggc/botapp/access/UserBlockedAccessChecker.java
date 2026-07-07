@@ -7,11 +7,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.formatter.msgkey.AdminMsgKey;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
-import ru.tggc.telegrambotframework.access.checker.AccessChecker;
-import ru.tggc.telegrambotframework.dto.AccessResult;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.ResponseBuilder;
-import ru.tggc.telegrambotframework.formatter.FormatService;
+import ru.tggc.telegrambotcore.access.checker.AccessChecker;
+import ru.tggc.telegrambotcore.dto.AccessResult;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.ResponseBuilder;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.lang.reflect.Method;
 

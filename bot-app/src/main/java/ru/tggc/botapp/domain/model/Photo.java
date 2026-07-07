@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.tggc.telegrambotframework.dto.FileType;
+import ru.tggc.telegrambotcore.dto.FileType;
 
 @Entity
 @Data

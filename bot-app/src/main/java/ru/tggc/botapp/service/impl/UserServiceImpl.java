@@ -11,10 +11,10 @@ import ru.tggc.botapp.exceptions.UserNotFoundException;
 import ru.tggc.botapp.repository.BlockRepository;
 import ru.tggc.botapp.repository.ChatRepository;
 import ru.tggc.botapp.repository.UserRepository;
-import ru.tggc.telegrambotframework.dto.ChatDto;
-import ru.tggc.telegrambotframework.dto.UserDto;
-import ru.tggc.telegrambotframework.dto.UserRole;
-import ru.tggc.telegrambotframework.service.UserService;
+import ru.tggc.telegrambotcore.dto.ChatDto;
+import ru.tggc.telegrambotcore.dto.UserDto;
+import ru.tggc.telegrambotcore.dto.UserRole;
+import ru.tggc.telegrambotcore.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;

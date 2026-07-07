@@ -1,11 +1,11 @@
 package ru.tggc.botapp.util;
 
 import lombok.experimental.UtilityClass;
-import ru.tggc.telegrambotframework.dto.FileDto;
+import ru.tggc.telegrambotcore.dto.FileDto;
 
 import java.util.List;
 
-import static ru.tggc.telegrambotframework.dto.FileType.PHOTO;
+import static ru.tggc.telegrambotcore.dto.FileType.PHOTO;
 
 @UtilityClass
 public class CapybaraPhotos {

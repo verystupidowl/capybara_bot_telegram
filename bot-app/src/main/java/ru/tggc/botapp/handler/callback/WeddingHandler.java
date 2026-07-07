@@ -2,12 +2,12 @@ package ru.tggc.botapp.handler.callback;
 
 import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.service.WeddingService;
-import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
-import ru.tggc.telegrambotframework.annotation.handle.CallbackHandle;
-import ru.tggc.telegrambotframework.annotation.params.Ctx;
-import ru.tggc.telegrambotframework.dto.PhotoDto;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
+import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
+import ru.tggc.telegrambotcore.annotation.params.Ctx;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 @BotHandler
 @RequiredArgsConstructor

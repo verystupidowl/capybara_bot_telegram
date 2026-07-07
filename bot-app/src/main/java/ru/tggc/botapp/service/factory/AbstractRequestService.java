@@ -7,9 +7,9 @@ import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.RequestService;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
 
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @RequiredArgsConstructor
 public abstract class AbstractRequestService<Rq> implements RequestService {

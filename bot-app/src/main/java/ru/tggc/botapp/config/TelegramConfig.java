@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.tggc.telegrambotframework.formatter.FormatService;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 @Slf4j
 @Configuration

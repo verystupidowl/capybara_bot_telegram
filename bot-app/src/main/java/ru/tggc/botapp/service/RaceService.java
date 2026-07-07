@@ -32,18 +32,18 @@ import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.botapp.util.RandomUtils;
-import ru.tggc.telegrambotframework.dto.FileDto;
-import ru.tggc.telegrambotframework.dto.FileType;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
-import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotcore.dto.FileDto;
+import ru.tggc.telegrambotcore.dto.FileType;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
 import java.time.LocalDateTime;
 import java.util.Random;
 
 import static java.lang.Math.max;
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Slf4j
 @Service

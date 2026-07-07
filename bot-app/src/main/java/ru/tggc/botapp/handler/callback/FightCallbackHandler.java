@@ -10,15 +10,15 @@ import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.BossFightService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.util.Text;
-import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
-import ru.tggc.telegrambotframework.annotation.handle.CallbackHandle;
-import ru.tggc.telegrambotframework.annotation.params.CallbackParam;
-import ru.tggc.telegrambotframework.annotation.params.Ctx;
-import ru.tggc.telegrambotframework.annotation.params.HandleParam;
-import ru.tggc.telegrambotframework.annotation.params.Username;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.dto.UserDto;
+import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
+import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
+import ru.tggc.telegrambotcore.annotation.params.CallbackParam;
+import ru.tggc.telegrambotcore.annotation.params.Ctx;
+import ru.tggc.telegrambotcore.annotation.params.HandleParam;
+import ru.tggc.telegrambotcore.annotation.params.Username;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.dto.UserDto;
 
 @BotHandler
 @RequiredArgsConstructor

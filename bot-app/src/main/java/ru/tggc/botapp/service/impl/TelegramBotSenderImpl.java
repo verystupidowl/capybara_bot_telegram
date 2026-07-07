@@ -8,11 +8,11 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.ResponseBuilder;
-import ru.tggc.telegrambotframework.exception.RetryableException;
-import ru.tggc.telegrambotframework.exception.RetryableWithSecsException;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.ResponseBuilder;
+import ru.tggc.telegrambotcore.exception.RetryableException;
+import ru.tggc.telegrambotcore.exception.RetryableWithSecsException;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
 import java.time.Instant;
 import java.util.function.Consumer;

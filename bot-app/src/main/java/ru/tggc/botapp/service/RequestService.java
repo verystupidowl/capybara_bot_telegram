@@ -2,7 +2,7 @@ package ru.tggc.botapp.service;
 
 
 import ru.tggc.botapp.domain.dto.RequestType;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 public interface RequestService {
 

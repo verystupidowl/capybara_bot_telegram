@@ -23,18 +23,18 @@ import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.botapp.util.SlotResult;
 import ru.tggc.botapp.util.SlotType;
-import ru.tggc.telegrambotframework.dto.PhotoDto;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.formatter.FormatService;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
-import ru.tggc.telegrambotframework.util.Utils;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.util.Utils;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
-import static ru.tggc.telegrambotframework.util.Utils.throwIfNull;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIfNull;
 
 @Service
 @RequiredArgsConstructor

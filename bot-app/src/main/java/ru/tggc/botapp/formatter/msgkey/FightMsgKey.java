@@ -2,7 +2,7 @@ package ru.tggc.botapp.formatter.msgkey;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import ru.tggc.telegrambotframework.formatter.MsgKey;
+import ru.tggc.telegrambotcore.formatter.MsgKey;
 
 @AllArgsConstructor
 @Getter

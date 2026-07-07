@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.util.Text;
-import ru.tggc.telegrambotframework.annotation.handle.BotAddedHandle;
-import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
-import ru.tggc.telegrambotframework.annotation.params.Ctx;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.handler.Handler;
+import ru.tggc.telegrambotcore.annotation.handle.BotAddedHandle;
+import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
+import ru.tggc.telegrambotcore.annotation.params.Ctx;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.handler.Handler;
 
 @BotHandler
 @RequiredArgsConstructor

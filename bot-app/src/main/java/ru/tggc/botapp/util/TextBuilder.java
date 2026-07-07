@@ -7,9 +7,9 @@ import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import java.util.Map;
 import java.util.function.Function;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
-import static ru.tggc.telegrambotframework.util.Utils.getText;
-import static ru.tggc.telegrambotframework.util.Utils.renderStaminaBar;
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
+import static ru.tggc.telegrambotcore.util.Utils.getText;
+import static ru.tggc.telegrambotcore.util.Utils.renderStaminaBar;
 
 @UtilityClass
 public class TextBuilder {

@@ -4,7 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.fight.BossFightState;
-import ru.tggc.telegrambotframework.dto.UserDto;
+import ru.tggc.telegrambotcore.dto.UserDto;
 
 import java.time.Duration;
 import java.util.HashSet;

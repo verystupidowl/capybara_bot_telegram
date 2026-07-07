@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import ru.tggc.telegrambotframework.dto.UserRole;
+import ru.tggc.telegrambotcore.dto.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.List;

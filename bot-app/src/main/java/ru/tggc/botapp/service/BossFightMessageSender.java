@@ -17,13 +17,13 @@ import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.dto.fight.BossFightState;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.tggc.telegrambotframework.util.Utils.ifPresent;
+import static ru.tggc.telegrambotcore.util.Utils.ifPresent;
 
 
 @Service

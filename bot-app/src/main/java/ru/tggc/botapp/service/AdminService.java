@@ -16,9 +16,9 @@ import ru.tggc.botapp.repository.BlockRepository;
 import ru.tggc.botapp.repository.CapybaraRepository;
 import ru.tggc.botapp.repository.ChatRepository;
 import ru.tggc.botapp.repository.UserRepository;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.formatter.FormatService;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

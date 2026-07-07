@@ -12,12 +12,12 @@ import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.repository.WeddingRequestRepository;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
-import ru.tggc.telegrambotframework.dto.PhotoDto;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 import java.time.LocalDateTime;
 
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 
 @Service
