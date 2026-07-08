@@ -4,9 +4,9 @@ spring:
   liquibase:
     enabled: true
   datasource:
-    url: jdbc:postgresql:///capybara_tg_bot
-    username: root
-    password: root
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: false
@@ -19,11 +19,16 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
+telegram:
+  mode: webhook
+  token: ${BOT_TOKEN}
+  admin-id: ${ADMIN_ID}
+  bot-id: ${BOT_ID}
+  webhook:
+    url: ${WEBHOOK_URL}
+    path: ${WEBHOOK_PATH}
+
 bot:
-  id: 7728598019
-  token: 7728598019:AAGOBoNpmK6OUJ3TJjw6YF7a6W6vKTfaxF0
-  webhook_url: https://sphinx-charting-lego.ngrok-free.dev/telegram/webhook
-  admin-id: 428873987
   photos:
     work:
       cashier: https://vk.com/photo-209917797_457242285
