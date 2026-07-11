@@ -3,6 +3,8 @@ package ru.tggc.botapp.service.impl;
 import com.pengrad.telegrambot.TelegramBot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -21,6 +23,9 @@ import java.util.function.Consumer;
 @Service
 @RequiredArgsConstructor
 public class TelegramBotSenderImpl implements TelegramBotSender {
+    @Value("${telegram.admin-id}")
+    private Long adminId;
+
     private final TelegramBot telegramBot;
     private final TaskScheduler taskScheduler;
 
@@ -30,9 +35,12 @@ public class TelegramBotSenderImpl implements TelegramBotSender {
             backoff = @Backoff(delay = 5000, multiplier = 2)
     )
     @Override
-    public void send(Response response) {
+    public void send(@NotNull Response response) {
         try {
-            response.accept(telegramBot);
+            response.accept(telegramBot).exceptionally(e -> {
+                log.error("error", e);
+                return null;
+            });
         } catch (RetryableException e) {
             taskScheduler.schedule(
                     () -> send(response),
@@ -42,15 +50,15 @@ public class TelegramBotSenderImpl implements TelegramBotSender {
     }
 
     @Override
-    public void sendToAdmin(String text) {
-        Response response = ResponseBuilder.toAdmin()
-                .message(text)
+    public void sendToAdmin(@NotNull String text) {
+        Response response = ResponseBuilder.to(adminId)
+                .message(text, null)
                 .build();
         response.accept(telegramBot);
     }
 
     @Override
-    public void sendDelayed(Consumer<TelegramBot> task, long delayMillis) {
+    public void sendDelayed(@NotNull Consumer<TelegramBot> task, long delayMillis) {
         taskScheduler.schedule(
                 () -> task.accept(telegramBot),
                 Instant.now().plusMillis(delayMillis)

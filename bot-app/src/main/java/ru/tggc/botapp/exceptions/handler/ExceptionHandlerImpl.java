@@ -5,6 +5,8 @@ import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.botapp.exceptions.CapybaraException;
@@ -34,9 +36,13 @@ import static ru.tggc.telegrambotcore.util.Utils.ifPresent;
 public class ExceptionHandlerImpl implements ExceptionHandler {
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
 
+    @Value("${telegram.admin-id}")
+    private Long adminId;
+
     private final KeyboardFactory keyboardFactory;
 
-    public Response handleException(Exception e, Chat chat, User from) {
+    @NotNull
+    public Response handleException(@NotNull Exception e, Chat chat, @NotNull User from) {
         Throwable cause = unwrap(e);
         Response response;
         long chatId = chat.id();
@@ -77,7 +83,7 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
             case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "Введи число!"));
             default -> {
                 log.error("Error invoking callback", cause);
-                response = ResponseBuilder.toAdmin()
+                response = ResponseBuilder.to(adminId)
                         .message(buildMessageToAdmin(cause.getMessage(), chat, from))
                         .build()
                         .andThen(ResponseBuilder.to(chatId)
@@ -89,7 +95,8 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
         return response;
     }
 
-    public String buildMessageToAdmin(String message, Chat chat, User from) {
+    @NotNull
+    public String buildMessageToAdmin(@NotNull String message, Chat chat, User from) {
         return LocalDateTime.now() + "\n" + from.username() + "\n" + getOrElse(chat.title(), Function.identity(), "Личка") + "\n" + message;
     }
 

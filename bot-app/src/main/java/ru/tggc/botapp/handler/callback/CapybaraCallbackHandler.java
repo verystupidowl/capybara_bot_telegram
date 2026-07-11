@@ -123,7 +123,7 @@ public class CapybaraCallbackHandler extends CallbackHandler {
     public Response casino(@Ctx UpdateContext ctx,
                            @HandleParam("target") CasinoTargetType target) {
         PhotoDto response = casinoService.casino(ctx, target);
-        return editPhoto(ctx.chatId(), ctx.messageId(), response.getUrl(), response.getCaption());
+        return editPhoto(ctx.chatId(), ctx.messageId(), response.url(), response.caption());
     }
 
     @CallbackHandle("take_capybara")

@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
@@ -148,6 +149,7 @@ public class BossFightService {
                                     } finally {
                                         userRateLimiterService.unlock(chatId);
                                     }
+                                    return CompletableFuture.completedFuture(null);
                                 });
                     }
                     String caption = ((Message) query.maybeInaccessibleMessage()).caption();

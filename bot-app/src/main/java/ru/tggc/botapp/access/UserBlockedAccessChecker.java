@@ -3,6 +3,7 @@ package ru.tggc.botapp.access;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.User;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.formatter.msgkey.AdminMsgKey;
@@ -22,8 +23,9 @@ public class UserBlockedAccessChecker implements AccessChecker {
     private final UserServiceImpl userService;
     private final FormatService formatService;
 
+    @NotNull
     @Override
-    public AccessResult check(User from, Method method, Chat chat) {
+    public AccessResult check(User from, @NotNull Method method, @NotNull Chat chat) {
         return userService.getBlockReason(from.username())
                 .map(result -> {
                     String message = formatService.getMessage(

@@ -161,12 +161,13 @@ public class CapybaraService {
         HappinessThings happinessThing = RandomUtils.getRandomHappinessThing();
         happiness.setLevel(max(0, happiness.getLevel() + happinessThing.getLevel()));
         happiness.setLastHappy(LocalDateTime.now());
-        messages.add(PhotoDto.builder()
-                .caption(happinessThing.getLabel())
-                .chatId(ctx.chatId())
-                .url(happinessThing.getPhotoUrl())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
-                .build());
+        PhotoDto photo = new PhotoDto(
+                happinessThing.getPhotoUrl(),
+                happinessThing.getLabel(),
+                ctx.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+        );
+        messages.add(photo);
         messages.addAll(self.checkNewLevel(capybara));
         capybaraRepository.save(capybara);
         return messages;
@@ -178,12 +179,13 @@ public class CapybaraService {
                 .orElseThrow(CapybaraNotFoundException::new);
         List<PhotoDto> messages = self.feed(capybara, 5);
         String caption = formatService.getMessage(CommonMsgKey.CAPYBARA_FEED_SUCCESS);
-        messages.add(PhotoDto.builder()
-                .caption(caption)
-                .chatId(ctx.chatId())
-                .url(feedPhoto)
-                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
-                .build());
+        PhotoDto photo = new PhotoDto(
+                fattenPhoto,
+                caption,
+                ctx.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+        );
+        messages.add(photo);
         return messages;
     }
 
@@ -196,12 +198,13 @@ public class CapybaraService {
         capybara.setCurrency(capybara.getCurrency() - 50);
 
         String caption = formatService.getMessage(CommonMsgKey.CAPYBARA_FEED_FATTEN);
-        messages.add(PhotoDto.builder()
-                .caption(caption)
-                .url(fattenPhoto)
-                .chatId(ctx.chatId())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
-                .build());
+        PhotoDto photo = new PhotoDto(
+                fattenPhoto,
+                caption,
+                ctx.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+        );
+        messages.add(photo);
         return messages;
     }
 
@@ -234,26 +237,27 @@ public class CapybaraService {
             photosToReturn.addAll(self.checkNewLevel(interlocutor));
             capybaraRepository.save(interlocutor);
             capybaraRepository.save(capybara);
-            photosToReturn.add(PhotoDto.builder()
-                    .url(photo)
-                    .chatId(ctx.chatId())
-                    .caption(Text.getTea(myDto, interlocutorDto))
-                    .build());
-            photosToReturn.add(PhotoDto.builder()
-                    .url(capybara.getPhoto().getUrl())
-                    .caption(Text.getTea(interlocutorDto, myDto))
-                    .chatId(interlocutor.getChat().getId())
-                    .build());
+            photosToReturn.add(new PhotoDto(
+                    photo,
+                    Text.getTea(myDto, interlocutorDto),
+                    ctx.chatId()
+            ));
+            photosToReturn.add(new PhotoDto(
+                    capybara.getPhoto().getUrl(),
+                    Text.getTea(interlocutorDto, myDto),
+                    interlocutor.getChat().getId()
+            ));
             return photosToReturn;
         }
         tea.setWaiting(true);
         capybaraRepository.save(capybara);
-        return List.of(PhotoDto.builder()
-                .url(teaPhoto)
-                .chatId(ctx.chatId())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TEA))
-                .caption(formatService.getMessage(CommonMsgKey.CAPYBARA_TEA_WAITING))
-                .build());
+        PhotoDto photo = new PhotoDto(
+                teaPhoto,
+                formatService.getMessage(CommonMsgKey.CAPYBARA_TEA_WAITING),
+                ctx.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardKey.TEA)
+        );
+        return List.of(photo);
     }
 
     public void takeFromTea(UpdateContext ctx) {
@@ -278,12 +282,12 @@ public class CapybaraService {
         Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
         capybaraRepository.save(capybara);
         String caption = formatService.getMessage(CommonMsgKey.CAPYBARA_CREATED, capybara.getName());
-        return PhotoDto.builder()
-                .chatId(chatId)
-                .caption(caption)
-                .url(capybara.getPhoto().getUrl())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU))
-                .build();
+        return new PhotoDto(
+                capybara.getPhoto().getUrl(),
+                caption,
+                chatId,
+                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+        );
     }
 
     public boolean hasWork(UpdateContext ctx) {
@@ -360,9 +364,7 @@ public class CapybaraService {
     public List<TopCapybaraDto> getTopCapybaras() {
         return capybaraRepository.findTop10ByOrderByLevelValueDesc().stream()
                 .map(c -> {
-                    PhotoDto photo = PhotoDto.builder()
-                            .url(c.getPhoto().getUrl())
-                            .build();
+                    PhotoDto photo = new PhotoDto(c.getPhoto().getUrl());
                     return new TopCapybaraDto(c.getName(), photo, c.getLevel().getValue());
                 })
                 .toList();
@@ -405,10 +407,10 @@ public class CapybaraService {
         if (capybara.getHappiness().getLevel() >= capybara.getHappiness().getMaxLevel()) {
             capybara.getHappiness().setLevel(0);
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
-            messages.add(PhotoDto.builder()
-                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
-                    .url(newLevelPhoto)
-                    .build());
+            messages.add(new PhotoDto(
+                    newLevelPhoto,
+                    Text.newLevel(capybara.getUser().getId().toString(), capybara.getUser().getUsername())
+            ));
             self.checkNewType(capybara).ifPresent(messages::add);
             capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
             capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
@@ -416,10 +418,10 @@ public class CapybaraService {
         if (capybara.getSatiety().getLevel() >= capybara.getSatiety().getMaxLevel()) {
             capybara.getSatiety().setLevel(0);
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
-            messages.add(PhotoDto.builder()
-                    .caption(Text.newLevel(capybara.getUser().getId().toString(), capybara.getChat().getId().toString()))
-                    .url(newLevelPhoto)
-                    .build());
+            messages.add(new PhotoDto(
+                    newLevelPhoto,
+                    Text.newLevel(capybara.getUser().getId().toString(), capybara.getUser().getUsername())
+            ));
             self.checkNewType(capybara).ifPresent(messages::add);
             capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
             capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
@@ -453,10 +455,10 @@ public class CapybaraService {
                         capybara.getLevel().setType(type);
                         capybara.getLevel().setMaxValue(self.calculateMaxLevel(level));
                         capybara.setCurrency(capybara.getCurrency() + type.getGift());
-                        return PhotoDto.builder()
-                                .caption(Text.newType(type.getLabel(), type.getGift()))
-                                .url(newTypePhoto)
-                                .build();
+                        return new PhotoDto(
+                                newTypePhoto,
+                                Text.newType(type.getLabel(), type.getGift())
+                        );
                     });
         } else {
             return Optional.empty();
