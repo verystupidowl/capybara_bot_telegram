@@ -1,7 +1,6 @@
 package ru.tggc.botapp.handler.callback;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
-import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
 import ru.tggc.botapp.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.botapp.domain.model.enums.fight.BuffType;
@@ -21,12 +20,9 @@ import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.dto.UserDto;
 
 @BotHandler
-@RequiredArgsConstructor
-public class FightCallbackHandler extends CallbackHandler {
-    private final BossFightService bossFightService;
-    private final CapybaraService capybaraService;
-    private final KeyboardFactory keyboardFactory;
-
+public record FightCallbackHandler(BossFightService bossFightService,
+                                   CapybaraService capybaraService,
+                                   KeyboardFactory keyboardFactory) {
     @CallbackHandle("fight_action_${action}")
     public Response fightStep(@Ctx UpdateContext ctx,
                               @Username String username,
@@ -38,10 +34,8 @@ public class FightCallbackHandler extends CallbackHandler {
     @CallbackHandle("fight_info")
     public Response fightInfo(@Ctx UpdateContext ctx) {
         FightCapybaraDto fightInfo = capybaraService.getFightInfo(ctx);
-        return editMessageCaption(
-                ctx.chatId(),
-                ctx.messageId(),
-                Text.getFightInfo(fightInfo),
+        return ctx.edit(
+                Text.getFightInfo(fightInfo), //todo
                 keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_INFO, fightInfo)
         );
     }
@@ -49,20 +43,18 @@ public class FightCallbackHandler extends CallbackHandler {
     @CallbackHandle("join_fight")
     public Response joinFight(@Ctx UpdateContext ctx, @Username String username) {
         String response = bossFightService.joinFight(ctx, username);
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), response, keyboardFactory.getKeyboardInline(KeyboardKey.LEAVE_FIGHT));
+        return ctx.edit(response, keyboardFactory.getKeyboardInline(KeyboardKey.LEAVE_FIGHT));
     }
 
     @CallbackHandle("leave_fight")
     public Response leaveFight(@Ctx UpdateContext ctx) {
         bossFightService.leaveFight(ctx.chatId(), ctx.userId());
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), "Да уж", keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU));
+        return ctx.edit("Да уж", keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU));
     }
 
     @CallbackHandle("start_fight")
     public Response startFight(@Ctx UpdateContext ctx) {
-        return editMessageCaption(
-                ctx.chatId(),
-                ctx.messageId(),
+        return ctx.edit(
                 bossFightService.startFight(ctx.chatId()),
                 keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT)
         );
@@ -70,18 +62,18 @@ public class FightCallbackHandler extends CallbackHandler {
 
     @CallbackHandle("maybe_start_fight")
     public Response maybeStartFight(@Ctx UpdateContext ctx) {
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), bossFightService.getUsers(ctx), keyboardFactory.getKeyboardInline(KeyboardKey.MAYBE_START_FIGHT));
+        return ctx.edit(bossFightService.getUsers(ctx), keyboardFactory.getKeyboardInline(KeyboardKey.MAYBE_START_FIGHT));
     }
 
     @CallbackHandle("list_of_buffs")
     public Response listOfBuffs(@Ctx UpdateContext ctx) {
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), "Выбери тип", keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_BUFF_TYPES));
+        return ctx.edit("Выбери тип", keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_BUFF_TYPES));
     }
 
     @CallbackHandle("fight_buffs_${buffType}")
     public Response fightBuffs(@Ctx UpdateContext ctx, @HandleParam("buffType") BuffType buffType) {
         String buffs = Text.getBuffs(buffType);
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), buffs, keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_BUFFS, buffType));
+        return ctx.edit(buffs, keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_BUFFS, buffType));
     }
 
     @CallbackHandle("buy_buff_${buff}_${buffType}")
@@ -89,6 +81,6 @@ public class FightCallbackHandler extends CallbackHandler {
                             @HandleParam("buff") String buff,
                             @HandleParam("buffType") BuffType buffType) {
         capybaraService.buyBuff(ctx, buff, buffType);
-        return editMessageCaption(ctx.chatId(), ctx.messageId(), "u bought a buff", keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU));
+        return ctx.edit("u bought a buff", keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU));
     }
 }

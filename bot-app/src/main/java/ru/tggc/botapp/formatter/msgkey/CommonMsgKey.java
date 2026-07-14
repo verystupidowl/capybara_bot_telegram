@@ -7,15 +7,20 @@ import ru.tggc.telegrambotcore.formatter.MsgKey;
 @Getter
 @AllArgsConstructor
 public enum CommonMsgKey implements MsgKey {
-    CAPYBARA_CHOSEN_RANDOM_PHOTO("capybara.chosen-random-photo"),
-    CAPYBARA_HAPPINESS_COOLDOWN("capybara.happiness.cooldown"),
-    CAPYBARA_FEED_SUCCESS("capybara.feed.feed"),
-    CAPYBARA_FEED_FATTEN("capybara.feed.fatten"),
+    CHOSEN_RANDOM_PHOTO("capybara.chosen-random-photo"),
+    HAPPINESS_COOLDOWN("capybara.happiness.cooldown"),
+    FEED_SUCCESS("capybara.feed.feed"),
+    FEED_FATTEN("capybara.feed.fatten"),
 
-    CAPYBARA_TEA_WAITING("capybara.tea.waiting"),
+    TEA_WAITING("capybara.tea.waiting"),
 
     CAPYBARA_CREATED("capybara.created"),
-
+    MY_CAPYBARA("capybara.my-capybara"),
+    START_MESSAGE("capybara.start-message"),
+    GREETINGS("capybara.greetings"),
+    START_CHANGE_NAME("capybara.start-change-name"),
+    START_CHANGE_PHOTO("capybara.start-change-photo"),
+    DELETED("capybara.deleted"),
     ;
 
     private final String key;

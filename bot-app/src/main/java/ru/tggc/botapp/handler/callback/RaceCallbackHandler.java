@@ -1,6 +1,5 @@
 package ru.tggc.botapp.handler.callback;
 
-import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
@@ -17,50 +16,47 @@ import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 
 @BotHandler
-@RequiredArgsConstructor
-public class RaceCallbackHandler extends CallbackHandler {
-    private final CapybaraService capybaraService;
-    private final KeyboardFactory keyboardFactory;
-    private final RaceService raceService;
-    private final FormatService formatService;
-
+public record RaceCallbackHandler(CapybaraService capybaraService,
+                                  KeyboardFactory keyboardFactory,
+                                  RaceService raceService,
+                                  FormatService formatService) {
     @CallbackHandle("start_race")
     public Response startRace(@Ctx UpdateContext ctx) {
         raceService.startRace(ctx);
-        return sendSimpleMessage(ctx.chatId(), Text.START_RACE, keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE));
+        return ctx.send(Text.START_RACE, keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE));//todo
     }
 
     @CallbackHandle("improve_pills")
     public Response improvePills(@Ctx UpdateContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.ANTI_LOSE);
-        return sendSimpleMessage(ctx.chatId(), Text.ANTI_LOSE);
+        return ctx.send(Text.ANTI_LOSE);
     }
 
     @CallbackHandle("improve_watermelon")
     public Response improveWatermelon(@Ctx UpdateContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.WATERMELON);
-        return sendSimpleMessage(ctx.chatId(), Text.WATERMELON);
+        return ctx.send(Text.WATERMELON);
     }
 
     @CallbackHandle("improve_boots")
     public Response improveBoots(@Ctx UpdateContext ctx) {
         capybaraService.setImprovement(ctx, ImprovementValue.BOOTS);
-        return sendSimpleMessage(ctx.chatId(), Text.BOOTS);
+        return ctx.send(Text.BOOTS);
     }
 
     @CallbackHandle("buy_improve")
     public Response buyImprove(@Ctx UpdateContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
-            return editMessageCaption(ctx.chatId(), ctx.messageId(), Text.LIST_OF_IMPROVEMENTS, keyboardFactory.getKeyboardInline(KeyboardKey.IMPROVEMENTS));
+            return ctx.edit(Text.LIST_OF_IMPROVEMENTS, keyboardFactory.getKeyboardInline(KeyboardKey.IMPROVEMENTS));
         }
-        return sendSimpleMessage(ctx.chatId(), formatService.getMessage(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT));
+        return ctx.send(formatService.getMessage(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT));
     }
 
     @CallbackHandle("do_massage")
     public Response doMassage(@Ctx UpdateContext ctx) {
         capybaraService.doMassage(ctx);
-        return editSimpleMessage(ctx.chatId(), ctx.messageId(), "Ты сделал своей капибаре массаж и восстановил ей всю выносливость!");
+        return ctx.edit("Ты сделал своей капибаре массаж и восстановил ей всю выносливость!");
     }
 
     @CallbackHandle("refuse_race")

@@ -1,15 +1,12 @@
 package ru.tggc.botapp.handler.admin;
 
 import com.pengrad.telegrambot.model.Message;
-import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.dto.AdminStats;
-import ru.tggc.botapp.handler.callback.CallbackHandler;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
-import ru.tggc.botapp.util.TextBuilder;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.handle.MessageHandle;
@@ -24,18 +21,19 @@ import ru.tggc.telegrambotcore.dto.UserRole;
 import java.util.Locale;
 
 @BotHandler
-@RequiredArgsConstructor
-public class AdminHandler extends CallbackHandler {
-    private final AdminService adminService;
-    private final KeyboardFactory keyboardFactory;
-    private final HistoryServiceImpl historyService;
-
-    @CallbackHandle(value = "admin_menu", canPublic = false, canPrivate = true, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
+public record AdminHandler(AdminService adminService,
+                           KeyboardFactory keyboardFactory,
+                           HistoryServiceImpl historyService) {
+    @CallbackHandle(
+            value = "admin_menu",
+            canPublic = false,
+            canPrivate = true,
+            requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
+    )
     public Response adminMenu(@Ctx UpdateContext ctx) {
         AdminStats stats = adminService.getStats();
-        return sendSimpleMessage(
-                ctx.chatId(),
-                TextBuilder.adminMenu(stats),
+        return ctx.send(
+                stats.messageToSend(),
                 keyboardFactory.getKeyboardInline(KeyboardKey.ADMIN_MENU)
         );
     }
@@ -43,15 +41,14 @@ public class AdminHandler extends CallbackHandler {
     @CallbackHandle(value = "broadcast", canPublic = false, canPrivate = true, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
     public Response startBroadcast(@Ctx UpdateContext ctx) {
         historyService.setHistory(ctx, HistoryType.BROADCAST);
-        return sendSimpleMessage(ctx.chatId(), "Введите сообщение для рассылки!");
+        return ctx.send("Введите сообщение для рассылки!");
     }
 
     @MessageHandle(value = "Админка", canPrivate = true, canPublic = false, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
     public Response openAdmin(@Ctx UpdateContext ctx) {
         AdminStats stats = adminService.getStats();
-        return sendSimpleMessage(
-                ctx.chatId(),
-                TextBuilder.adminMenu(stats),
+        return ctx.send(
+                stats.messageToSend(),
                 keyboardFactory.getKeyboardInline(KeyboardKey.ADMIN_MENU)
         );
     }
@@ -63,6 +60,6 @@ public class AdminHandler extends CallbackHandler {
                           @HandleParam("username") String username,
                           @Username String reporterUsername) {
         adminService.blockUser(username.toLowerCase(Locale.ROOT).replace("@", ""), reason, reporterUsername);
-        return sendSimpleMessage(ctx.chatId(), "Пользователь " + username + " забанен по причине " + reason);
+        return ctx.send("Пользователь " + username + " забанен по причине " + reason);
     }
 }

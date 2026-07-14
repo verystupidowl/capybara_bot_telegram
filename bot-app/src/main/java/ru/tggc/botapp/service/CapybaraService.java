@@ -142,7 +142,7 @@ public class CapybaraService {
         capybara.setPhoto(RandomUtils.getRandomDefaultPhoto());
         capybara.setCurrency(capybara.getCurrency() - 25);
         capybaraRepository.save(capybara);
-        return formatService.getMessage(CommonMsgKey.CAPYBARA_CHOSEN_RANDOM_PHOTO);
+        return formatService.getMessage(CommonMsgKey.CHOSEN_RANDOM_PHOTO);
     }
 
     @Transactional
@@ -154,7 +154,7 @@ public class CapybaraService {
 
         throwIf(!happiness.canPerform(), () -> {
             String status = timedActionService.getStatus(happiness);
-            String message = formatService.getMessage(CommonMsgKey.CAPYBARA_HAPPINESS_COOLDOWN, status);
+            String message = formatService.getMessage(CommonMsgKey.HAPPINESS_COOLDOWN, status);
             return new CapybaraException(message);
         });
 
@@ -178,9 +178,9 @@ public class CapybaraService {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         List<PhotoDto> messages = self.feed(capybara, 5);
-        String caption = formatService.getMessage(CommonMsgKey.CAPYBARA_FEED_SUCCESS);
+        String caption = formatService.getMessage(CommonMsgKey.FEED_SUCCESS);
         PhotoDto photo = new PhotoDto(
-                fattenPhoto,
+                feedPhoto,
                 caption,
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
@@ -197,7 +197,7 @@ public class CapybaraService {
         List<PhotoDto> messages = self.feed(capybara, 50);
         capybara.setCurrency(capybara.getCurrency() - 50);
 
-        String caption = formatService.getMessage(CommonMsgKey.CAPYBARA_FEED_FATTEN);
+        String caption = formatService.getMessage(CommonMsgKey.FEED_FATTEN);
         PhotoDto photo = new PhotoDto(
                 fattenPhoto,
                 caption,
@@ -253,7 +253,7 @@ public class CapybaraService {
         capybaraRepository.save(capybara);
         PhotoDto photo = new PhotoDto(
                 teaPhoto,
-                formatService.getMessage(CommonMsgKey.CAPYBARA_TEA_WAITING),
+                formatService.getMessage(CommonMsgKey.TEA_WAITING),
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardKey.TEA)
         );

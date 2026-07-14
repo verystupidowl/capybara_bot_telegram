@@ -1,15 +1,13 @@
-package ru.tggc.botapp.handler.text;
+package ru.tggc.botapp.util;
 
 import com.pengrad.telegrambot.model.Message;
-import lombok.extern.slf4j.Slf4j;
+import lombok.experimental.UtilityClass;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.telegrambotcore.handler.Handler;
 
-@Slf4j
-@Deprecated
-public abstract class TextHandler extends Handler {
+@UtilityClass
+public class HandlerUtils {
 
-    protected String getTargetUsername(String username, Message message) {
+    public String getTargetUsername(String username, Message message) {
         if (username == null && message.replyToMessage() != null) {
             return message.replyToMessage().from().username();
         } else if (username == null && message.replyToMessage() == null) {

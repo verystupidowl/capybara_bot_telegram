@@ -1,8 +1,6 @@
 package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.AdminService;
@@ -14,48 +12,41 @@ import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.DefaultMessageHandle;
 import ru.tggc.telegrambotcore.annotation.params.MessageParam;
-import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 @BotHandler
-@RequiredArgsConstructor
-public class DefaultMessageHandler extends TextHandler {
-    private final HistoryServiceImpl historyService;
-    private final CasinoService casinoService;
-    private final KeyboardFactory keyboardFactory;
-    private final CapybaraService capybaraService;
-    private final RaceService raceService;
-    private final AdminService adminService;
-
-    @Value("${bot.photos.casino.set-bet}")
-    private String casinoSetBetPhoto;
-
+public record DefaultMessageHandler(HistoryServiceImpl historyService,
+                                    CasinoService casinoService,
+                                    KeyboardFactory keyboardFactory,
+                                    CapybaraService capybaraService,
+                                    RaceService raceService,
+                                    AdminService adminService) {
     @DefaultMessageHandle
     public Response handleDefaultMessages(@MessageParam Message message) {
         long chatId = message.chat().id();
         long userId = message.from().id();
         String text = message.text();
-        UpdateContext historyDto = new UpdateContext(chatId, userId, message.messageId());
-        HistoryType historyType = historyService.getFromHistory(historyDto);
+        UpdateContext ctx = new UpdateContext(chatId, userId, message.messageId());
+        HistoryType historyType = historyService.getFromHistory(ctx);
         if (historyType == null) {
             return null;
         }
 
         return switch (historyType) {
-            case CASINO_SET_BET -> casinoSetBet(historyDto, text);
-            case CHANGE_NAME -> changeName(historyDto, text);
-            case SLOTS_SET_BET -> slots(historyDto, text);
-            case START_RACE -> race(historyDto, text);
-            case BROADCAST -> broadcast(historyDto, text);
+            case CASINO_SET_BET -> casinoSetBet(ctx, text);
+            case CHANGE_NAME -> changeName(ctx, text);
+            case SLOTS_SET_BET -> slots(ctx, text);
+            case START_RACE -> race(ctx, text);
+            case BROADCAST -> broadcast(ctx, text);
             default -> null;
         };
     }
 
-    private Response broadcast(UpdateContext historyDto, String text) {
-        adminService.startBroadcast(historyDto.chatId(), text);
-        historyService.removeFromHistory(historyDto);
-        return sendSimpleMessage(historyDto.chatId(), "Началось");
+    private Response broadcast(UpdateContext ctx, String text) {
+        adminService.startBroadcast(ctx.chatId(), text);
+        historyService.removeFromHistory(ctx);
+        return ctx.send("Началось");
     }
 
     private Response race(UpdateContext ctx, String text) {
@@ -65,7 +56,7 @@ public class DefaultMessageHandler extends TextHandler {
         String username = text.substring(1);
         raceService.sendRequest(username, ctx);
         historyService.removeFromHistory(ctx);
-        return sendSimpleMessage(ctx.chatId(), text + ", тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
+        return ctx.send(text + ", тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
     }
 
     private Response slots(UpdateContext historyDto, String bet) {
@@ -75,17 +66,10 @@ public class DefaultMessageHandler extends TextHandler {
     private Response changeName(UpdateContext ctx, String text) {
         capybaraService.changeName(ctx, text);
         historyService.removeFromHistory(ctx);
-        return sendSimpleMessage(ctx.chatId(), "Твою капибару теперь зовут " + text + ", отличное имя!");
+        return ctx.send("Твою капибару теперь зовут " + text + ", отличное имя!");
     }
 
-    private Response casinoSetBet(UpdateContext historyDto, String text) {
-        casinoService.setBet(historyDto, text);
-        PhotoDto photoDto = PhotoDto.builder()
-                .caption("Введите цель")
-                .url(casinoSetBetPhoto)
-                .chatId(historyDto.chatId())
-                .markup(keyboardFactory.getKeyboardInline(KeyboardKey.CASINO_TARGET))
-                .build();
-        return sendSimplePhoto(photoDto);
+    private Response casinoSetBet(UpdateContext ctx, String text) {
+        return ctx.send(casinoService.setBet(ctx, text));
     }
 }

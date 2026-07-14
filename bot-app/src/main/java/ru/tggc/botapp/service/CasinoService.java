@@ -17,6 +17,8 @@ import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.CasinoMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardFactory;
+import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.CasinoTargetType;
 import ru.tggc.botapp.util.HistoryType;
@@ -31,6 +33,7 @@ import ru.tggc.telegrambotcore.service.TelegramBotSender;
 import ru.tggc.telegrambotcore.util.Utils;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
@@ -43,11 +46,14 @@ public class CasinoService {
     private final CapybaraService capybaraService;
     private final TelegramBotSender sender;
     private final FormatService formatService;
+    private final KeyboardFactory keyboardFactory;
 
     @Value("${bot.photos.casino.win}")
     private String winPhoto;
     @Value("${bot.photos.casino.lose}")
     private String losePhoto;
+    @Value("${bot.photos.casino.set-bet}")
+    private String casinoSetBetPhoto;
 
     @Setter(onMethod = @__({@Lazy, @Autowired}))
     private CasinoService self;
@@ -56,10 +62,16 @@ public class CasinoService {
         historyService.setHistory(ctx, HistoryType.CASINO_SET_BET);
     }
 
-    public void setBet(UpdateContext historyDto, String bet) {
+    public PhotoDto setBet(UpdateContext historyDto, String bet) {
         bet = Utils.checkNumber(bet);
         throwIf(!historyService.isEmpty(historyDto), this::getNotPlayingException);
         historyService.putData(historyDto, "bet", bet);
+        return new PhotoDto(
+                casinoSetBetPhoto,
+                "Введите цель",
+                historyDto.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardKey.CASINO_TARGET)
+        );
     }
 
     @Transactional
@@ -79,9 +91,8 @@ public class CasinoService {
         checkBet(ctx, betAmount, capybara);
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
-        PhotoDto response = PhotoDto.builder()
-                .chatId(chatId)
-                .build();
+        PhotoDto.Builder response = PhotoDto.builder()
+                .chatId(chatId);
 
         if (wonType == type) {
             Long winAmount = type.getCalculateWin().apply(betAmount);
@@ -97,7 +108,7 @@ public class CasinoService {
         historyService.removeFromHistory(ctx);
 
         capybaraService.save(capybara);
-        return response;
+        return response.build();
     }
 
     public Response slots(UpdateContext ctx, long bet) {
@@ -135,6 +146,7 @@ public class CasinoService {
                 tb.execute(sendPhoto);
                 historyService.removeFromHistory(ctx);
             }, 3000L);
+            return CompletableFuture.completedFuture(null);
         };
     }
 
