@@ -2,8 +2,8 @@ package ru.tggc.botapp.domain.model.enums.fight;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import ru.tggc.botapp.domain.dto.fight.BossFightState;
-import ru.tggc.botapp.domain.dto.fight.effect.positive.VampirismEffect;
+import ru.tggc.botapp.fight.BossFightState;
+import ru.tggc.botapp.fight.effect.positive.VampirismEffect;
 
 @Getter
 @AllArgsConstructor

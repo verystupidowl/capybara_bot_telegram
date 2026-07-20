@@ -1,10 +1,9 @@
 package ru.tggc.botapp.util;
 
 import lombok.experimental.UtilityClass;
-import ru.tggc.botapp.domain.dto.HappinessThings;
-import ru.tggc.botapp.domain.dto.fight.enums.BossAction;
-import ru.tggc.botapp.domain.dto.fight.enums.BossType;
 import ru.tggc.botapp.domain.model.Photo;
+import ru.tggc.botapp.fight.enums.BossAction;
+import ru.tggc.botapp.fight.enums.BossType;
 import ru.tggc.telegrambotcore.dto.FileDto;
 
 import java.util.List;
@@ -19,11 +18,6 @@ import static ru.tggc.botapp.util.CasinoTargetType.ZERO;
 @UtilityClass
 public class RandomUtils {
     private static final Random RANDOM = new Random();
-
-    public HappinessThings getRandomHappinessThing() {
-        HappinessThings[] values = HappinessThings.values();
-        return values[RANDOM.nextInt(values.length)];
-    }
 
     public Photo getRandomDefaultPhoto() {
         List<String> values = CapybaraPhotos.DEFAULT_PHOTOS;

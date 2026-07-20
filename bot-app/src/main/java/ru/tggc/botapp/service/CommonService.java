@@ -20,7 +20,7 @@ public class CommonService {
     public PhotoDto start(Long chatId) {
         return new PhotoDto(
                 startPhoto,
-                formatService.getMessage(CommonMsgKey.START_MESSAGE),
+                formatService.get(CommonMsgKey.START_MESSAGE),
                 chatId
         );
     }

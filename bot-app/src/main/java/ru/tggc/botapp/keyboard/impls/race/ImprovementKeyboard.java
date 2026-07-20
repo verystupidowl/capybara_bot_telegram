@@ -19,9 +19,9 @@ public class ImprovementKeyboard extends AbstractInlineKeyboardCreator<Void> {
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
         return () -> rows(
-                btn("Удобные ботиночки", "improve_boots"),
-                btn("Вкусный арбуз", "improve_watermelon"),
-                btn("Антипроигрыш", "improve_pill")
+                btn("Удобные ботиночки", "improve_BOOTS"),
+                btn("Вкусный арбуз", "improve_WATERMELON"),
+                btn("Антипроигрыш", "improve_ANTI_LOSE")
         );
     }
 }

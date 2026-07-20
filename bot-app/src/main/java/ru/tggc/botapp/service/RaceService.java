@@ -41,6 +41,7 @@ import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.Math.max;
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
@@ -135,12 +136,12 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
             FileDto fileDto = RandomUtils.getRandomRacePhoto();
             int messageId;
             String caption = "\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName();
-            if (fileDto.getType() == FileType.PHOTO) {
-                messageId = bot.execute(new SendPhoto(chatId, fileDto.getUrl()).caption(caption))
+            if (fileDto.type() == FileType.PHOTO) {
+                messageId = bot.execute(new SendPhoto(chatId, fileDto.url()).caption(caption))
                         .message()
                         .messageId();
             } else {
-                SendResponse execute = bot.execute(new SendAnimation(chatId, fileDto.getUrl()).caption(caption));
+                SendResponse execute = bot.execute(new SendAnimation(chatId, fileDto.url()).caption(caption));
                 messageId = execute
                         .message()
                         .messageId();
@@ -154,6 +155,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
             RaceStepContext ctx = new RaceStepContext(contextDto1, contextDto2, need, bot, chatId, messageId);
 
             scheduleNextStep(ctx);
+            return CompletableFuture.completedFuture(null);
         };
     }
 

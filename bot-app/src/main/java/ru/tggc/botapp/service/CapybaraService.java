@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tggc.botapp.domain.dto.CapybaraInfoDto;
+import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.domain.dto.CapybaraTeaDto;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
-import ru.tggc.botapp.domain.dto.HappinessThings;
+import ru.tggc.botapp.domain.dto.HappinessThingDto;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.dto.TopCapybaraDto;
 import ru.tggc.botapp.domain.model.Capybara;
@@ -53,7 +53,6 @@ import ru.tggc.botapp.service.factory.WorkServiceFactory;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.CapybaraBuilder;
 import ru.tggc.botapp.util.RandomUtils;
-import ru.tggc.botapp.util.Text;
 import ru.tggc.telegrambotcore.dto.FileType;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
@@ -142,7 +141,7 @@ public class CapybaraService {
         capybara.setPhoto(RandomUtils.getRandomDefaultPhoto());
         capybara.setCurrency(capybara.getCurrency() - 25);
         capybaraRepository.save(capybara);
-        return formatService.getMessage(CommonMsgKey.CHOSEN_RANDOM_PHOTO);
+        return formatService.get(CommonMsgKey.CHOSEN_RANDOM_PHOTO);
     }
 
     @Transactional
@@ -154,16 +153,16 @@ public class CapybaraService {
 
         throwIf(!happiness.canPerform(), () -> {
             String status = timedActionService.getStatus(happiness);
-            String message = formatService.getMessage(CommonMsgKey.HAPPINESS_COOLDOWN, status);
+            String message = formatService.get(CommonMsgKey.HAPPINESS_COOLDOWN, status);
             return new CapybaraException(message);
         });
 
-        HappinessThings happinessThing = RandomUtils.getRandomHappinessThing();
-        happiness.setLevel(max(0, happiness.getLevel() + happinessThing.getLevel()));
+        HappinessThingDto happinessThing = formatService.randomObject(CommonMsgKey.HAPPINESS_THINGS, HappinessThingDto.class);
+        happiness.setLevel(max(0, happiness.getLevel() + happinessThing.level()));
         happiness.setLastHappy(LocalDateTime.now());
         PhotoDto photo = new PhotoDto(
-                happinessThing.getPhotoUrl(),
-                happinessThing.getLabel(),
+                happinessThing.photoUrl(),
+                happinessThing.title(),
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
         );
@@ -178,7 +177,7 @@ public class CapybaraService {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         List<PhotoDto> messages = self.feed(capybara, 5);
-        String caption = formatService.getMessage(CommonMsgKey.FEED_SUCCESS);
+        String caption = formatService.get(CommonMsgKey.FEED);
         PhotoDto photo = new PhotoDto(
                 feedPhoto,
                 caption,
@@ -197,7 +196,7 @@ public class CapybaraService {
         List<PhotoDto> messages = self.feed(capybara, 50);
         capybara.setCurrency(capybara.getCurrency() - 50);
 
-        String caption = formatService.getMessage(CommonMsgKey.FEED_FATTEN);
+        String caption = formatService.get(CommonMsgKey.FATTEN);
         PhotoDto photo = new PhotoDto(
                 fattenPhoto,
                 caption,
@@ -216,11 +215,11 @@ public class CapybaraService {
 
         throwIf(!tea.canPerform(), () -> {
             String status = timedActionService.getStatus(tea);
-            String message = formatService.getMessage(ErrorMsgKey.CAPYBARA_TEA_COOLDOWN, status);
+            String message = formatService.get(ErrorMsgKey.CAPYBARA_TEA_COOLDOWN, status);
             return new CapybaraException(message);
         });
 
-        throwIf(tea.isWaiting(), () -> new CapybaraException(formatService.getMessage(ErrorMsgKey.CAPYBARA_TEA_ALREADY_WAITING)));
+        throwIf(tea.isWaiting(), () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_TEA_ALREADY_WAITING)));
 
         List<Tea> byIsWaiting = teaRepository.findByIsWaiting(true);
         if (!byIsWaiting.isEmpty()) {
@@ -229,34 +228,42 @@ public class CapybaraService {
             String photo = interlocutor.getPhoto().getUrl();
             CapybaraTeaDto myDto = capybaraTeaMapper.toDto(capybara);
             CapybaraTeaDto interlocutorDto = capybaraTeaMapper.toDto(interlocutor);
+
             self.updateTea(tea);
             self.updateTea(incerlocutorTea);
+
             capybara.getHappiness().setLevel(capybara.getHappiness().getLevel() + 10);
             interlocutor.getHappiness().setLevel(interlocutor.getHappiness().getLevel() + 10);
             List<PhotoDto> photosToReturn = new ArrayList<>(self.checkNewLevel(capybara));
             photosToReturn.addAll(self.checkNewLevel(interlocutor));
+
             capybaraRepository.save(interlocutor);
             capybaraRepository.save(capybara);
+
+            String text1 = formatService.get(CommonMsgKey.DO_TEA, myDto.name(), interlocutorDto.name());
             photosToReturn.add(new PhotoDto(
                     photo,
-                    Text.getTea(myDto, interlocutorDto),
+                    text1,
                     ctx.chatId()
             ));
+            String text2 = formatService.get(CommonMsgKey.DO_TEA, interlocutorDto.name(), myDto.name());
             photosToReturn.add(new PhotoDto(
                     capybara.getPhoto().getUrl(),
-                    Text.getTea(interlocutorDto, myDto),
+                    text2,
                     interlocutor.getChat().getId()
             ));
+
             return photosToReturn;
         }
         tea.setWaiting(true);
         capybaraRepository.save(capybara);
         PhotoDto photo = new PhotoDto(
                 teaPhoto,
-                formatService.getMessage(CommonMsgKey.TEA_WAITING),
+                formatService.get(CommonMsgKey.TEA_WAITING),
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardKey.TEA)
         );
+
         return List.of(photo);
     }
 
@@ -281,7 +288,7 @@ public class CapybaraService {
         int size = capybaraRepository.countByChatId(chatId);
         Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
         capybaraRepository.save(capybara);
-        String caption = formatService.getMessage(CommonMsgKey.CAPYBARA_CREATED, capybara.getName());
+        String caption = formatService.get(CommonMsgKey.CAPYBARA_CREATED, capybara.getName());
         return new PhotoDto(
                 capybara.getPhoto().getUrl(),
                 caption,
@@ -340,7 +347,7 @@ public class CapybaraService {
 
         Improvement improvement = capybara.getImprovement();
         throwIf(improvement.getImprovementValue() != ImprovementValue.NONE, () -> {
-            String message = formatService.getMessage(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT);
+            String message = formatService.get(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT);
             return new CapybaraException(message);
         });
 
@@ -407,10 +414,14 @@ public class CapybaraService {
         if (capybara.getHappiness().getLevel() >= capybara.getHappiness().getMaxLevel()) {
             capybara.getHappiness().setLevel(0);
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
-            messages.add(new PhotoDto(
-                    newLevelPhoto,
-                    Text.newLevel(capybara.getUser().getId().toString(), capybara.getUser().getUsername())
-            ));
+            String message = formatService.get(
+                    CommonMsgKey.NEW_LEVEL,
+                    capybara.getUser().getId(),
+                    capybara.getUser().getUsername()
+            );
+
+            messages.add(new PhotoDto(newLevelPhoto, message));
+
             self.checkNewType(capybara).ifPresent(messages::add);
             capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
             capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
@@ -418,10 +429,14 @@ public class CapybaraService {
         if (capybara.getSatiety().getLevel() >= capybara.getSatiety().getMaxLevel()) {
             capybara.getSatiety().setLevel(0);
             capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
-            messages.add(new PhotoDto(
-                    newLevelPhoto,
-                    Text.newLevel(capybara.getUser().getId().toString(), capybara.getUser().getUsername())
-            ));
+            String message = formatService.get(
+                    CommonMsgKey.NEW_LEVEL,
+                    capybara.getUser().getId(),
+                    capybara.getUser().getUsername()
+            );
+
+            messages.add(new PhotoDto(newLevelPhoto, message));
+
             self.checkNewType(capybara).ifPresent(messages::add);
             capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
             capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
@@ -434,7 +449,7 @@ public class CapybaraService {
         Satiety satiety = capybara.getSatiety();
         throwIf(!satiety.canPerform(), () -> {
             String status = timedActionService.getStatus(satiety);
-            String message = formatService.getMessage(ErrorMsgKey.CAPYBARA_FEED_COOLDOWN, status);
+            String message = formatService.get(ErrorMsgKey.CAPYBARA_FEED_COOLDOWN, status);
             return new CapybaraException(message);
         });
         satiety.setLevel(satiety.getLevel() + feed);
@@ -452,13 +467,13 @@ public class CapybaraService {
                     filter(type -> type.getLevel().equals(level.getMaxValue()))
                     .findFirst()
                     .map(type -> {
+                        String message = formatService.get(CommonMsgKey.NEW_TYPE, type.getLevel(), type.getGift());
+
                         capybara.getLevel().setType(type);
                         capybara.getLevel().setMaxValue(self.calculateMaxLevel(level));
                         capybara.setCurrency(capybara.getCurrency() + type.getGift());
-                        return new PhotoDto(
-                                newTypePhoto,
-                                Text.newType(type.getLabel(), type.getGift())
-                        );
+
+                        return new PhotoDto(newTypePhoto, message);
                     });
         } else {
             return Optional.empty();
@@ -487,7 +502,7 @@ public class CapybaraService {
     @Transactional
     public void changeName(UpdateContext historyDto, String newName) {
         if (newName.length() > 25 || newName.isEmpty()) {
-            throw new CapybaraException(formatService.getMessage(ErrorMsgKey.CAPYBARA_NAME_TOO_LONG));
+            throw new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_NAME_TOO_LONG));
         }
         Capybara capybara = getCapybaraByContext(historyDto);
         capybara.setName(newName);
@@ -539,28 +554,28 @@ public class CapybaraService {
             case ATTACK -> {
                 throwIf(
                         fightCapybara.getFight().getWeapon() != FightBuffWeapon.NONE,
-                        () -> new CapybaraException(formatService.getMessage(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "оружия"))
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "оружия"))
                 );
                 buyWeapon(fightCapybara, FightBuffWeapon.valueOf(buff));
             }
             case DEFEND -> {
                 throwIf(
                         fightCapybara.getFight().getShield() != FightBuffShield.NONE,
-                        () -> new CapybaraException(formatService.getMessage(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "щита"))
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "щита"))
                 );
                 buyShield(fightCapybara, FightBuffShield.valueOf(buff));
             }
             case HEAL -> {
                 throwIf(
                         fightCapybara.getFight().getHeal() != FightBuffHeal.NONE,
-                        () -> new CapybaraException(formatService.getMessage(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "лечения"))
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "лечения"))
                 );
                 buyHeal(fightCapybara, FightBuffHeal.valueOf(buff));
             }
             case SPECIAL -> {
                 throwIf(
                         fightCapybara.getFight().getSpecial() != FightBuffSpecial.NONE,
-                        () -> new CapybaraException(formatService.getMessage(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "спец. оружия"))
+                        () -> new CapybaraException(formatService.get(ErrorMsgKey.CAPYBARA_FIGHT_ONLY_ONE, "спец. оружия"))
                 );
                 buySpecial(fightCapybara, FightBuffSpecial.valueOf(buff));
             }

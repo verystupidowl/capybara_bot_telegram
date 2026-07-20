@@ -14,13 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tggc.botapp.domain.dto.fight.BossFightState;
-import ru.tggc.botapp.domain.dto.fight.enums.BossAction;
-import ru.tggc.botapp.domain.dto.fight.enums.BossType;
-import ru.tggc.botapp.domain.dto.fight.enums.PlayerActionType;
+import ru.tggc.botapp.fight.BossFightState;
+import ru.tggc.botapp.fight.enums.BossAction;
+import ru.tggc.botapp.fight.enums.BossType;
+import ru.tggc.botapp.fight.enums.PlayerActionType;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Fight;
 import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.fight.FightFormatService;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
@@ -32,9 +33,7 @@ import ru.tggc.telegrambotcore.dto.UserDto;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -55,13 +54,17 @@ public class BossFightService {
     private final TimedActionService timedActionService;
     private final BossFightMessageSender messageSender;
     private final FormatService formatService;
+    private final FightFormatService fightFormatterFactory;
 
     @Setter(onMethod = @__({@Lazy, @Autowired}))
     private BossFightService self;
 
     public String joinFight(UpdateContext ctx, String username) {
         Capybara capybara = capybaraService.getFightCapybara(ctx.chatId(), ctx.userId());
-        throwIf(!capybara.getFight().getFightAction().canPerform(), () -> new CapybaraException("u will can join only in " + timedActionService.getStatus(capybara.getFight().getFightAction())));
+        throwIf(!capybara.getFight().getFightAction().canPerform(), () -> {
+            String message = "u will can join only in " + timedActionService.getStatus(capybara.getFight().getFightAction());
+            return new CapybaraException(message);
+        });
         return provider.joinFight(ctx.chatId(), ctx.userId(), username);
     }
 
@@ -73,16 +76,13 @@ public class BossFightService {
         Optional<BossFightState> optional = provider.getFight(chatId);
         throwIf(optional.isPresent(), () -> new CapybaraException("Fight already in progress"));
 
-        BossFightState fight = new BossFightState();
         BossType bossType = RandomUtils.geetRandomBoss();
         BossFightState.BossState bossState = BossFightState.BossState.builder()
                 .bossType(bossType)
                 .bossHp(bossType.getHp())
                 .build();
-        fight.setBossState(bossState);
-        fight.setTurn(1);
-        fight.setPlayers(new HashMap<>());
-        fight.setActionLogs(new ArrayList<>());
+
+        BossFightState fight = new BossFightState(bossState);
 
         Set<UserDto> users = provider.popPreparedUsers(chatId);
         users.forEach(user -> {
@@ -102,7 +102,7 @@ public class BossFightService {
         });
 
         provider.startFight(chatId, fight);
-        return formatService.getMessage(FightMsgKey.FIGHT_START_MESSAGE, bossType.getName(), bossType.getHp());
+        return formatService.get(FightMsgKey.START_MESSAGE, bossType.getName(), bossType.getHp());
     }
 
     public String getUsers(UpdateContext ctx) {
@@ -110,7 +110,7 @@ public class BossFightService {
         String usernames = users.stream()
                 .map(UserDto::username)
                 .collect(Collectors.joining("\n"));
-        return formatService.getMessage(FightMsgKey.FIGHT_PREPARING_USERS, users.size(), usernames);
+        return formatService.get(FightMsgKey.PREPARING_USERS, users.size(), usernames);
     }
 
     public Response registerAction(CallbackQuery query, UserDto userDto, PlayerActionType action) {
@@ -123,7 +123,7 @@ public class BossFightService {
                     Integer messageId = query.maybeInaccessibleMessage().messageId();
 
                     if (ps == null || !ps.isAlive()) {
-                        return Response.of(new SendMessage(chatId, formatService.getMessage(FightMsgKey.FIGHT_CANT_ACT)));
+                        return Response.of(new SendMessage(chatId, formatService.get(FightMsgKey.CANT_ACT)));
                     }
 
                     if (ps.getLastAction() != null) {
@@ -153,7 +153,7 @@ public class BossFightService {
                                 });
                     }
                     String caption = ((Message) query.maybeInaccessibleMessage()).caption();
-                    String text = formatService.getMessage(FightMsgKey.FIGHT_PLAYER_CHOSE, caption, ps.getUsername(), action.getLabel());
+                    String text = formatService.get(FightMsgKey.PLAYER_CHOSE, caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
                             .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
@@ -219,7 +219,11 @@ public class BossFightService {
                 continue;
             }
 
-            response.append(ps.getLastAction().apply(fight, ps));
+            ps.getLastAction().apply(fight, ps).events().forEach(event -> {
+                String action = fightFormatterFactory.format(event);
+                response.append(action).append("\n");
+            });
+
             ps.endTurn();
         }
         BossFightState.BossState boss = fight.getBossState();

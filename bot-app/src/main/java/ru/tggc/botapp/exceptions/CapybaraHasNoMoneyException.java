@@ -1,11 +1,11 @@
 package ru.tggc.botapp.exceptions;
 
-import ru.tggc.botapp.util.Text;
+import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 
 public class CapybaraHasNoMoneyException extends CapybaraException {
 
     public CapybaraHasNoMoneyException() {
-        super(Text.NO_MONEY);
+        super(ErrorMsgKey.NO_MONEY);
     }
 
 }

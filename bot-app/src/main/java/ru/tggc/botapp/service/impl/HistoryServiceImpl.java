@@ -3,14 +3,17 @@ package ru.tggc.botapp.service.impl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.Nullable;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.dto.DialogSession;
 import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.service.HistoryService;
 
 import java.time.Duration;
@@ -22,12 +25,13 @@ import java.util.function.Consumer;
 @Service
 @RequiredArgsConstructor
 public class HistoryServiceImpl implements HistoryService {
-    private final Cache<UpdateContext, DialogSession> cache = Caffeine.newBuilder()
+    private final Cache<@NonNull UpdateContext, DialogSession> cache = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofMinutes(3))
             .maximumSize(10_000)
             .build();
 
     private final KeyboardFactory keyboardFactory;
+    private final FormatService formatService;
 
     public void setHistory(UpdateContext ctx, HistoryType type, Consumer<DialogSession> failAction) {
         DialogSession prev = cache.asMap().putIfAbsent(ctx, new DialogSession(type, new HashMap<>()));
@@ -38,7 +42,10 @@ public class HistoryServiceImpl implements HistoryService {
 
     public void setHistory(UpdateContext ctx, HistoryType type) {
         setHistory(ctx, type, prev -> {
-            throw new CapybaraException("Ты уже делаешь " + prev.state().getLabel(), keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE));
+            throw new CapybaraException(
+                    formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
+                    keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE)
+            );
         });
     }
 

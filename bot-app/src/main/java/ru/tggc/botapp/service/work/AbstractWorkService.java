@@ -31,11 +31,11 @@ public abstract class AbstractWorkService implements WorkService {
         capybara.setCurrency(capybara.getCurrency() + salary);
 
         List<String> messages = new ArrayList<>();
-        messages.add(formatService.getMessage(WorkMsgKey.TAKE_FROM_WORK, salary));
+        messages.add(formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary));
 
         work.setRise(work.getRise() + 1);
         if (checkRise(capybara)) {
-            messages.add(formatService.getMessage(WorkMsgKey.NEW_RISE));
+            messages.add(formatService.get(WorkMsgKey.NEW_RISE));
         }
 
         return messages;
@@ -90,14 +90,14 @@ public abstract class AbstractWorkService implements WorkService {
 
     protected void checkHasWork(Capybara capybara) {
         throwIf(!checkWork(capybara), () -> {
-            String message = formatService.getMessage(WorkMsgKey.ERROR_HAS_NO_WORK);
+            String message = formatService.get(WorkMsgKey.ERROR_HAS_NO_WORK);
             return new CapybaraException(message);
         });
     }
 
     protected void checkHasNoWork(Capybara capybara) {
         throwIf(checkWork(capybara), () -> {
-            String message = formatService.getMessage(WorkMsgKey.ERROR_ALREADY_HAS_WORK);
+            String message = formatService.get(WorkMsgKey.ERROR_ALREADY_HAS_WORK);
             return new CapybaraException(message);
         });
     }

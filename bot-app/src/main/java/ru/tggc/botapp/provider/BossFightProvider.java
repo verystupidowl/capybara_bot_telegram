@@ -2,8 +2,9 @@ package ru.tggc.botapp.provider;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.NonNull;
 import org.springframework.stereotype.Component;
-import ru.tggc.botapp.domain.dto.fight.BossFightState;
+import ru.tggc.botapp.fight.BossFightState;
 import ru.tggc.telegrambotcore.dto.UserDto;
 
 import java.time.Duration;
@@ -15,11 +16,11 @@ import java.util.stream.Collectors;
 
 @Component
 public class BossFightProvider {
-    private final Cache<Long, BossFightState> currentFights = Caffeine.newBuilder()
+    private final Cache<@NonNull Long, BossFightState> currentFights = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofHours(1))
             .maximumSize(10_000)
             .build();
-    private final Cache<Long, Set<UserDto>> preparingFights = Caffeine.newBuilder()
+    private final Cache<@NonNull Long, Set<UserDto>> preparingFights = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofHours(1))
             .maximumSize(10_000)
             .build();
@@ -52,7 +53,7 @@ public class BossFightProvider {
 
     public void leaveFight(Long chatId, Long userId) {
         Set<UserDto> users = preparingFights.get(chatId, _ -> new HashSet<>());
-        Objects.requireNonNull(users).removeIf(u -> u.userId().equals(userId));
+        Objects.requireNonNull(users).removeIf(u -> u.userId() == userId);
         preparingFights.put(chatId, users);
     }
 

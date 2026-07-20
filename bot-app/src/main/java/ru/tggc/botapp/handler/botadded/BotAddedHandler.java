@@ -15,7 +15,7 @@ public record BotAddedHandler(KeyboardFactory keyboardFactory, FormatService for
     @BotAddedHandle
     public Response botAdded(@Ctx UpdateContext ctx) {
         return ctx.send(
-                formatService.getMessage(CommonMsgKey.GREETINGS),
+                formatService.get(CommonMsgKey.GREETINGS),
                 keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA)
         );
     }

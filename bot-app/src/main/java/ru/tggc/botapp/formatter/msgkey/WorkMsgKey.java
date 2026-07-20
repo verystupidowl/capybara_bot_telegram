@@ -11,8 +11,13 @@ public enum WorkMsgKey implements MsgKey {
     NEW_RISE("work.new-rise"),
     BUSTED("work.busted"),
 
+    LIST_OF_THINGS_FOR_ROBBERY("work.list-of-things-for-robbery"),
+    LIST_OF_THINGS_FOR_BIG_IT_PROJECT("work.list-of-things-for-big-it-project"),
+    LIST_OF_THINGS_FOR_CASH_REPORT("work.list-of-things-for-cash-report"),
+
     ERROR_HAS_NO_WORK("work.error.has-no-work"),
-    ERROR_ALREADY_HAS_WORK("work.error.already-has-work");
+    ERROR_ALREADY_HAS_WORK("work.error.already-has-work"),
+    ;
 
     private final String key;
 }

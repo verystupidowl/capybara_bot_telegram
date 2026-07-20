@@ -1,6 +1,6 @@
 package ru.tggc.botapp.keyboard;
 
-import ru.tggc.botapp.domain.dto.CapybaraInfoDto;
+import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.model.enums.fight.BuffType;

@@ -1,6 +1,6 @@
 package ru.tggc.botapp.domain.model.enums.fight;
 
-import ru.tggc.botapp.domain.dto.fight.BossFightState;
+import ru.tggc.botapp.fight.BossFightState;
 
 import java.util.function.Consumer;
 

@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,8 +28,8 @@ public class Work {
     private WorkAction workAction;
     private Integer rise;
     private Integer index;
-//    @OneToOne
-//    private BigJob bigJob;
+    @OneToOne
+    private BigJob bigJob;
     @Enumerated(EnumType.STRING)
     private WorkType workType;
 }

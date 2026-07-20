@@ -1,6 +1,5 @@
 package ru.tggc.botapp.handler.admin;
 
-import com.pengrad.telegrambot.model.Message;
 import ru.tggc.botapp.domain.dto.AdminStats;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
@@ -12,7 +11,6 @@ import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.handle.MessageHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.annotation.params.HandleParam;
-import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.annotation.params.Username;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
@@ -38,13 +36,22 @@ public record AdminHandler(AdminService adminService,
         );
     }
 
-    @CallbackHandle(value = "broadcast", canPublic = false, canPrivate = true, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
+    @CallbackHandle(
+            value = "broadcast",
+            canPublic = false,
+            canPrivate = true,
+            requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
+    )
     public Response startBroadcast(@Ctx UpdateContext ctx) {
         historyService.setHistory(ctx, HistoryType.BROADCAST);
         return ctx.send("Введите сообщение для рассылки!");
     }
 
-    @MessageHandle(value = "Админка", canPrivate = true, canPublic = false, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
+    @MessageHandle(value = "Админка",
+            canPrivate = true,
+            canPublic = false,
+            requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
+    )
     public Response openAdmin(@Ctx UpdateContext ctx) {
         AdminStats stats = adminService.getStats();
         return ctx.send(
@@ -53,13 +60,16 @@ public record AdminHandler(AdminService adminService,
         );
     }
 
-    @MessageHandle(value = "block ${username} ${reason}", canPrivate = true, requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN})
-    public Response block(@MessageParam Message message,
-                          @Ctx UpdateContext ctx,
+    @MessageHandle(value = "block ${username} ${reason}",
+            canPrivate = true,
+            requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
+    )
+    public Response block(@Ctx UpdateContext ctx,
                           @HandleParam("reason") String reason,
                           @HandleParam("username") String username,
                           @Username String reporterUsername) {
-        adminService.blockUser(username.toLowerCase(Locale.ROOT).replace("@", ""), reason, reporterUsername);
+        username = username.toLowerCase(Locale.ROOT).replace("@", "");
+        adminService.blockUser(username, reason, reporterUsername);
         return ctx.send("Пользователь " + username + " забанен по причине " + reason);
     }
 }

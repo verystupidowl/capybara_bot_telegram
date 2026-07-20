@@ -28,7 +28,7 @@ public class UserBlockedAccessChecker implements AccessChecker {
     public AccessResult check(User from, @NotNull Method method, @NotNull Chat chat) {
         return userService.getBlockReason(from.username())
                 .map(result -> {
-                    String message = formatService.getMessage(
+                    String message = formatService.get(
                             AdminMsgKey.BLOCK_MESSAGE,
                             from.username(),
                             result.getReporter(),

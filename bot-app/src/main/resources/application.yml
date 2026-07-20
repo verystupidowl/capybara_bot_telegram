@@ -11,7 +11,7 @@ spring:
   jpa:
     show-sql: false
     hibernate:
-    #          ddl-auto: create
+#      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -27,6 +27,15 @@ telegram:
   webhook:
     url: ${WEBHOOK_URL}
     path: ${WEBHOOK_PATH}
+  base-names:
+    - messages/common/messages
+    - messages/common/lists
+    - messages/fight/messages
+    - messages/admin/admin_messages
+    - messages/casino/casino_messages
+    - messages/work/work_messages
+    - messages/race/messages
+    - messages/info/info_messages
 
 bot:
   photos:

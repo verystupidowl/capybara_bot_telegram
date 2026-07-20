@@ -30,8 +30,7 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
     }
 
     @CallbackHandle("set_job_${jobType}")
-    public Response setJob(@Ctx UpdateContext ctx,
-                           @HandleParam("jobType") WorkType workType) {
+    public Response setJob(@Ctx UpdateContext ctx, @HandleParam("jobType") WorkType workType) {
         String photoUrl = capybaraService.setJob(ctx, workType);
         return ctx.edit(
                 photoUrl,

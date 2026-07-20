@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.tggc.botapp.domain.dto.fight.BossFightState;
+import ru.tggc.botapp.fight.BossFightState;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;

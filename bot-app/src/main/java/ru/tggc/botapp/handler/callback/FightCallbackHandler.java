@@ -2,13 +2,13 @@ package ru.tggc.botapp.handler.callback;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
-import ru.tggc.botapp.domain.dto.fight.enums.PlayerActionType;
 import ru.tggc.botapp.domain.model.enums.fight.BuffType;
+import ru.tggc.botapp.fight.enums.PlayerActionType;
+import ru.tggc.botapp.formatter.fight.FightFormatService;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.BossFightService;
 import ru.tggc.botapp.service.CapybaraService;
-import ru.tggc.botapp.util.Text;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.CallbackParam;
@@ -22,7 +22,8 @@ import ru.tggc.telegrambotcore.dto.UserDto;
 @BotHandler
 public record FightCallbackHandler(BossFightService bossFightService,
                                    CapybaraService capybaraService,
-                                   KeyboardFactory keyboardFactory) {
+                                   KeyboardFactory keyboardFactory,
+                                   FightFormatService fightFormatService) {
     @CallbackHandle("fight_action_${action}")
     public Response fightStep(@Ctx UpdateContext ctx,
                               @Username String username,
@@ -35,7 +36,7 @@ public record FightCallbackHandler(BossFightService bossFightService,
     public Response fightInfo(@Ctx UpdateContext ctx) {
         FightCapybaraDto fightInfo = capybaraService.getFightInfo(ctx);
         return ctx.edit(
-                Text.getFightInfo(fightInfo), //todo
+                fightFormatService.getFightInfo(fightInfo),
                 keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_INFO, fightInfo)
         );
     }
@@ -62,7 +63,8 @@ public record FightCallbackHandler(BossFightService bossFightService,
 
     @CallbackHandle("maybe_start_fight")
     public Response maybeStartFight(@Ctx UpdateContext ctx) {
-        return ctx.edit(bossFightService.getUsers(ctx), keyboardFactory.getKeyboardInline(KeyboardKey.MAYBE_START_FIGHT));
+        String message = bossFightService.getUsers(ctx);
+        return ctx.edit(message, keyboardFactory.getKeyboardInline(KeyboardKey.MAYBE_START_FIGHT));
     }
 
     @CallbackHandle("list_of_buffs")
@@ -72,7 +74,7 @@ public record FightCallbackHandler(BossFightService bossFightService,
 
     @CallbackHandle("fight_buffs_${buffType}")
     public Response fightBuffs(@Ctx UpdateContext ctx, @HandleParam("buffType") BuffType buffType) {
-        String buffs = Text.getBuffs(buffType);
+        String buffs = fightFormatService.getBuffs(buffType);
         return ctx.edit(buffs, keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT_BUFFS, buffType));
     }
 

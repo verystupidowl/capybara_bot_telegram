@@ -61,6 +61,7 @@ public class CapybaraBuilder {
                 .index(0)
                 .rise(0)
                 .workAction(new WorkAction())
+                .bigJob(bigJob)
                 .workType(WorkType.NONE)
                 .build();
         Race race = Race.builder()

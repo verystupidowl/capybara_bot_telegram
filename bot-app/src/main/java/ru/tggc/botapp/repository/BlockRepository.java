@@ -1,5 +1,6 @@
 package ru.tggc.botapp.repository;
 
+import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,7 @@ import ru.tggc.botapp.domain.model.BlockInfo;
 import java.util.Optional;
 
 @Repository
-public interface BlockRepository extends JpaRepository<BlockInfo, Long> {
+public interface BlockRepository extends JpaRepository<@NonNull BlockInfo, @NonNull Long> {
 
     @NotNull
     @EntityGraph(attributePaths = {

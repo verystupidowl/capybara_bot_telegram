@@ -14,12 +14,13 @@ import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.exceptions.CapybaraTiredException;
 import ru.tggc.botapp.exceptions.UserNotFoundException;
+import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
-import ru.tggc.botapp.util.Text;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.ResponseBuilder;
 import ru.tggc.telegrambotcore.exception.ExceptionHandler;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
     private Long adminId;
 
     private final KeyboardFactory keyboardFactory;
+    private final FormatService formatService;
 
     @NotNull
     public Response handleException(@NotNull Exception e, Chat chat, @NotNull User from) {
@@ -49,23 +51,23 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
         switch (cause) {
             case CapybaraNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
-                SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
+                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
                 message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case UserNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
-                SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
+                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
                 message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case CapybaraAlreadyExistsException ex -> {
                 log.info(ex.getMessage(), chatId);
-                response = Response.of(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
+                response = Response.of(new SendMessage(chatId, formatService.get(ErrorMsgKey.ALREADY_HAVE)));
             }
             case CapybaraHasNoMoneyException ex -> {
                 log.info(ex.getMessage());
-                String messageToSend = Text.NO_MONEY;
+                String messageToSend = formatService.get(ErrorMsgKey.NO_MONEY);
                 response = Response.of(new SendMessage(chatId, messageToSend));
             }
             case CapybaraTiredException ex -> {
@@ -74,8 +76,14 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
                 response = Response.of(sm);
             }
             case CapybaraException ex -> {
-                log.info(ex.getMessage(), chatId);
-                String messageToSend = ex.getMessageToSend();
+                String messageToSend;
+                if (ex.hasMsgKey()) {
+                    messageToSend = formatService.get(ex.getMsgKey());
+                } else {
+                    messageToSend = ex.getMessageToSend();
+                }
+
+                log.warn(ex.getMessage(), ex);
                 SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE));
                 ifPresent(ex.getMarkup(), sm::replyMarkup);
                 response = Response.of(sm);

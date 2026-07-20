@@ -34,14 +34,14 @@ public class CriminalWorkService extends AbstractWorkService {
         List<String> messages = new ArrayList<>();
         if (salary != -1) {
             capybara.setCurrency(capybara.getCurrency() + salary);
-            messages.add(formatService.getMessage(WorkMsgKey.TAKE_FROM_WORK, salary));
+            messages.add(formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary));
             work.setRise(work.getRise() + 1);
             if (checkRise(capybara)) {
-                messages.add(formatService.getMessage(WorkMsgKey.NEW_RISE));
+                messages.add(formatService.get(WorkMsgKey.NEW_RISE));
             }
         } else {
             capybara.setCurrency(capybara.getCurrency() - capybara.getCurrency() / 10);
-            messages.add(formatService.getMessage(WorkMsgKey.BUSTED));
+            messages.add(formatService.get(WorkMsgKey.BUSTED));
         }
 
         return messages;

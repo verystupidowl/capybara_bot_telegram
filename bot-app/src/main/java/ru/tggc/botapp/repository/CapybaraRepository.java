@@ -1,5 +1,6 @@
 package ru.tggc.botapp.repository;
 
+import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
+public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @NonNull Long> {
 
     @NotNull
     @EntityGraph(attributePaths = {

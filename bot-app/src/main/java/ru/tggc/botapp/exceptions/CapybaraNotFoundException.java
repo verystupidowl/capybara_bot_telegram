@@ -1,12 +1,12 @@
 package ru.tggc.botapp.exceptions;
 
 import lombok.Getter;
-import ru.tggc.botapp.util.Text;
+import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 
 @Getter
 public class CapybaraNotFoundException extends CapybaraException {
 
     public CapybaraNotFoundException() {
-        super(Text.DONT_HAVE_CAPYBARA);
+        super(ErrorMsgKey.CAPYBARA_NOT_FOUND);
     }
 }

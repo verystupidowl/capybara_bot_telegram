@@ -1,8 +1,10 @@
 package ru.tggc.botapp.domain.model.enums;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@RequiredArgsConstructor
 public enum ImprovementValue {
     BOOTS("Удобные ботиночки", 30, 10, 10, 50),
     WATERMELON("Вкусный арбуз", -10, 10, 0, 100),
@@ -14,12 +16,4 @@ public enum ImprovementValue {
     private final int winHappiness;
     private final int loseHappiness;
     private final int cost;
-
-    ImprovementValue(String label, Integer chance, int winHappiness, int loseHappiness, int cost) {
-        this.label = label;
-        this.chance = chance;
-        this.winHappiness = winHappiness;
-        this.loseHappiness = loseHappiness;
-        this.cost = cost;
-    }
 }

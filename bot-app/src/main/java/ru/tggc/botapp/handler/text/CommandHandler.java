@@ -2,18 +2,19 @@ package ru.tggc.botapp.handler.text;
 
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.dto.TopCapybaraDto;
-import ru.tggc.botapp.formatter.CapybaraFormatter;
+import ru.tggc.botapp.formatter.common.CapybaraFormatter;
+import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardFactory;
 import ru.tggc.botapp.keyboard.KeyboardKey;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CommonService;
-import ru.tggc.botapp.util.Text;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CommandHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +23,8 @@ import java.util.stream.Collectors;
 public record CommandHandler(CapybaraService capybaraService,
                              KeyboardFactory keyboardFactory,
                              CommonService commonService,
-                             CapybaraFormatter capybaraFormatter) {
+                             CapybaraFormatter capybaraFormatter,
+                             FormatService formatService) {
     @CommandHandle(value = "start", canPrivate = true, canPublic = false)
     public Response start(@Ctx UpdateContext ctx) {
         return ctx.send(commonService.start(ctx.chatId()));
@@ -30,7 +32,7 @@ public record CommandHandler(CapybaraService capybaraService,
 
     @CommandHandle(value = "command_list", canPrivate = true)
     public Response sendCommandList(@Ctx UpdateContext ctx) {
-        return ctx.send(Text.LIST_OF_COMMANDS);
+        return ctx.send(formatService.get(CommonMsgKey.LIST_OF_COMMANDS));
     }
 
     @CommandHandle("my_capybara")

@@ -38,7 +38,7 @@ public class AdminService {
         long userCount = userRepository.count();
         long blockedUsers = blockRepository.count();
         long capybaraCount = capybaraRepository.count();
-        String messageToSend = formatService.getMessage(AdminMsgKey.ADMIN_STATS, userCount, blockedUsers, capybaraCount);
+        String messageToSend = formatService.get(AdminMsgKey.ADMIN_STATS, userCount, blockedUsers, capybaraCount);
 
         return new AdminStats(
                 userCount,
@@ -59,7 +59,7 @@ public class AdminService {
                 //ignore
             }
         })).thenRun(() -> {
-            String message = formatService.getMessage(AdminMsgKey.ADMIN_BROADCAST_ENDED, chatIds.size());
+            String message = formatService.get(AdminMsgKey.ADMIN_BROADCAST_ENDED, chatIds.size());
             telegramBotSender.send(Response.of(new SendMessage(chatId, message)));
         });
     }
@@ -68,12 +68,12 @@ public class AdminService {
     public void blockUser(String username, String reason, String reporterUsername) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
-                    String message = formatService.getMessage(ErrorMsgKey.USER_USERNAME_NOT_FOUND, username);
+                    String message = formatService.get(ErrorMsgKey.USER_USERNAME_NOT_FOUND, username);
                     return new UserNotFoundException(message);
                 });
         User reporter = userRepository.findByUsername(reporterUsername)
                 .orElseThrow(() -> {
-                    String message = formatService.getMessage(ErrorMsgKey.USER_USERNAME_NOT_FOUND, reporterUsername);
+                    String message = formatService.get(ErrorMsgKey.USER_USERNAME_NOT_FOUND, reporterUsername);
                     return new UserNotFoundException(message);
                 });
 
