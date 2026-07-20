@@ -5,13 +5,18 @@ import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
+import ru.tggc.botapp.service.TimedActionService;
 
 import java.util.function.Function;
 
 import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
 
 @Component
-public class MyCapybaraMapper {
+public class MyCapybaraMapper extends AbstractMapper<Capybara, MyCapybaraDto> {
+
+    public MyCapybaraMapper(TimedActionService timedActionService) {
+        super(timedActionService);
+    }
 
     public MyCapybaraDto toDto(Capybara capybara) {
         Capybara wedding = capybara.getSpouse();
