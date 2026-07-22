@@ -72,7 +72,7 @@ public class CapybaraFormatter {
         if (!tea.isWaiting()) {
             return availability(tea.isCanAct(), tea.getTimeToAct());
         }
-        return "в ожидании собеседника";
+        return formatService.get(InfoMsgKey.STATUS_TEA_WAITING);
     }
 
     private String getWorkStatus(WorkInfoDto work) {

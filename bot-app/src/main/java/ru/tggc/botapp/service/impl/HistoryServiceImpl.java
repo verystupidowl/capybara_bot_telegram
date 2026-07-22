@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.dto.DialogSession;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.HistoryService;
 
 import java.time.Duration;
@@ -44,7 +44,7 @@ public class HistoryServiceImpl implements HistoryService {
         setHistory(ctx, type, prev -> {
             throw new CapybaraException(
                     formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
-                    keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE)
+                    keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
             );
         });
     }

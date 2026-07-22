@@ -17,7 +17,7 @@ public class CashierWorkService extends AbstractWorkService {
     }
 
     @Override
-    public WorkType getJobType() {
+    public WorkType getWorkType() {
         return WorkType.CASHIER;
     }
 

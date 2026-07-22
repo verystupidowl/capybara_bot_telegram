@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.fight.BossFightState;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class BossFightMessageSender {
             String text = steps.stream()
                     .map(AnimationStep::getText)
                     .collect(Collectors.joining());
-            telegramBot.execute(new EditMessageCaption(chatId, messageId).caption(text).replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT)));
+            telegramBot.execute(new EditMessageCaption(chatId, messageId).caption(text).replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT)));
             fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
             fight.setActionLogs(new ArrayList<>());
         }, (steps.size() + 1) * 4L);

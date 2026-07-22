@@ -56,3 +56,45 @@ bot:
     wedding: https://vk.com/photo-209917797_457245520
     fight:
       animation: https://thumbs.dreamstime.com/b/%D0%BF%D1%80%D0%B8%D0%BC%D0%B0%D0%BD%D0%BA%D0%B0-%D0%BA%D1%80%D0%BE%D0%BA%D0%BE-%D0%B8-%D0%B0-%D0%B0%D1%82%D0%B0%D0%BA%D1%83%D1%8F-75539401.jpg
+    default-photos:
+      - https://vk.com/photo-206143282_457239574
+      - https://vk.com/photo-206143282_457239456
+      - https://vk.com/photo-206143282_457239409
+      - https://vk.com/photo-206143282_457239396
+      - https://vk.com/photo-206143282_457239375
+      - https://vk.com/photo-206143282_457239334
+      - https://vk.com/photo-206143282_457239317
+      - https://vk.com/photo-206143282_457239262
+      - https://vk.com/photo-206143282_457239201
+      - https://vk.com/photo-206143282_457239189
+      - https://vk.com/photo-206143282_457239167
+      - https://vk.com/photo-206143282_457239164
+      - https://vk.com/photo-206143282_457239104
+      - https://vk.com/photo-206143282_457239095
+      - https://vk.com/photo-206143282_457239073
+      - https://vk.com/photo-206143282_457239037
+      - https://vk.com/photo-206143282_457239025
+    race:
+      improvement:
+        boots: https://vk.com/photo-209917797_457246198
+        watermelon: https://vk.com/photo-209917797_457246200
+        anti-lose: https://vk.com/photo-209917797_457246201
+      race-photos:
+        - url: https://vk.com/photo-209917797_457241919
+          type: PHOTO
+        - url: https://vk.com/photo-209917797_457241924
+          type: PHOTO
+        - url: https://vk.com/photo-209917797_457241923
+          type: PHOTO
+        - url: https://vk.com/photo-209917797_457241922
+          type: PHOTO
+        - url: https://vk.com/photo-209917797_457241921
+          type: PHOTO
+        - url: https://vk.com/photo-209917797_457241920
+          type: PHOTO
+  #      - url: CgACAgQAAyEFAAS-gX0XAAIHtGjYEbh8dKraYQiUcwmSLVmUVDYfAAIVAwAC1nKsUYoLomnV0FyENgQ
+  #        type: DOC
+  #      - url: CgACAgQAAyEFAAS-gX0XAAIHtmjYEz6sNvRTpm6fxpdXTztLTgtZAAJ1AwACxpoFU0qXGu-MvYwDNgQ
+  #        type: DOC
+  #      - url: CgACAgQAAyEFAAS-gX0XAAIHt2jYE10Ytug2qfLFbZioVsSOFBMpAAL3AgAC-40MU9lbtg_EuWUxNgQ
+  #        type: DOC

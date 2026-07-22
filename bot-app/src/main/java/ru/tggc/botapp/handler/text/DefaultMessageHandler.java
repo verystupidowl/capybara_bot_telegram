@@ -1,8 +1,7 @@
 package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
@@ -14,6 +13,7 @@ import ru.tggc.telegrambotcore.annotation.handle.DefaultMessageHandle;
 import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
 public record DefaultMessageHandler(HistoryServiceImpl historyService,
@@ -56,7 +56,7 @@ public record DefaultMessageHandler(HistoryServiceImpl historyService,
         String username = text.substring(1);
         raceService.sendRequest(username, ctx);
         historyService.removeFromHistory(ctx);
-        return ctx.send(text + ", тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
+        return ctx.send(text + ", тебе бросили вызов!", keyboardFactory.getKeyboardInline(KeyboardType.RACE));
     }
 
     private Response slots(UpdateContext historyDto, String bet) {

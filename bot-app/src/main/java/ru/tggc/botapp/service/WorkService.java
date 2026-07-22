@@ -11,7 +11,7 @@ public interface WorkService {
 
     void goWork(Capybara capybara);
 
-    WorkType getJobType();
+    WorkType getWorkType();
 
     List<String> takeFromWork(Capybara capybara);
 

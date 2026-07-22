@@ -1,14 +1,14 @@
 package ru.tggc.botapp.handler.botadded;
 
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.telegrambotcore.annotation.handle.BotAddedHandle;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
 public record BotAddedHandler(KeyboardFactory keyboardFactory, FormatService formatService) {
@@ -16,7 +16,7 @@ public record BotAddedHandler(KeyboardFactory keyboardFactory, FormatService for
     public Response botAdded(@Ctx UpdateContext ctx) {
         return ctx.send(
                 formatService.get(CommonMsgKey.GREETINGS),
-                keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA)
+                keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA)
         );
     }
 }

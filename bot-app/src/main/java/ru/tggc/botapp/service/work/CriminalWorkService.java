@@ -26,21 +26,21 @@ public class CriminalWorkService extends AbstractWorkService {
 
     @Override
     public List<String> takeFromWork(Capybara capybara) {
-        checkHasWork(capybara);
         Work work = capybara.getWork();
+        checkHasWork(work);
         work.getWorkAction().takeFromWork();
 
-        int salary = getJobType().getCalculateSalary().apply(work.getIndex());
+        int salary = getWorkType().getCalculateSalary().apply(work.getIndex());
         List<String> messages = new ArrayList<>();
         if (salary != -1) {
-            capybara.setCurrency(capybara.getCurrency() + salary);
+            capybara.increaseMoney(salary);
             messages.add(formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary));
             work.setRise(work.getRise() + 1);
             if (checkRise(capybara)) {
                 messages.add(formatService.get(WorkMsgKey.NEW_RISE));
             }
         } else {
-            capybara.setCurrency(capybara.getCurrency() - capybara.getCurrency() / 10);
+            capybara.increaseMoney((int) (capybara.getCurrency() / 10));
             messages.add(formatService.get(WorkMsgKey.BUSTED));
         }
 
@@ -63,7 +63,7 @@ public class CriminalWorkService extends AbstractWorkService {
     }
 
     @Override
-    public WorkType getJobType() {
+    public WorkType getWorkType() {
         return WorkType.CRIMINAL;
     }
 }

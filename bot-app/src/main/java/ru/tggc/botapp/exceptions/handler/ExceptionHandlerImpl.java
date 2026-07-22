@@ -15,12 +15,12 @@ import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.exceptions.CapybaraTiredException;
 import ru.tggc.botapp.exceptions.UserNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.ResponseBuilder;
 import ru.tggc.telegrambotcore.exception.ExceptionHandler;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
@@ -52,13 +52,13 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
             case CapybaraNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
                 SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
-                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case UserNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
                 SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
-                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case CapybaraAlreadyExistsException ex -> {

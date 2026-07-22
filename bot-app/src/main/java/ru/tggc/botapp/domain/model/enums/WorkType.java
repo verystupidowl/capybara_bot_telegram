@@ -10,7 +10,7 @@ public enum WorkType {
     NONE("Безработный", null),
     PROGRAMMING("Программист", index -> index != 0 ? RandomUtils.getRandomInt(index * 100) + 100 : 0),
     CASHIER("Кассир", index -> RandomUtils.getRandomInt(index + 1) * 200 + 1),
-    CRIMINAL("Бандит>", index -> {
+    CRIMINAL("Бандит", index -> {
         int randomSalary = RandomUtils.getRandomInt(index + 1) * 10 + 30;
         if (randomSalary < 100) {
             return -1;

@@ -1,8 +1,7 @@
 package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.BossFightService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
@@ -15,6 +14,7 @@ import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.annotation.params.Username;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
 public record CommandTextHandler(CapybaraService capybaraService,
@@ -40,7 +40,7 @@ public record CommandTextHandler(CapybaraService capybaraService,
     }
 
     @MessageHandle("перевести дольки ${amount} ${username}")
-    public Response transferMoney(@HandleParam("amount") Long amount,
+    public Response transferMoney(@HandleParam("amount") Integer amount,
                                   @HandleParam("username") String username,
                                   @MessageParam Message message,
                                   @Ctx UpdateContext ctx) {
@@ -58,6 +58,6 @@ public record CommandTextHandler(CapybaraService capybaraService,
 
     @MessageHandle("start fight")
     public Response startFight(@Ctx UpdateContext ctx, @Username String username) {
-        return ctx.send(bossFightService.startFight(ctx.chatId()), keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
+        return ctx.send(bossFightService.startFight(ctx.chatId()), keyboardFactory.getKeyboardInline(KeyboardType.FIGHT));
     }
 }

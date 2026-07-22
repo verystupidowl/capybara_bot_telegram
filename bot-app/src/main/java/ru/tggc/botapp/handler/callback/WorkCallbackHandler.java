@@ -1,8 +1,8 @@
 package ru.tggc.botapp.handler.callback;
 
 import ru.tggc.botapp.domain.model.enums.WorkType;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
@@ -10,12 +10,15 @@ import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.annotation.params.HandleParam;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.util.List;
 
 @BotHandler
 public record WorkCallbackHandler(CapybaraService capybaraService,
-                                  KeyboardFactory keyboardFactory) {
+                                  KeyboardFactory keyboardFactory,
+                                  FormatService formatService) {
     @CallbackHandle("take_from_work")
     public Response takeFromWork(@Ctx UpdateContext ctx) {
         List<String> texts = capybaraService.takeFromWork(ctx);
@@ -34,7 +37,8 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
         String photoUrl = capybaraService.setJob(ctx, workType);
         return ctx.edit(
                 photoUrl,
-                "Твоя капибара теперь " + workType.getLabel() + "! Поздравляю!"
+                formatService.get(WorkMsgKey.NEW_WORK, workType.getLabel()),
+                keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
     }
 
@@ -42,7 +46,7 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
     public Response getJob(@Ctx UpdateContext ctx) {
         boolean hasWork = capybaraService.hasWork(ctx);
         if (!hasWork) {
-            return ctx.edit("Выбери работу", keyboardFactory.getKeyboardInline(KeyboardKey.NEW_WORK));
+            return ctx.edit("Выбери работу", keyboardFactory.getKeyboardInline(KeyboardType.NEW_WORK));
         } else {
             return ctx.edit("Твоя капибара уже имеет работу");
         }

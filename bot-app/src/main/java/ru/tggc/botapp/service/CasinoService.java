@@ -17,8 +17,7 @@ import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.CasinoMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.CasinoTargetType;
 import ru.tggc.botapp.util.HistoryType;
@@ -29,6 +28,7 @@ import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 import ru.tggc.telegrambotcore.util.Utils;
 
@@ -70,7 +70,7 @@ public class CasinoService {
                 casinoSetBetPhoto,
                 "Введите цель",
                 historyDto.chatId(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.CASINO_TARGET)
+                keyboardFactory.getKeyboardInline(KeyboardType.CASINO_TARGET)
         );
     }
 

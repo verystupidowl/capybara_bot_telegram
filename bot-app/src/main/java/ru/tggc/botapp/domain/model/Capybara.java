@@ -22,9 +22,12 @@ import ru.tggc.botapp.domain.model.timedaction.Happiness;
 import ru.tggc.botapp.domain.model.timedaction.Satiety;
 import ru.tggc.botapp.domain.model.timedaction.Tea;
 import ru.tggc.botapp.domain.model.timedaction.WeddingGift;
+import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Getter
 @Setter
@@ -105,5 +108,18 @@ public class Capybara {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    public void decreaseMoney(Integer cost) {
+        checkCurrency(cost);
+        this.currency -= cost;
+    }
+
+    public void checkCurrency(Integer cost) {
+        throwIf(this.currency < cost, CapybaraHasNoMoneyException::new);
+    }
+
+    public void increaseMoney(Integer cost) {
+        this.currency += cost;
     }
 }

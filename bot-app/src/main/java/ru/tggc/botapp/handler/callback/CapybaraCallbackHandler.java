@@ -1,13 +1,11 @@
 package ru.tggc.botapp.handler.callback;
 
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import com.pengrad.telegrambot.request.DeleteMessage;
-import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
+import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.formatter.common.CapybaraFormatter;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
@@ -20,6 +18,7 @@ import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import static ru.tggc.botapp.util.HistoryType.CHANGE_NAME;
 import static ru.tggc.botapp.util.HistoryType.CHANGE_PHOTO;
@@ -34,7 +33,7 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("set_name")
     public Response setName(@Ctx UpdateContext ctx) {
         historyService.setHistory(ctx, CHANGE_NAME);
-        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE);
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE);
         String message = formatService.get(CommonMsgKey.START_CHANGE_NAME);
         return ctx.send(message, markup);
     }
@@ -42,7 +41,7 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("set_photo")
     public Response setPhoto(@Ctx UpdateContext ctx) {
         historyService.setHistory(ctx, CHANGE_PHOTO);
-        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.DEFAULT_PHOTO);
+        InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.DEFAULT_PHOTO);
         String message = formatService.get(CommonMsgKey.START_CHANGE_PHOTO);
         return ctx.send(message, markup);
     }
@@ -83,7 +82,7 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("feed_fatten")
     public Response feedFatten(@Ctx UpdateContext ctx) {
         String message = formatService.get(CommonMsgKey.FEED_FATEN);
-        return ctx.edit(message, keyboardFactory.getKeyboardInline(KeyboardKey.FEED));
+        return ctx.edit(message, keyboardFactory.getKeyboardInline(KeyboardType.FEED));
     }
 
     @CallbackHandle("set_default_photo")
@@ -95,15 +94,16 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("not_change")
     public Response notChange(@Ctx UpdateContext ctx) {
         historyService.removeFromHistory(ctx);
-        return ctx.edit("Ok");
+        return ctx.sendWithDelete("Ok");
     }
 
     @CallbackHandle("go_to_main")
     public Response sendGoToMainMessage(@Ctx UpdateContext ctx) {
         MyCapybaraDto capybara = capybaraService.getMyCapybara(ctx);
         return ctx.edit(
+                capybara.photo(),
                 capybaraFormatter.getMyCapybara(capybara),
-                keyboardFactory.getKeyboardInline(KeyboardKey.MY_CAPYBARA, capybara)
+                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
         );
     }
 
@@ -112,7 +112,7 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
         CapybaraInfoDto info = capybaraService.getInfo(ctx);
         return ctx.edit(
                 capybaraFormatter.getCapybaraInfo(info),
-                keyboardFactory.getKeyboardInline(KeyboardKey.INFO, info)
+                keyboardFactory.getKeyboardInline(KeyboardType.INFO, info)
         );
     }
 
@@ -126,7 +126,6 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("take_capybara")
     public Response takeCapybara(@Ctx UpdateContext ctx) {
         PhotoDto photoDto = capybaraService.saveCapybara(ctx);
-        return ctx.send(photoDto)
-                .andThen(Response.of(new DeleteMessage(ctx.chatId(), ctx.messageId())));
+        return ctx.sendWithLoader(() -> photoDto, true);
     }
 }

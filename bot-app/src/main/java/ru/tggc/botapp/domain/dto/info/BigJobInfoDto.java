@@ -4,6 +4,4 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class BigJobInfoDto extends LongActionInfo {
-
-
 }

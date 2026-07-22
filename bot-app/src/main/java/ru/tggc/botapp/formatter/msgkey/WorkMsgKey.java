@@ -10,6 +10,8 @@ public enum WorkMsgKey implements MsgKey {
     TAKE_FROM_WORK("work.take-from-work"),
     NEW_RISE("work.new-rise"),
     BUSTED("work.busted"),
+    NEW_WORK("work.new-work"),
+    GO_WORK("work.go-work"),
 
     LIST_OF_THINGS_FOR_ROBBERY("work.list-of-things-for-robbery"),
     LIST_OF_THINGS_FOR_BIG_IT_PROJECT("work.list-of-things-for-big-it-project"),

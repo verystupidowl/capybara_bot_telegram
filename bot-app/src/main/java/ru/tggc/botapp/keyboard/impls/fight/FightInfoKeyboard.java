@@ -3,14 +3,14 @@ package ru.tggc.botapp.keyboard.impls.fight;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
-import ru.tggc.botapp.keyboard.AbstractInlineKeyboardCreator;
 import ru.tggc.botapp.provider.BossFightProvider;
+import ru.tggc.telegrambotcore.keyboard.AbstractInlineKeyboardCreator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.botapp.keyboard.KeyboardKey.FIGHT_INFO;
+import static ru.tggc.botapp.keyboard.KeyboardType.FIGHT_INFO;
 
 @Component
 public class FightInfoKeyboard extends AbstractInlineKeyboardCreator<FightCapybaraDto> {

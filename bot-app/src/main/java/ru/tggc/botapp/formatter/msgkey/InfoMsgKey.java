@@ -9,6 +9,7 @@ import ru.tggc.telegrambotcore.formatter.MsgKey;
 public enum InfoMsgKey implements MsgKey {
     STATUS_READY("capybara.info.common.status.ready"),
     STATUS_COOLDOWN("capybara.info.common.status.cooldown"),
+    STATUS_TEA_WAITING("capybara.info.common.status.tea-waiting"),
     CAPYBARA_HEADER("capybara.info.header"),
     CAPYBARA_NAME("capybara.info.name"),
     CAPYBARA_TEA("capybara.info.tea"),

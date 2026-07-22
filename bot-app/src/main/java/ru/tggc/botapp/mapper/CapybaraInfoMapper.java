@@ -21,18 +21,23 @@ public class CapybaraInfoMapper extends AbstractMapper<Capybara, CapybaraInfoDto
     }
 
     public CapybaraInfoDto toDto(Capybara capybara) {
-        WorkInfoDto workInfoDto = new WorkInfoDto(false);
-        BigJobInfoDto bigJobInfoDto = new BigJobInfoDto();
+        WorkInfoDto workInfo = new WorkInfoDto(false);
+        BigJobInfoDto bigJobInfo = new BigJobInfoDto();
+        Work work = capybara.getWork();
 
-        if (capybara.getWork().getWorkType() != WorkType.NONE) {
-            Work work = capybara.getWork();
-            workInfoDto = mapLongAction(work.getWorkAction(), WorkInfoDto::new, w -> {
+        if (work.getWorkType() != WorkType.NONE) {
+            workInfo = mapLongAction(work.getWorkAction(), WorkInfoDto::new, w -> {
                 w.setHasWork(true);
                 w.setRise(work.getRise());
                 w.setIndex(work.getIndex());
             });
 
-            bigJobInfoDto = mapLongAction(capybara.getWork().getBigJob().getBigJobAction(), BigJobInfoDto::new);
+            if (work.getBigJob().isActive()) {
+                bigJobInfo = mapLongAction(
+                        work.getBigJob().getBigJobAction(),
+                        BigJobInfoDto::new
+                );
+            }
         }
         RaceInfoDto race = mapActionInfo(
                 capybara.getRace().getRaceAction(),
@@ -50,11 +55,9 @@ public class CapybaraInfoMapper extends AbstractMapper<Capybara, CapybaraInfoDto
                 .happiness(mapActionInfo(capybara.getHappiness(), HappinessInfoDto::new))
                 .satiety(mapActionInfo(capybara.getSatiety(), SatietyInfoDto::new))
                 .tea(tea)
-                .work(workInfoDto)
+                .work(workInfo)
                 .race(race)
-                .bigJob(bigJobInfoDto)
+                .bigJob(bigJobInfo)
                 .build();
     }
-
-
 }

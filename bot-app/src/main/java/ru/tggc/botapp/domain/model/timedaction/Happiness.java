@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import static java.lang.Math.max;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -27,6 +29,14 @@ public class Happiness implements TimedAction {
     private LocalDateTime lastHappy;
 
     private static final Duration COOLDOWN = Duration.ofHours(2);
+
+    public void increase(Integer level) {
+        this.level += level; //todo
+    }
+
+    public void decrease(Integer level) {
+        this.level = max(0, this.level - level);
+    }
 
     @Override
     public boolean canPerform() {

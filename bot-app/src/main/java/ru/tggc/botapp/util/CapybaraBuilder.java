@@ -7,6 +7,7 @@ import ru.tggc.botapp.domain.model.Chat;
 import ru.tggc.botapp.domain.model.Fight;
 import ru.tggc.botapp.domain.model.Improvement;
 import ru.tggc.botapp.domain.model.Level;
+import ru.tggc.botapp.domain.model.Photo;
 import ru.tggc.botapp.domain.model.Race;
 import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.domain.model.Work;
@@ -31,7 +32,7 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class CapybaraBuilder {
 
-    public static Capybara buildCapybara(int size, Chat chat, User user) {
+    public static Capybara buildCapybara(int size, Chat chat, User user, Photo photo) {
         String name = "Моя капибара" + (size == 0 ? "" : " (" + size + ")");
         Improvement improvement = Improvement.builder()
                 .improvementValue(ImprovementValue.NONE)
@@ -87,7 +88,7 @@ public class CapybaraBuilder {
                 .satiety(satiety)
                 .user(user)
                 .tea(tea)
-                .photo(RandomUtils.getRandomDefaultPhoto())
+                .photo(photo)
                 .race(race)
                 .chat(chat)
                 .work(work)

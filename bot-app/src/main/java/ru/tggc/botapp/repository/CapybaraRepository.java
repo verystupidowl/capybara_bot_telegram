@@ -57,6 +57,7 @@ public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @No
             "tea",
             "happiness",
             "work", "work.workType", "work.workAction",
+            "work.bigJob", "work.bigJob.bigJobAction",
             "improvement",
             "satiety",
             "race"

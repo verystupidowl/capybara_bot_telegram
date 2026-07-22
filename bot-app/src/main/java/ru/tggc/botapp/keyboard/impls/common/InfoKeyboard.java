@@ -3,18 +3,19 @@ package ru.tggc.botapp.keyboard.impls.common;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
-import ru.tggc.botapp.keyboard.AbstractInlineKeyboardCreator;
+import ru.tggc.telegrambotcore.keyboard.AbstractInlineKeyboardCreator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.botapp.keyboard.KeyboardKey.INFO;
+import static ru.tggc.botapp.keyboard.KeyboardType.INFO;
+import static ru.tggc.botapp.util.KeyboardUtils.toMainMenuBtn;
 
 @Component
-public class InfoKeyboardCreator extends AbstractInlineKeyboardCreator<CapybaraInfoDto> {
+public class InfoKeyboard extends AbstractInlineKeyboardCreator<CapybaraInfoDto> {
 
-    public InfoKeyboardCreator() {
+    public InfoKeyboard() {
         super(INFO);
     }
 
@@ -34,7 +35,7 @@ public class InfoKeyboardCreator extends AbstractInlineKeyboardCreator<CapybaraI
             mainRow.add(main);
             rows.add(mainRow);
 
-            if (capybara.tea().isCanAct()) {
+            if (capybara.tea().isCanAct() && !capybara.tea().isWaiting()) {
                 InlineKeyboardButton teaBtn = btn("Пойти на чаепитие", "go_tea");
                 tea = new ArrayList<>();
                 tea.add(teaBtn);
@@ -48,7 +49,7 @@ public class InfoKeyboardCreator extends AbstractInlineKeyboardCreator<CapybaraI
                 rows.add(job);
             }
 
-            if (capybara.race().getImprovement() != null) {
+            if (capybara.race().getImprovement().equals("Ничего")) {
                 InlineKeyboardButton improvementBtn = btn("Купить улучшение для гонок", "buy_improve");
                 improve = new ArrayList<>();
                 improve.add(improvementBtn);

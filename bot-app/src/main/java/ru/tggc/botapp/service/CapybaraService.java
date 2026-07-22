@@ -10,12 +10,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.domain.dto.CapybaraTeaDto;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
 import ru.tggc.botapp.domain.dto.HappinessThingDto;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.dto.TopCapybaraDto;
+import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Chat;
 import ru.tggc.botapp.domain.model.Improvement;
@@ -36,12 +36,11 @@ import ru.tggc.botapp.domain.model.timedaction.Satiety;
 import ru.tggc.botapp.domain.model.timedaction.Tea;
 import ru.tggc.botapp.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.formatter.msgkey.RaceMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.mapper.CapybaraInfoMapper;
 import ru.tggc.botapp.mapper.CapybaraTeaMapper;
 import ru.tggc.botapp.mapper.FightCapybaraMapper;
@@ -52,11 +51,12 @@ import ru.tggc.botapp.repository.TeaRepository;
 import ru.tggc.botapp.service.factory.WorkServiceFactory;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.CapybaraBuilder;
-import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.FileType;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.ext.TelegramMessageUtils;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -93,6 +93,7 @@ public class CapybaraService {
     private final ChatRepository chatRepository;
     private final FightCapybaraMapper fightCapybaraMapper;
     private final FormatService formatService;
+    private final PhotoService photoService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
@@ -137,9 +138,11 @@ public class CapybaraService {
     @Transactional
     public String setDefaultPhoto(UpdateContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
-        checkCurrency(capybara, 25);
-        capybara.setPhoto(RandomUtils.getRandomDefaultPhoto());
-        capybara.setCurrency(capybara.getCurrency() - 25);
+        Photo photo = photoService.getRandomDefaultPhoto();
+
+        capybara.decreaseMoney(25);
+        capybara.setPhoto(photo);
+
         capybaraRepository.save(capybara);
         return formatService.get(CommonMsgKey.CHOSEN_RANDOM_PHOTO);
     }
@@ -164,7 +167,7 @@ public class CapybaraService {
                 happinessThing.photoUrl(),
                 happinessThing.title(),
                 ctx.chatId(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+                keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
         messages.add(photo);
         messages.addAll(self.checkNewLevel(capybara));
@@ -182,7 +185,7 @@ public class CapybaraService {
                 feedPhoto,
                 caption,
                 ctx.chatId(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+                keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
         messages.add(photo);
         return messages;
@@ -192,16 +195,15 @@ public class CapybaraService {
     public List<PhotoDto> fatten(UpdateContext ctx) {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
-        checkCurrency(capybara, 50);
+        capybara.decreaseMoney(50);
         List<PhotoDto> messages = self.feed(capybara, 50);
-        capybara.setCurrency(capybara.getCurrency() - 50);
 
         String caption = formatService.get(CommonMsgKey.FATTEN);
         PhotoDto photo = new PhotoDto(
                 fattenPhoto,
                 caption,
                 ctx.chatId(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+                keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
         messages.add(photo);
         return messages;
@@ -232,8 +234,8 @@ public class CapybaraService {
             self.updateTea(tea);
             self.updateTea(incerlocutorTea);
 
-            capybara.getHappiness().setLevel(capybara.getHappiness().getLevel() + 10);
-            interlocutor.getHappiness().setLevel(interlocutor.getHappiness().getLevel() + 10);
+            capybara.getHappiness().increase(10);
+            interlocutor.getHappiness().increase(10);
             List<PhotoDto> photosToReturn = new ArrayList<>(self.checkNewLevel(capybara));
             photosToReturn.addAll(self.checkNewLevel(interlocutor));
 
@@ -261,7 +263,7 @@ public class CapybaraService {
                 teaPhoto,
                 formatService.get(CommonMsgKey.TEA_WAITING),
                 ctx.chatId(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.TEA)
+                keyboardFactory.getKeyboardInline(KeyboardType.TEA)
         );
 
         return List.of(photo);
@@ -286,14 +288,15 @@ public class CapybaraService {
                 .orElseThrow(IllegalArgumentException::new);
 
         int size = capybaraRepository.countByChatId(chatId);
-        Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user);
+        Photo photo = photoService.getRandomDefaultPhoto();
+        Capybara capybara = CapybaraBuilder.buildCapybara(size, chat, user, photo);
         capybaraRepository.save(capybara);
         String caption = formatService.get(CommonMsgKey.CAPYBARA_CREATED, capybara.getName());
         return new PhotoDto(
                 capybara.getPhoto().getUrl(),
                 caption,
                 chatId,
-                keyboardFactory.getKeyboardInline(KeyboardKey.TO_MAIN_MENU)
+                keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
     }
 
@@ -331,30 +334,33 @@ public class CapybaraService {
 
     public void doMassage(UpdateContext ctx) {
         Capybara capybara = self.getRaceCapybara(ctx);
-        if (capybara.getCurrency() <= 50) {
-            throw new CapybaraHasNoMoneyException();
-        }
-        capybara.setCurrency(capybara.getCurrency() - 50);
+        capybara.decreaseMoney(50);
         capybara.getRace().getRaceAction().setCharges(capybara.getRace().getRaceAction().getMaxCharges());
 
         capybaraRepository.save(capybara);
     }
 
     @Transactional
-    public void setImprovement(UpdateContext ctx, ImprovementValue improvementValue) {
+    public PhotoDto setImprovement(UpdateContext ctx, ImprovementValue improvementValue) {
         Capybara capybara = getCapybaraByContext(ctx);
-        checkCurrency(capybara, improvementValue.getCost());
 
         Improvement improvement = capybara.getImprovement();
         throwIf(improvement.getImprovementValue() != ImprovementValue.NONE, () -> {
             String message = formatService.get(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT);
             return new CapybaraException(message);
         });
+        capybara.decreaseMoney(improvementValue.getCost());
 
         improvement.setImprovementValue(improvementValue);
         capybara.setImprovement(improvement);
-        capybara.setCurrency(capybara.getCurrency() - improvementValue.getCost());
         capybaraRepository.save(capybara);
+
+        return PhotoDto.builder()
+                .chatId(ctx.chatId())
+                .caption(formatService.get(RaceMsgKey.getByImprovement(improvementValue)))
+                .url(photoService.getImprovementPhoto(improvementValue))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU))
+                .build();
     }
 
     public Capybara getCapybaraById(Long id) {
@@ -385,15 +391,14 @@ public class CapybaraService {
     }
 
     @Transactional
-    public void transferMoney(UpdateContext ctx, String targetUsername, Long amount) {
+    public void transferMoney(UpdateContext ctx, String targetUsername, Integer amount) {
         Capybara sourcecapybara = getCapybaraByContext(ctx);
-        throwIf(sourcecapybara.getCurrency() < amount, CapybaraHasNoMoneyException::new);
 
         User user = userService.getUserByUsername(targetUsername);
         Capybara targetCapybara = self.getCapybara(user.getId());
 
-        targetCapybara.setCurrency(targetCapybara.getCurrency() + amount);
-        sourcecapybara.setCurrency(sourcecapybara.getCurrency() - amount);
+        sourcecapybara.decreaseMoney(amount);
+        targetCapybara.increaseMoney(amount);
 
         capybaraRepository.saveAll(List.of(sourcecapybara, targetCapybara));
     }
@@ -463,15 +468,15 @@ public class CapybaraService {
     public Optional<PhotoDto> checkNewType(Capybara capybara) {
         Level level = capybara.getLevel();
         if (level.getValue() >= level.getMaxValue()) {
-            return Arrays.stream(Type.values()).
-                    filter(type -> type.getLevel().equals(level.getMaxValue()))
+            return Arrays.stream(Type.values())
+                    .filter(type -> type.getLevel().equals(level.getMaxValue()))
                     .findFirst()
                     .map(type -> {
                         String message = formatService.get(CommonMsgKey.NEW_TYPE, type.getLevel(), type.getGift());
 
                         capybara.getLevel().setType(type);
                         capybara.getLevel().setMaxValue(self.calculateMaxLevel(level));
-                        capybara.setCurrency(capybara.getCurrency() + type.getGift());
+                        capybara.increaseMoney(type.getGift());
 
                         return new PhotoDto(newTypePhoto, message);
                     });
@@ -495,10 +500,6 @@ public class CapybaraService {
         };
     }
 
-    private void checkCurrency(Capybara capybara, Integer currency) {
-        throwIf(capybara.getCurrency() < currency, CapybaraHasNoMoneyException::new);
-    }
-
     @Transactional
     public void changeName(UpdateContext historyDto, String newName) {
         if (newName.length() > 25 || newName.isEmpty()) {
@@ -518,8 +519,8 @@ public class CapybaraService {
     @Transactional
     public void setPhoto(UpdateContext ctx, Message message) {
         Capybara capybara = getCapybaraByContext(ctx);
-        checkCurrency(capybara, 50);
-        if (message.photo() != null && message.photo().length != 0) {
+        capybara.decreaseMoney(50);
+        if (TelegramMessageUtils.hasPhoto(message)) {
             PhotoSize photoSize = message.photo()[0];
             Photo photo = capybara.getPhoto();
             photo.setFileId(photoSize.fileId());
@@ -534,7 +535,6 @@ public class CapybaraService {
             photo.setFileUniqueId(photo.getFileUniqueId());
             photo.setType(FileType.DOC);
         }
-        capybara.setCurrency(capybara.getCurrency() - 50);
         capybaraRepository.save(capybara);
     }
 
@@ -584,22 +584,22 @@ public class CapybaraService {
     }
 
     private void buySpecial(Capybara fightCapybara, FightBuffSpecial fightBuffSpecial) {
-        checkCurrency(fightCapybara, fightBuffSpecial.getCost());
+        fightCapybara.decreaseMoney(fightBuffSpecial.getCost());
         fightCapybara.getFight().setSpecial(fightBuffSpecial);
     }
 
     private void buyHeal(Capybara fightCapybara, FightBuffHeal fightBuffHeal) {
-        checkCurrency(fightCapybara, fightBuffHeal.getCost());
+        fightCapybara.decreaseMoney(fightBuffHeal.getCost());
         fightCapybara.getFight().setHeal(fightBuffHeal);
     }
 
     private void buyShield(Capybara fightCapybara, FightBuffShield fightBuffShield) {
-        checkCurrency(fightCapybara, fightBuffShield.getCost());
+        fightCapybara.decreaseMoney(fightBuffShield.getCost());
         fightCapybara.getFight().setShield(fightBuffShield);
     }
 
     private void buyWeapon(Capybara fightCapybara, FightBuffWeapon fightBuffWeapon) {
-        checkCurrency(fightCapybara, fightBuffWeapon.getCost());
+        fightCapybara.decreaseMoney(fightBuffWeapon.getCost());
         fightCapybara.getFight().setWeapon(fightBuffWeapon);
     }
 }

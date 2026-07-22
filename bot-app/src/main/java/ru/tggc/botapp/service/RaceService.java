@@ -24,18 +24,17 @@ import ru.tggc.botapp.domain.model.timedaction.Happiness;
 import ru.tggc.botapp.domain.model.timedaction.RaceAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.exceptions.CapybaraTiredException;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.repository.RaceRequestRepository;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
-import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.FileDto;
 import ru.tggc.telegrambotcore.dto.FileType;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
@@ -43,7 +42,6 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
-import static java.lang.Math.max;
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Slf4j
@@ -58,6 +56,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService rateLimiterService;
     private final TelegramBotSender telegramBotService;
+    private final PhotoService photoService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private RaceService self;
@@ -69,7 +68,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                        HistoryServiceImpl historyService,
                        KeyboardFactory keyboardFactory,
                        UserRateLimiterService rateLimiterService,
-                       TelegramBotSender telegramBotService) {
+                       TelegramBotSender telegramBotService,
+                       PhotoService photoService) {
         super(capybaraService, userService);
         this.raceRequestRepository = raceRequestRepository;
         this.capybaraService = capybaraService;
@@ -78,6 +78,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         this.keyboardFactory = keyboardFactory;
         this.rateLimiterService = rateLimiterService;
         this.telegramBotService = telegramBotService;
+        this.photoService = photoService;
     }
 
     public Response acceptRace(UpdateContext ctx) {
@@ -108,6 +109,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                                 challenger,
                                 opponent
                         ));
+                        historyService.removeFromHistory(ctx);
                     } else {
                         raceRequest.setStatus(RaceStatus.DECLINED);
                         response = response.andThen(Response.of(new SendMessage(ctx.chatId(), "ok")));
@@ -133,7 +135,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     public Response race(Capybara c1, Capybara c2) {
         return bot -> {
             long chatId = c1.getChat().getId();
-            FileDto fileDto = RandomUtils.getRandomRacePhoto();
+            FileDto fileDto = photoService.getRandomRacePhoto();
             int messageId;
             String caption = "\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName();
             if (fileDto.type() == FileType.PHOTO) {
@@ -212,9 +214,11 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     public void updateHappiness(Capybara capybara, boolean isWinner) {
         ImprovementValue improvement = capybara.getImprovement().getImprovementValue();
         Happiness happiness = capybara.getHappiness();
-        happiness.setLevel(isWinner ?
-                happiness.getLevel() + improvement.getWinHappiness() :
-                max(0, happiness.getLevel() - improvement.getLoseHappiness()));
+        if (isWinner) {
+            happiness.increase(improvement.getWinHappiness());
+        } else {
+            happiness.decrease(improvement.getWinHappiness());
+        }
         capybara.setHappiness(happiness);
     }
 
@@ -254,7 +258,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         RaceAction raceAction = c.getRace().getRaceAction();
         throwIf(!raceAction.canPerform(), () -> {
             String status = getStatus(raceAction);
-            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.RACE_MASSAGE);
+            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE_MASSAGE);
             return new CapybaraTiredException(status, markup);
         });
     }
@@ -275,7 +279,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         boolean requestsAlreadyExists = raceRequestRepository.existsByChallengerOrOpponent(challenger, opponent);
         throwIf(requestsAlreadyExists, () -> {
             String messageToSend = "u or ur opponent already has a challenge";
-            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.RACE);
+            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE);
             return new CapybaraException(messageToSend, markup);
         });
         return RaceRequest.builder()
@@ -295,7 +299,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         self.checkStamina(capybara);
         historyService.setHistory(ctx, HistoryType.START_RACE, prev -> {
-            throw new CapybaraException("Ты уже делаешь " + prev.state().getLabel(), keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
+            throw new CapybaraException("Ты уже делаешь " + prev.state().getLabel(), keyboardFactory.getKeyboardInline(KeyboardType.RACE));
         });
     }
 

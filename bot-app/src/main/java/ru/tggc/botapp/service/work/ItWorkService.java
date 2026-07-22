@@ -17,7 +17,7 @@ public class ItWorkService extends AbstractWorkService {
     }
 
     @Override
-    public WorkType getJobType() {
+    public WorkType getWorkType() {
         return WorkType.PROGRAMMING;
     }
 

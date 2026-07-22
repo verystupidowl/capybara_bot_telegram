@@ -1,8 +1,7 @@
 package ru.tggc.botapp.handler.admin;
 
 import ru.tggc.botapp.domain.dto.AdminStats;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
@@ -15,6 +14,7 @@ import ru.tggc.telegrambotcore.annotation.params.Username;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.dto.UserRole;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.util.Locale;
 
@@ -32,7 +32,7 @@ public record AdminHandler(AdminService adminService,
         AdminStats stats = adminService.getStats();
         return ctx.send(
                 stats.messageToSend(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.ADMIN_MENU)
+                keyboardFactory.getKeyboardInline(KeyboardType.ADMIN_MENU)
         );
     }
 
@@ -56,7 +56,7 @@ public record AdminHandler(AdminService adminService,
         AdminStats stats = adminService.getStats();
         return ctx.send(
                 stats.messageToSend(),
-                keyboardFactory.getKeyboardInline(KeyboardKey.ADMIN_MENU)
+                keyboardFactory.getKeyboardInline(KeyboardType.ADMIN_MENU)
         );
     }
 

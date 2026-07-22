@@ -5,17 +5,18 @@ import ru.tggc.botapp.domain.model.enums.ImprovementValue;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.formatter.msgkey.RaceMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.RaceService;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.annotation.params.HandleParam;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
 public record RaceCallbackHandler(CapybaraService capybaraService,
@@ -27,14 +28,14 @@ public record RaceCallbackHandler(CapybaraService capybaraService,
         raceService.startRace(ctx);
         return ctx.send(
                 formatService.get(RaceMsgKey.START_RACE),
-                keyboardFactory.getKeyboardInline(KeyboardKey.NOT_CHANGE)
+                keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
         );
     }
 
     @CallbackHandle("improve_${improvement}")
-    public Response improvePills(@Ctx UpdateContext ctx, @HandleParam("Improvement") ImprovementValue improvement) {
-        capybaraService.setImprovement(ctx, improvement);
-        return ctx.send(formatService.get(RaceMsgKey.getByImprovement(improvement)));
+    public Response improvePills(@Ctx UpdateContext ctx, @HandleParam("improvement") ImprovementValue improvement) {
+        PhotoDto photoDto = capybaraService.setImprovement(ctx, improvement);
+        return ctx.edit(photoDto);
     }
 
     @CallbackHandle("buy_improve")
@@ -42,7 +43,7 @@ public record RaceCallbackHandler(CapybaraService capybaraService,
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         if (capybara.getImprovement().getImprovementValue() == ImprovementValue.NONE) {
             String message = formatService.get(CommonMsgKey.LIST_OF_IMPROVEMENTS);
-            return ctx.edit(message, keyboardFactory.getKeyboardInline(KeyboardKey.IMPROVEMENTS));
+            return ctx.edit(message, keyboardFactory.getKeyboardInline(KeyboardType.IMPROVEMENTS));
         }
         return ctx.send(formatService.get(ErrorMsgKey.CAPYBARA_ALREADY_HAS_IMPROVEMENT));
     }

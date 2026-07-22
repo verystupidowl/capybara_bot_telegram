@@ -23,14 +23,14 @@ import ru.tggc.botapp.domain.model.Fight;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.formatter.fight.FightFormatService;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.provider.BossFightProvider;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.dto.UserDto;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
 import java.util.Collection;
@@ -76,7 +76,7 @@ public class BossFightService {
         Optional<BossFightState> optional = provider.getFight(chatId);
         throwIf(optional.isPresent(), () -> new CapybaraException("Fight already in progress"));
 
-        BossType bossType = RandomUtils.geetRandomBoss();
+        BossType bossType = RandomUtils.getRandomBoss();
         BossFightState.BossState bossState = BossFightState.BossState.builder()
                 .bossType(bossType)
                 .bossHp(bossType.getHp())
@@ -156,7 +156,7 @@ public class BossFightService {
                     String text = formatService.get(FightMsgKey.PLAYER_CHOSE, caption, ps.getUsername(), action.getLabel());
                     EditMessageCaption message = new EditMessageCaption(chatId, messageId)
                             .caption(text)
-                            .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.FIGHT));
+                            .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT));
                     return Response.of(message);
                 }).orElseGet(() -> Response.of(new SendMessage(chatId, "⚠️ Бой не найден."))
                         .andThen(Response.of(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()))));
