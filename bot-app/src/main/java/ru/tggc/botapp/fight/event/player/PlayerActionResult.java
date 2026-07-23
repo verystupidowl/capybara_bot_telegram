@@ -1,4 +1,4 @@
-package ru.tggc.botapp.fight.event;
+package ru.tggc.botapp.fight.event.player;
 
 import java.util.List;
 

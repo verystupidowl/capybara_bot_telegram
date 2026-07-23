@@ -1,8 +1,9 @@
-package ru.tggc.botapp.formatter.fight;
+package ru.tggc.botapp.formatter.fight.player;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.tggc.botapp.fight.event.DefendEvent;
+import ru.tggc.botapp.fight.event.player.DefendEvent;
+import ru.tggc.botapp.formatter.fight.FightEventFormatter;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 

@@ -3,12 +3,12 @@ package ru.tggc.botapp.fight.enums;
 import lombok.Getter;
 import ru.tggc.botapp.fight.BossFightState;
 import ru.tggc.botapp.fight.DamageEvent;
-import ru.tggc.botapp.fight.event.CriticalHitEvent;
-import ru.tggc.botapp.fight.event.DamageDealtEvent;
-import ru.tggc.botapp.fight.event.DefendEvent;
-import ru.tggc.botapp.fight.event.HealEvent;
-import ru.tggc.botapp.fight.event.PlayerActionEvent;
-import ru.tggc.botapp.fight.event.PlayerActionResult;
+import ru.tggc.botapp.fight.event.player.CriticalHitEvent;
+import ru.tggc.botapp.fight.event.player.DamageDealtEvent;
+import ru.tggc.botapp.fight.event.player.DefendEvent;
+import ru.tggc.botapp.fight.event.player.HealEvent;
+import ru.tggc.botapp.fight.event.player.PlayerActionEvent;
+import ru.tggc.botapp.fight.event.player.PlayerActionResult;
 import ru.tggc.botapp.util.RandomUtils;
 
 import java.util.ArrayList;

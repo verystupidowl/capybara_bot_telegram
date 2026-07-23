@@ -21,6 +21,7 @@ public enum Type {
     SPACE_TIME("Капибара пространства и времени", 100, 250),
     CAPY_GOD("КапибараБог", 150, 1000),
     ;
+
     private final String label;
     private final int requiredLevel;
     private final Integer gift;

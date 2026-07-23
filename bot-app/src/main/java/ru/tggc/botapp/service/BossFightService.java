@@ -14,13 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.tggc.botapp.domain.model.Capybara;
+import ru.tggc.botapp.domain.model.Fight;
+import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.fight.BossFightState;
 import ru.tggc.botapp.fight.enums.BossAction;
 import ru.tggc.botapp.fight.enums.BossType;
 import ru.tggc.botapp.fight.enums.PlayerActionType;
-import ru.tggc.botapp.domain.model.Capybara;
-import ru.tggc.botapp.domain.model.Fight;
-import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.fight.event.boss.BossActionResult;
 import ru.tggc.botapp.formatter.fight.FightFormatService;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
@@ -193,12 +194,19 @@ public class BossFightService {
 
         if (alivePlayers.isEmpty()) return;
 
-        String response = bossAction.apply(fight, alivePlayers);
+        BossActionResult actionResult = bossAction.apply(fight, alivePlayers);
+        StringBuilder response = new StringBuilder();
+        actionResult.events().forEach(event -> {
+            String format = fightFormatterFactory.format(event);
+            response.append(format).append("\n");
+        });
         String checkedPlayers = checkPs(alivePlayers);
-        fight.getActionLogs().add("🐊 Ход босса:\n" +
-                response +
-                checkedPlayers + "\n==========================\n" +
-                getPlayersHp(fight.getPlayers().values(), fight.getBossState()));
+        fight.getActionLogs().add(formatService.get(
+                FightMsgKey.BOSS_ACTION_TEMPLATE,
+                response.toString(),
+                checkedPlayers,
+                getPlayersHp(fight.getPlayers().values(), fight.getBossState())
+        ));
         if (fight.getPlayers().values().stream().noneMatch(BossFightState.PlayerState::isAlive)) {
             fight.getActionLogs().add("Boss won!");
         }
