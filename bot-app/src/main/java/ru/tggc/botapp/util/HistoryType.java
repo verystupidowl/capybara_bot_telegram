@@ -13,6 +13,7 @@ public enum HistoryType {
     CHANGE_PHOTO("изменение фотографии"),
     BROADCAST("рассылка"),
     START_RACE("начало гонки"),
+    BUG_REPORT("Сообщение об ошибке")
     ;
 
     private final String label;

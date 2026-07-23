@@ -33,4 +33,10 @@ public record WeddingHandler(WeddingService weddingService) {
         String message = weddingService.respondUnWedding(ctx, false);
         return ctx.edit(message);
     }
+
+    @CallbackHandle("wedding_gift")
+    public Response weddingGift(@Ctx UpdateContext ctx) {
+        String message = weddingService.getWeddingGift(ctx);
+        return ctx.send(message);
+    }
 }

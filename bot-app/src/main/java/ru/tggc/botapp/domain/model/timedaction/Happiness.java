@@ -12,8 +12,6 @@ import lombok.NoArgsConstructor;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import static java.lang.Math.max;
-
 @Entity
 @Data
 @AllArgsConstructor
@@ -24,19 +22,10 @@ public class Happiness implements TimedAction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Integer level;
-    private Integer maxLevel;
 
     private LocalDateTime lastHappy;
 
     private static final Duration COOLDOWN = Duration.ofHours(2);
-
-    public void increase(Integer level) {
-        this.level += level; //todo
-    }
-
-    public void decrease(Integer level) {
-        this.level = max(0, this.level - level);
-    }
 
     @Override
     public boolean canPerform() {
@@ -48,5 +37,9 @@ public class Happiness implements TimedAction {
         if (lastHappy == null) return Duration.ZERO;
         Duration passed = Duration.between(lastHappy, LocalDateTime.now());
         return passed.compareTo(COOLDOWN) >= 0 ? Duration.ZERO : COOLDOWN.minus(passed);
+    }
+
+    public Integer calculateMaxLevel(Integer capybaraLevel) {
+        return 100 + ((capybaraLevel / 10) * 10 * 2);
     }
 }

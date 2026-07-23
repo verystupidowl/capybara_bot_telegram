@@ -22,6 +22,7 @@ public enum InfoMsgKey implements MsgKey {
     CAPYBARA_HAPPINESS("capybara.info.happiness"),
     CAPYBARA_RACE_CHARGES("capybara.info.race.charges"),
     CAPYBARA_RACE_IMPROVEMENTS("capybara.info.race.improvements"),
+    WEDDING_GIFT("capybara.info.wedding-gift"),
     ;
     private final String key;
 }

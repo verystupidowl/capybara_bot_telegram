@@ -40,12 +40,13 @@ public record CommandTextHandler(CapybaraService capybaraService,
     }
 
     @MessageHandle("перевести дольки ${amount} ${username}")
-    public Response transferMoney(@HandleParam("amount") Integer amount,
+    public Response transferMoney(@HandleParam("amount") String amount,
                                   @HandleParam("username") String username,
                                   @MessageParam Message message,
                                   @Ctx UpdateContext ctx) {
         String targetUsername = HandlerUtils.getTargetUsername(username, message);
-        capybaraService.transferMoney(ctx, targetUsername, amount); //todo доработать
+        Integer intAmount = Integer.parseInt(amount);
+        capybaraService.transferMoney(ctx, targetUsername, intAmount); //todo доработать
 
         return ctx.send("ok");
     }

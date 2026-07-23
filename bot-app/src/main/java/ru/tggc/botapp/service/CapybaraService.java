@@ -14,17 +14,16 @@ import ru.tggc.botapp.domain.dto.CapybaraTeaDto;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
 import ru.tggc.botapp.domain.dto.HappinessThingDto;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
+import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.dto.TopCapybaraDto;
 import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Chat;
 import ru.tggc.botapp.domain.model.Improvement;
-import ru.tggc.botapp.domain.model.Level;
 import ru.tggc.botapp.domain.model.Photo;
 import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
-import ru.tggc.botapp.domain.model.enums.Type;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.domain.model.enums.fight.BuffType;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffHeal;
@@ -50,6 +49,7 @@ import ru.tggc.botapp.repository.ChatRepository;
 import ru.tggc.botapp.repository.TeaRepository;
 import ru.tggc.botapp.service.factory.WorkServiceFactory;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
+import ru.tggc.botapp.service.stats.CapybaraStatsService;
 import ru.tggc.botapp.util.CapybaraBuilder;
 import ru.tggc.telegrambotcore.dto.FileType;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
@@ -60,11 +60,10 @@ import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import static java.lang.Math.max;
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Service
@@ -76,10 +75,6 @@ public class CapybaraService {
     private String fattenPhoto;
     @Value("${bot.photos.tea}")
     private String teaPhoto;
-    @Value("${bot.photos.new-level}")
-    private String newLevelPhoto;
-    @Value("${bot.photos.new-type}")
-    private String newTypePhoto;
 
     private final CapybaraRepository capybaraRepository;
     private final UserServiceImpl userService;
@@ -94,6 +89,7 @@ public class CapybaraService {
     private final FightCapybaraMapper fightCapybaraMapper;
     private final FormatService formatService;
     private final PhotoService photoService;
+    private final CapybaraStatsService statsService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private CapybaraService self;
@@ -119,6 +115,11 @@ public class CapybaraService {
 
     public Capybara getCapybaraByContext(UpdateContext ctx) {
         return getCapybaraByUserId(ctx.userId(), ctx.chatId());
+    }
+
+    public Capybara getCapybaraByContext(UpdateContext ctx, Supplier<RuntimeException> supplier) {
+        return capybaraRepository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
+                .orElseThrow(supplier);
     }
 
     @Transactional(readOnly = true)
@@ -148,8 +149,7 @@ public class CapybaraService {
     }
 
     @Transactional
-    public List<PhotoDto> makeHappy(UpdateContext ctx) {
-        List<PhotoDto> messages = new ArrayList<>();
+    public PhotoDto makeHappy(UpdateContext ctx) {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         Happiness happiness = capybara.getHappiness();
@@ -161,7 +161,8 @@ public class CapybaraService {
         });
 
         HappinessThingDto happinessThing = formatService.randomObject(CommonMsgKey.HAPPINESS_THINGS, HappinessThingDto.class);
-        happiness.setLevel(max(0, happiness.getLevel() + happinessThing.level()));
+        statsService.modify(capybara, StatKey.HAPPINESS, happinessThing.level());
+
         happiness.setLastHappy(LocalDateTime.now());
         PhotoDto photo = new PhotoDto(
                 happinessThing.photoUrl(),
@@ -169,48 +170,45 @@ public class CapybaraService {
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
-        messages.add(photo);
-        messages.addAll(self.checkNewLevel(capybara));
+
         capybaraRepository.save(capybara);
-        return messages;
+        return photo;
     }
 
     @Transactional
-    public List<PhotoDto> feed(UpdateContext ctx) {
+    public PhotoDto feed(UpdateContext ctx) {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
-        List<PhotoDto> messages = self.feed(capybara, 5);
+        self.feed(capybara, 5);
         String caption = formatService.get(CommonMsgKey.FEED);
-        PhotoDto photo = new PhotoDto(
+        return new PhotoDto(
                 feedPhoto,
                 caption,
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
-        messages.add(photo);
-        return messages;
     }
 
     @Transactional
-    public List<PhotoDto> fatten(UpdateContext ctx) {
+    public PhotoDto fatten(UpdateContext ctx) {
         Capybara capybara = capybaraRepository.findSatietyAndHappinessCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         capybara.decreaseMoney(50);
-        List<PhotoDto> messages = self.feed(capybara, 50);
+
+        feed(capybara, 50);
 
         String caption = formatService.get(CommonMsgKey.FATTEN);
-        PhotoDto photo = new PhotoDto(
+        return new PhotoDto(
                 fattenPhoto,
                 caption,
                 ctx.chatId(),
                 keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
-        messages.add(photo);
-        return messages;
     }
 
     @Transactional
     public List<PhotoDto> goTea(UpdateContext ctx) {
+        List<PhotoDto> photosToReturn = new ArrayList<>();
         Capybara capybara = capybaraRepository.findTeaCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(CapybaraNotFoundException::new);
         Tea tea = capybara.getTea();
@@ -234,10 +232,8 @@ public class CapybaraService {
             self.updateTea(tea);
             self.updateTea(incerlocutorTea);
 
-            capybara.getHappiness().increase(10);
-            interlocutor.getHappiness().increase(10);
-            List<PhotoDto> photosToReturn = new ArrayList<>(self.checkNewLevel(capybara));
-            photosToReturn.addAll(self.checkNewLevel(interlocutor));
+            statsService.modify(capybara, StatKey.HAPPINESS, 10);
+            statsService.modify(interlocutor, StatKey.HAPPINESS, 10);
 
             capybaraRepository.save(interlocutor);
             capybaraRepository.save(capybara);
@@ -414,90 +410,25 @@ public class CapybaraService {
     }
 
     @Transactional
-    public List<PhotoDto> checkNewLevel(Capybara capybara) {
-        List<PhotoDto> messages = new ArrayList<>();
-        if (capybara.getHappiness().getLevel() >= capybara.getHappiness().getMaxLevel()) {
-            capybara.getHappiness().setLevel(0);
-            capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
-            String message = formatService.get(
-                    CommonMsgKey.NEW_LEVEL,
-                    capybara.getUser().getId(),
-                    capybara.getUser().getUsername()
-            );
-
-            messages.add(new PhotoDto(newLevelPhoto, message));
-
-            self.checkNewType(capybara).ifPresent(messages::add);
-            capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
-            capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
-        }
-        if (capybara.getSatiety().getLevel() >= capybara.getSatiety().getMaxLevel()) {
-            capybara.getSatiety().setLevel(0);
-            capybara.getLevel().setValue(capybara.getLevel().getValue() + 1);
-            String message = formatService.get(
-                    CommonMsgKey.NEW_LEVEL,
-                    capybara.getUser().getId(),
-                    capybara.getUser().getUsername()
-            );
-
-            messages.add(new PhotoDto(newLevelPhoto, message));
-
-            self.checkNewType(capybara).ifPresent(messages::add);
-            capybara.getSatiety().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
-            capybara.getHappiness().setMaxLevel((capybara.getLevel().getValue() / 10) * 10 * 2);
-        }
-        return messages;
-    }
-
-    @Transactional
-    public List<PhotoDto> feed(Capybara capybara, Integer feed) {
+    public void feed(Capybara capybara, Integer feed) {
         Satiety satiety = capybara.getSatiety();
+
         throwIf(!satiety.canPerform(), () -> {
             String status = timedActionService.getStatus(satiety);
             String message = formatService.get(ErrorMsgKey.CAPYBARA_FEED_COOLDOWN, status);
             return new CapybaraException(message);
         });
-        satiety.setLevel(satiety.getLevel() + feed);
+
+        statsService.modify(capybara, StatKey.SATIETY, feed);
         satiety.setLastFed(LocalDateTime.now());
-        List<PhotoDto> messages = new ArrayList<>(self.checkNewLevel(capybara));
+
         capybaraRepository.save(capybara);
-        return messages;
-    }
-
-    @Transactional
-    public Optional<PhotoDto> checkNewType(Capybara capybara) {
-        Level level = capybara.getLevel();
-        if (level.getValue() >= level.getMaxValue()) {
-            return Arrays.stream(Type.values())
-                    .filter(type -> type.getLevel().equals(level.getMaxValue()))
-                    .findFirst()
-                    .map(type -> {
-                        String message = formatService.get(CommonMsgKey.NEW_TYPE, type.getLevel(), type.getGift());
-
-                        capybara.getLevel().setType(type);
-                        capybara.getLevel().setMaxValue(self.calculateMaxLevel(level));
-                        capybara.increaseMoney(type.getGift());
-
-                        return new PhotoDto(newTypePhoto, message);
-                    });
-        } else {
-            return Optional.empty();
-        }
     }
 
     @Transactional
     public void updateTea(Tea tea) {
         tea.setWaiting(false);
         tea.setLastTea(LocalDateTime.now());
-    }
-
-    @Transactional
-    public Integer calculateMaxLevel(Level level) {
-        return switch (level.getValue()) {
-            case Integer i when i < 100 -> level.getMaxValue() + 10;
-            case Integer i when i < 150 -> 150;
-            default -> Integer.MAX_VALUE;
-        };
     }
 
     @Transactional

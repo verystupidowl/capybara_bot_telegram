@@ -33,6 +33,9 @@ public enum CommonMsgKey implements MsgKey {
 
     LIST_OF_COMMANDS("capybara.list-of-commands"),
     LIST_OF_IMPROVEMENTS("capybara.list-of-improvements"),
+    START_BUG_REPORT("capybara.bug-report.start"),
+    BUG_REPORT_TO_ADMIN("capybara.bug-report.to-admin"),
+    BUG_REPORT_THANKS("capybara.bug-report.thanks"),
     ;
 
     private final String key;

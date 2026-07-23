@@ -5,6 +5,7 @@ import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
+import ru.tggc.botapp.service.CommonService;
 import ru.tggc.botapp.service.RaceService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
@@ -21,7 +22,8 @@ public record DefaultMessageHandler(HistoryServiceImpl historyService,
                                     KeyboardFactory keyboardFactory,
                                     CapybaraService capybaraService,
                                     RaceService raceService,
-                                    AdminService adminService) {
+                                    AdminService adminService,
+                                    CommonService commonService) {
     @DefaultMessageHandle
     public Response handleDefaultMessages(@MessageParam Message message) {
         long chatId = message.chat().id();
@@ -39,8 +41,14 @@ public record DefaultMessageHandler(HistoryServiceImpl historyService,
             case SLOTS_SET_BET -> slots(ctx, text);
             case START_RACE -> race(ctx, text);
             case BROADCAST -> broadcast(ctx, text);
+            case BUG_REPORT -> bugReport(ctx, text);
             default -> null;
         };
+    }
+
+    private Response bugReport(UpdateContext ctx, String text) {
+        historyService.removeFromHistory(ctx);
+        return ctx.send(commonService.bugReport(ctx, text));
     }
 
     private Response broadcast(UpdateContext ctx, String text) {

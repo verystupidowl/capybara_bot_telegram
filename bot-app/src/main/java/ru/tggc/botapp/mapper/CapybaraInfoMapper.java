@@ -7,11 +7,13 @@ import ru.tggc.botapp.domain.dto.info.HappinessInfoDto;
 import ru.tggc.botapp.domain.dto.info.RaceInfoDto;
 import ru.tggc.botapp.domain.dto.info.SatietyInfoDto;
 import ru.tggc.botapp.domain.dto.info.TeaInfoDto;
+import ru.tggc.botapp.domain.dto.info.WeddingGiftInfoDto;
 import ru.tggc.botapp.domain.dto.info.WorkInfoDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.service.TimedActionService;
+import ru.tggc.telegrambotcore.util.Utils;
 
 @Component
 public class CapybaraInfoMapper extends AbstractMapper<Capybara, CapybaraInfoDto> {
@@ -49,11 +51,17 @@ public class CapybaraInfoMapper extends AbstractMapper<Capybara, CapybaraInfoDto
                 t -> t.setWaiting(capybara.getTea().isWaiting())
         );
 
+        WeddingGiftInfoDto weddingGift = Utils.getOrNull(
+                capybara.getWeddingGift(),
+                wg -> mapActionInfo(wg, WeddingGiftInfoDto::new)
+        );
+
         return CapybaraInfoDto.builder()
                 .name(capybara.getName())
                 .level(capybara.getLevel().getValue())
                 .happiness(mapActionInfo(capybara.getHappiness(), HappinessInfoDto::new))
                 .satiety(mapActionInfo(capybara.getSatiety(), SatietyInfoDto::new))
+                .weddingGift(weddingGift)
                 .tea(tea)
                 .work(workInfo)
                 .race(race)

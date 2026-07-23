@@ -38,16 +38,13 @@ public class CapybaraBuilder {
                 .improvementValue(ImprovementValue.NONE)
                 .build();
         Level level = Level.builder()
-                .type(Type.FIRST)
+                .type(Type.COMMON)
                 .value(0)
-                .maxValue(10)
                 .build();
         Happiness happiness = Happiness.builder()
-                .maxLevel(100)
                 .level(0)
                 .build();
         Satiety satiety = Satiety.builder()
-                .maxLevel(100)
                 .level(0)
                 .build();
         Tea tea = Tea.builder()

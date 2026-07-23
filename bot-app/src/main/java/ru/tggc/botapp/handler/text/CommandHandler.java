@@ -54,11 +54,16 @@ public record CommandHandler(CapybaraService capybaraService,
         String caption = topCapybaras.stream()
                 .map(c -> c.name() + " - " + c.level())
                 .collect(Collectors.joining("\n"));
-        return ctx.send(new PhotoDto(photo.url(), caption));
+        return ctx.send(new PhotoDto(photo.url(), caption, ctx.chatId()));
     }
 
     @CommandHandle("take_capybara")
     public Response takeCapybara(@Ctx UpdateContext ctx) {
         return ctx.send(capybaraService.saveCapybara(ctx));
+    }
+
+    @CommandHandle("bug_report")
+    public Response bugReport(@Ctx UpdateContext ctx) {
+        return ctx.send(commonService.startBugReport(ctx));
     }
 }

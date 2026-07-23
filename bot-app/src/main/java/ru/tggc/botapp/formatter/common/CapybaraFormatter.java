@@ -10,6 +10,7 @@ import ru.tggc.botapp.domain.dto.info.HappinessInfoDto;
 import ru.tggc.botapp.domain.dto.info.RaceInfoDto;
 import ru.tggc.botapp.domain.dto.info.SatietyInfoDto;
 import ru.tggc.botapp.domain.dto.info.TeaInfoDto;
+import ru.tggc.botapp.domain.dto.info.WeddingGiftInfoDto;
 import ru.tggc.botapp.domain.dto.info.WorkInfoDto;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.formatter.msgkey.InfoMsgKey;
@@ -42,12 +43,13 @@ public class CapybaraFormatter {
         return formatService.get(CommonMsgKey.MY_CAPYBARA, params);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "DataFlowIssue"})
     public String getCapybaraInfo(CapybaraInfoDto capybara) {
         SatietyInfoDto satiety = capybara.satiety();
         HappinessInfoDto happiness = capybara.happiness();
         WorkInfoDto work = capybara.work();
         RaceInfoDto race = capybara.race();
+        WeddingGiftInfoDto weddingGift = capybara.weddingGift();
         return MessageBuilder.create()
                 .line(formatService.get(InfoMsgKey.CAPYBARA_HEADER))
                 .empty()
@@ -60,6 +62,10 @@ public class CapybaraFormatter {
                 )
                 .line(formatService.get(InfoMsgKey.CAPYBARA_FEED, availability(satiety.isCanAct(), satiety.getTimeToAct())))
                 .line(formatService.get(InfoMsgKey.CAPYBARA_HAPPINESS, availability(happiness.isCanAct(), happiness.getTimeToAct())))
+                .line(
+                        weddingGift != null,
+                        () -> formatService.get(InfoMsgKey.WEDDING_GIFT, availability(weddingGift.isCanAct(), weddingGift.getTimeToAct()))
+                )
                 .line(
                         !race.isCanAct(),
                         () -> formatService.get(InfoMsgKey.CAPYBARA_RACE_CHARGES, race.getTimeToAct())

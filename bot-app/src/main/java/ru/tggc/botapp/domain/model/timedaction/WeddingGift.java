@@ -22,16 +22,19 @@ public class WeddingGift implements TimedAction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDateTime lastTime;
-    private Integer level;
-    private LocalDateTime nextTime;
+    private Integer amount;
+
+    private static final Duration COOLDOWN = Duration.ofDays(1);
 
     @Override
     public boolean canPerform() {
-        return false;
+        return lastTime == null || Duration.between(lastTime, LocalDateTime.now()).compareTo(COOLDOWN) >= 0;
     }
 
     @Override
     public Duration timeUntilNext() {
-        return null;
+        if (lastTime == null) return Duration.ZERO;
+        Duration passed = Duration.between(lastTime, LocalDateTime.now());
+        return passed.compareTo(COOLDOWN) >= 0 ? Duration.ZERO : COOLDOWN.minus(passed);
     }
 }

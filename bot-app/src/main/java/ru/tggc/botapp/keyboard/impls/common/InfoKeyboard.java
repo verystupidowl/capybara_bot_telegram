@@ -24,47 +24,41 @@ public class InfoKeyboard extends AbstractInlineKeyboardCreator<CapybaraInfoDto>
         return capybara -> {
             List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-            List<InlineKeyboardButton> mainRow = new ArrayList<>();
-            List<InlineKeyboardButton> tea;
-            List<InlineKeyboardButton> job;
-            List<InlineKeyboardButton> improve;
-            List<InlineKeyboardButton> race;
-            List<InlineKeyboardButton> fight;
-
-            InlineKeyboardButton main = toMainMenuBtn("Моя капибара");
-            mainRow.add(main);
+            List<InlineKeyboardButton> mainRow = List.of(toMainMenuBtn("Моя капибара"));
             rows.add(mainRow);
 
             if (capybara.tea().isCanAct() && !capybara.tea().isWaiting()) {
                 InlineKeyboardButton teaBtn = btn("Пойти на чаепитие", "go_tea");
-                tea = new ArrayList<>();
-                tea.add(teaBtn);
+                List<InlineKeyboardButton> tea = List.of(teaBtn);
                 rows.add(tea);
             }
 
             if (capybara.work().isCanAct()) {
                 InlineKeyboardButton jobBtn = btn("Отправить капибару на работу", "go_job");
-                job = new ArrayList<>();
-                job.add(jobBtn);
+                List<InlineKeyboardButton> job = List.of(jobBtn);
                 rows.add(job);
             }
 
             if (capybara.race().getImprovement().equals("Ничего")) {
                 InlineKeyboardButton improvementBtn = btn("Купить улучшение для гонок", "buy_improve");
-                improve = new ArrayList<>();
-                improve.add(improvementBtn);
+                List<InlineKeyboardButton> improve = List.of(improvementBtn);
                 rows.add(improve);
             }
 
             if (capybara.race().isCanAct()) {
                 InlineKeyboardButton raceBtn = btn("Забег", "start_race");
-                race = new ArrayList<>();
-                race.add(raceBtn);
+                List<InlineKeyboardButton> race = List.of(raceBtn);
                 rows.add(race);
             }
 
+            if (capybara.weddingGift() != null && capybara.weddingGift().isCanAct()) {
+                InlineKeyboardButton weddingGiftBtn = btn("Подарок", "wedding_gift");
+                List<InlineKeyboardButton> weddingGift = List.of(weddingGiftBtn);
+                rows.add(weddingGift);
+            }
+
             InlineKeyboardButton fightBtn = btn("Бой с боссом", "fight_info");
-            fight = List.of(fightBtn);
+            List<InlineKeyboardButton> fight = List.of(fightBtn);
             rows.add(fight);
 
             return rows;

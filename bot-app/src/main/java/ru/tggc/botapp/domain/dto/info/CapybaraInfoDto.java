@@ -11,6 +11,7 @@ public record CapybaraInfoDto(
         TeaInfoDto tea,
         WorkInfoDto work,
         RaceInfoDto race,
-        BigJobInfoDto bigJob
+        BigJobInfoDto bigJob,
+        WeddingGiftInfoDto weddingGift
 ) {
 }

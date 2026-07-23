@@ -8,6 +8,7 @@ import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.WeddingRequest;
 import ru.tggc.botapp.domain.model.enums.WeddingRequestType;
 import ru.tggc.botapp.domain.model.enums.WeddingStatus;
+import ru.tggc.botapp.domain.model.timedaction.WeddingGift;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.repository.WeddingRequestRepository;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
@@ -53,6 +54,11 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
             request.setStatus(WeddingStatus.ACCEPTED);
             accepter.setSpouse(proposer);
             proposer.setSpouse(accepter);
+            WeddingGift weddingGift = WeddingGift.builder()
+                    .amount(20)
+                    .build();
+            accepter.setWeddingGift(weddingGift);
+            proposer.setWeddingGift(weddingGift);
             caption = "Ура! " + accepter.getName() + " и " + proposer.getName() + " теперь женаты!";
         } else {
             request.setStatus(WeddingStatus.DECLINED);
@@ -86,6 +92,8 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
             request.setStatus(WeddingStatus.ACCEPTED);
             accepter.setSpouse(null);
             proposer.setSpouse(null);
+            accepter.setWeddingGift(null);
+            proposer.setWeddingGift(null);
             message = accepter.getName() + " и " + proposer.getName() + " теперь разведены!";
         } else {
             request.setStatus(WeddingStatus.DECLINED);
@@ -95,6 +103,23 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
         weddingRequestRepository.save(request);
 
         return message;
+    }
+
+    public String getWeddingGift(UpdateContext ctx) {
+        Capybara capybara = capybaraService.getCapybaraByContext(ctx);
+
+        WeddingGift weddingGift = capybara.getWeddingGift();
+        throwIf(
+                capybara.getSpouse() == null || !weddingGift.canPerform(),
+                () -> new CapybaraException("Wedding gift can't perform!")
+        );
+
+        capybara.increaseMoney(weddingGift.getAmount());
+        weddingGift.setLastTime(LocalDateTime.now());
+
+        capybaraService.save(capybara);
+
+        return "Вы получили " + weddingGift.getAmount() + " арбузных долек";
     }
 
     @Override

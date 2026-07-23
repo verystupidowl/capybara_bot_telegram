@@ -60,7 +60,8 @@ public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @No
             "work.bigJob", "work.bigJob.bigJobAction",
             "improvement",
             "satiety",
-            "race"
+            "race",
+            "weddingGift"
     })
     Optional<Capybara> findInfoCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
@@ -97,4 +98,11 @@ public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @No
             "fight"
     })
     Optional<Capybara> findFightCapybaraByChatIdAndUserId(Long chatId, Long userId);
+
+    @EntityGraph(attributePaths = {
+            "user",
+            "chat",
+
+    })
+    Optional<Capybara> findCapybaraWithUserByUserIdAndChatId(Long userId, Long chatId);
 }
