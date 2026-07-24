@@ -10,27 +10,16 @@ import ru.tggc.botapp.domain.model.enums.fight.FightBuffHeal;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffShield;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffSpecial;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffWeapon;
-import ru.tggc.botapp.fight.event.FightEvent;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class FightFormatService {
     private final FormatService formatService;
-    private final List<FightEventFormatter<FightEvent>> formatters;
-
-    public String format(FightEvent event) {
-        return formatters.stream()
-                .filter(formatter -> formatter.type().equals(event.getClass()))
-                .findFirst()
-                .map(formatter -> formatter.format(event))
-                .orElse("");
-    }
 
     public String getFightInfo(FightCapybaraDto fightInfo) {
         String timeUntil = fightInfo.canFight() ? "Уже можно" : fightInfo.fightTime();
