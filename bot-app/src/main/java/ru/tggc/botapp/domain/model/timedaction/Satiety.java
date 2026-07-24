@@ -21,13 +21,15 @@ public class Satiety implements TimedAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private Integer level;
-    private Integer maxLevel;
 
     private LocalDateTime lastFed;
 
     private static final Duration COOLDOWN = Duration.ofHours(2);
+
+    public Integer calculateMaxLevel(Integer level) {
+        return 100 + ((level / 10) * 10 * 2);
+    }
 
     @Override
     public boolean canPerform() {

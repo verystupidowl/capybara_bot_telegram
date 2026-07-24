@@ -16,34 +16,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.dto.RequestType;
+import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.RaceRequest;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
 import ru.tggc.botapp.domain.model.enums.RaceStatus;
-import ru.tggc.botapp.domain.model.timedaction.Happiness;
 import ru.tggc.botapp.domain.model.timedaction.RaceAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.exceptions.CapybaraTiredException;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.formatter.msgkey.RaceMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.repository.RaceRequestRepository;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
 import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
+import ru.tggc.botapp.service.stats.CapybaraStatsService;
 import ru.tggc.botapp.util.HistoryType;
-import ru.tggc.botapp.util.RandomUtils;
-import ru.tggc.telegrambotframework.dto.FileDto;
-import ru.tggc.telegrambotframework.dto.FileType;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.service.TelegramBotSender;
-import ru.tggc.telegrambotframework.service.UserRateLimiterService;
+import ru.tggc.telegrambotcore.dto.FileDto;
+import ru.tggc.telegrambotcore.dto.FileType;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
+import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
-import static java.lang.Math.max;
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Slf4j
 @Service
@@ -57,6 +60,9 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService rateLimiterService;
     private final TelegramBotSender telegramBotService;
+    private final PhotoService photoService;
+    private final CapybaraStatsService statsService;
+    private final FormatService formatService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private RaceService self;
@@ -68,7 +74,10 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                        HistoryServiceImpl historyService,
                        KeyboardFactory keyboardFactory,
                        UserRateLimiterService rateLimiterService,
-                       TelegramBotSender telegramBotService) {
+                       TelegramBotSender telegramBotService,
+                       PhotoService photoService,
+                       CapybaraStatsService statsService,
+                       FormatService formatService) {
         super(capybaraService, userService);
         this.raceRequestRepository = raceRequestRepository;
         this.capybaraService = capybaraService;
@@ -77,6 +86,9 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         this.keyboardFactory = keyboardFactory;
         this.rateLimiterService = rateLimiterService;
         this.telegramBotService = telegramBotService;
+        this.photoService = photoService;
+        this.statsService = statsService;
+        this.formatService = formatService;
     }
 
     public Response acceptRace(UpdateContext ctx) {
@@ -85,7 +97,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public Response refuseRace(UpdateContext ctx) {
-        Capybara capybara = capybaraService.getCapybaraByContext(ctx);
+        Capybara capybara = capybaraService.getCapybaraByContext(ctx, fallback());
+
         Response response = respondRace(capybara, ctx, false);
         capybaraService.save(capybara);
         return response;
@@ -107,6 +120,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                                 challenger,
                                 opponent
                         ));
+                        historyService.removeFromHistory(ctx);
                     } else {
                         raceRequest.setStatus(RaceStatus.DECLINED);
                         response = response.andThen(Response.of(new SendMessage(ctx.chatId(), "ok")));
@@ -116,7 +130,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                     opponent.setRaceRequest(null);
 
                     raceRequestRepository.delete(raceRequest);
-
+                    historyService.removeFromHistory(ctx);
                     return response;
                 })
                 .orElseThrow(() -> new CapybaraException("No incoming challenge to respond to!"));
@@ -132,15 +146,15 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     public Response race(Capybara c1, Capybara c2) {
         return bot -> {
             long chatId = c1.getChat().getId();
-            FileDto fileDto = RandomUtils.getRandomRacePhoto();
+            FileDto fileDto = photoService.getRandomRacePhoto();
             int messageId;
             String caption = "\uD83C\uDFC3Идёт забег капибар!!!\nСоревнуются " + c1.getName() + " и " + c2.getName();
-            if (fileDto.getType() == FileType.PHOTO) {
-                messageId = bot.execute(new SendPhoto(chatId, fileDto.getUrl()).caption(caption))
+            if (fileDto.type() == FileType.PHOTO) {
+                messageId = bot.execute(new SendPhoto(chatId, fileDto.url()).caption(caption))
                         .message()
                         .messageId();
             } else {
-                SendResponse execute = bot.execute(new SendAnimation(chatId, fileDto.getUrl()).caption(caption));
+                SendResponse execute = bot.execute(new SendAnimation(chatId, fileDto.url()).caption(caption));
                 messageId = execute
                         .message()
                         .messageId();
@@ -154,6 +168,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
             RaceStepContext ctx = new RaceStepContext(contextDto1, contextDto2, need, bot, chatId, messageId);
 
             scheduleNextStep(ctx);
+            return CompletableFuture.completedFuture(null);
         };
     }
 
@@ -209,11 +224,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     @Transactional
     public void updateHappiness(Capybara capybara, boolean isWinner) {
         ImprovementValue improvement = capybara.getImprovement().getImprovementValue();
-        Happiness happiness = capybara.getHappiness();
-        happiness.setLevel(isWinner ?
-                happiness.getLevel() + improvement.getWinHappiness() :
-                max(0, happiness.getLevel() - improvement.getLoseHappiness()));
-        capybara.setHappiness(happiness);
+        int happiness = isWinner ? improvement.getWinHappiness() : -improvement.getLoseHappiness();
+        statsService.modify(capybara, StatKey.HAPPINESS, happiness);
     }
 
     public void sendMessages(Capybara winner, Capybara loser, RaceStepContext ctx) {
@@ -252,7 +264,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         RaceAction raceAction = c.getRace().getRaceAction();
         throwIf(!raceAction.canPerform(), () -> {
             String status = getStatus(raceAction);
-            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.RACE_MASSAGE);
+            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE_MASSAGE);
             return new CapybaraTiredException(status, markup);
         });
     }
@@ -273,7 +285,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         boolean requestsAlreadyExists = raceRequestRepository.existsByChallengerOrOpponent(challenger, opponent);
         throwIf(requestsAlreadyExists, () -> {
             String messageToSend = "u or ur opponent already has a challenge";
-            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardKey.RACE);
+            InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE);
             return new CapybaraException(messageToSend, markup);
         });
         return RaceRequest.builder()
@@ -292,7 +304,16 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     public void startRace(UpdateContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         self.checkStamina(capybara);
-        historyService.setHistory(ctx, HistoryType.START_RACE);
+        historyService.setHistory(ctx, HistoryType.START_RACE, prev -> {
+            throw new CapybaraException("Ты уже делаешь " + prev.state().getLabel(), keyboardFactory.getKeyboardInline(KeyboardType.RACE));
+        });
+    }
+
+    private Supplier<RuntimeException> fallback() {
+        return () -> {
+            String message = formatService.get(RaceMsgKey.OPPONENT_HAS_NO_CAPY);
+            return new CapybaraException(message, keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
+        };
     }
 
     public static class RaceStepContext {
@@ -303,8 +324,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         final long chatId;
         final int messageId;
         int percent1 = 0;
-        int percent2 = 0;
 
+        int percent2 = 0;
         public RaceStepContext(CapybaraContextDto c1, CapybaraContextDto c2, int need, TelegramBot bot, long chatId, int messageId) {
             this.c1 = c1;
             this.c2 = c2;
@@ -313,8 +334,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
             this.chatId = chatId;
             this.messageId = messageId;
         }
-    }
 
+    }
     public record CapybaraContextDto(Long id, String name, int level, int chance, long userId) {
         public CapybaraContextDto(Capybara capybara) {
             this(
@@ -325,5 +346,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                     capybara.getUser().getId()
             );
         }
+
     }
 }

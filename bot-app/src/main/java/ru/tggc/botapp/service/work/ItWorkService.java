@@ -1,21 +1,30 @@
 package ru.tggc.botapp.service.work;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.service.stats.CapybaraStatsService;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.Duration;
 
 @Service
 public class ItWorkService extends AbstractWorkService {
+    @Value("${bot.photos.work.setter.it}")
+    private String photo;
+
+    public ItWorkService(FormatService formatService, CapybaraStatsService statsService) {
+        super(formatService, statsService);
+    }
 
     @Override
-    public WorkType getJobType() {
-        return WorkType.PROGRAMMING;
+    public WorkType getWorkType() {
+        return WorkType.IT;
     }
 
     @Override
     protected String getSetWorkPhoto() {
-        return "https://vk.com/photo-209917797_457242284";
+        return photo;
     }
 
     @Override

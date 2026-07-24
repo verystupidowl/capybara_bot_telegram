@@ -5,13 +5,18 @@ import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
+import ru.tggc.botapp.service.TimedActionService;
 
 import java.util.function.Function;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
 
 @Component
-public class MyCapybaraMapper {
+public class MyCapybaraMapper extends AbstractMapper<Capybara, MyCapybaraDto> {
+
+    public MyCapybaraMapper(TimedActionService timedActionService) {
+        super(timedActionService);
+    }
 
     public MyCapybaraDto toDto(Capybara capybara) {
         Capybara wedding = capybara.getSpouse();
@@ -28,9 +33,9 @@ public class MyCapybaraMapper {
                 .currency(capybara.getCurrency())
                 .wedding(weddingName)
                 .satietyLevel(capybara.getSatiety().getLevel())
-                .satietyMaxLevel(100 + ((capybara.getLevel().getValue() / 10) * 10 * 2))
+                .satietyMaxLevel(capybara.getSatiety().calculateMaxLevel(capybara.getLevel().getValue()))
                 .happinessLevel(capybara.getHappiness().getLevel())
-                .happinessMaxLevel((100 + ((capybara.getLevel().getValue() / 10) * 10 * 2)))
+                .happinessMaxLevel(capybara.getHappiness().calculateMaxLevel(capybara.getLevel().getValue()))
                 .wins(capybara.getRace().getWins())
                 .defeats(capybara.getRace().getDefeats())
                 .canGoWork(getOrElse(capybara.getWork().getWorkAction(), WorkAction::canPerform, false))

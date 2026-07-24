@@ -1,5 +1,6 @@
 package ru.tggc.botapp.repository;
 
+import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
+public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @NonNull Long> {
 
     @NotNull
     @EntityGraph(attributePaths = {
@@ -56,9 +57,11 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "tea",
             "happiness",
             "work", "work.workType", "work.workAction",
+            "work.bigJob", "work.bigJob.bigJobAction",
             "improvement",
             "satiety",
-            "race"
+            "race",
+            "weddingGift"
     })
     Optional<Capybara> findInfoCapybaraByUserIdAndChatId(Long userId, Long chatId);
 
@@ -95,4 +98,11 @@ public interface CapybaraRepository extends JpaRepository<Capybara, Long> {
             "fight"
     })
     Optional<Capybara> findFightCapybaraByChatIdAndUserId(Long chatId, Long userId);
+
+    @EntityGraph(attributePaths = {
+            "user",
+            "chat",
+
+    })
+    Optional<Capybara> findCapybaraWithUserByUserIdAndChatId(Long userId, Long chatId);
 }

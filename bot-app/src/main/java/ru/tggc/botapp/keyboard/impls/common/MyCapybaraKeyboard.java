@@ -3,13 +3,13 @@ package ru.tggc.botapp.keyboard.impls.common;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
-import ru.tggc.botapp.keyboard.AbstractInlineKeyboardCreator;
+import ru.tggc.telegrambotcore.keyboard.AbstractInlineKeyboardCreator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.botapp.keyboard.KeyboardKey.MY_CAPYBARA;
+import static ru.tggc.botapp.keyboard.KeyboardType.MY_CAPYBARA;
 
 @Component
 public class MyCapybaraKeyboard extends AbstractInlineKeyboardCreator<MyCapybaraDto> {
@@ -75,7 +75,7 @@ public class MyCapybaraKeyboard extends AbstractInlineKeyboardCreator<MyCapybara
             List<InlineKeyboardButton> jobs = null;
 
             if (Boolean.TRUE.equals(capybara.canTakeFromWork())) {
-                InlineKeyboardButton job = btn("Забрать с работы", "take_from_job");
+                InlineKeyboardButton job = btn("Забрать с работы", "take_from_work");
                 jobs = new ArrayList<>();
                 jobs.add(job);
             } else if (Boolean.FALSE.equals(capybara.hasWork())) {

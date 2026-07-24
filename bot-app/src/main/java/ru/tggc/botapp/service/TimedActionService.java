@@ -6,7 +6,7 @@ import ru.tggc.botapp.domain.model.timedaction.TimedAction;
 
 import java.time.Duration;
 
-import static ru.tggc.telegrambotframework.util.Utils.formatDuration;
+import static ru.tggc.telegrambotcore.util.Utils.formatDuration;
 
 
 @Service

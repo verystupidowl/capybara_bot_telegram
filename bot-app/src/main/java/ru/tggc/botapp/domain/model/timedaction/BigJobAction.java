@@ -20,14 +20,14 @@ public class BigJobAction implements LongTimedAction {
         this.cooldown = cooldown;
     }
 
-    public void startWorking() {
+    public void startBigJob() {
         if (!canPerform()) {
             throw new CapybaraException("Нельзя отправить сейчас!");
         }
         startTime = Instant.now();
     }
 
-    public void takeFromWork() {
+    public void takeFromBigJob() {
         if (canTakeFrom()) {
             lastTaken = Instant.now();
             startTime = null;

@@ -1,97 +1,71 @@
 package ru.tggc.botapp.mapper;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.tggc.botapp.domain.dto.CapybaraInfoDto;
+import ru.tggc.botapp.domain.dto.info.BigJobInfoDto;
+import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
+import ru.tggc.botapp.domain.dto.info.HappinessInfoDto;
+import ru.tggc.botapp.domain.dto.info.RaceInfoDto;
+import ru.tggc.botapp.domain.dto.info.SatietyInfoDto;
+import ru.tggc.botapp.domain.dto.info.TeaInfoDto;
+import ru.tggc.botapp.domain.dto.info.WeddingGiftInfoDto;
+import ru.tggc.botapp.domain.dto.info.WorkInfoDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
-import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.service.TimedActionService;
-
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
+import ru.tggc.telegrambotcore.util.Utils;
 
 @Component
-@RequiredArgsConstructor
-public class CapybaraInfoMapper {
-    private final TimedActionService timedActionService;
+public class CapybaraInfoMapper extends AbstractMapper<Capybara, CapybaraInfoDto> {
 
-    public CapybaraInfoDto toDto(Capybara capybara) {
-        Boolean canTea = capybara.getTea().canPerform();
-        Boolean canHappiness = capybara.getHappiness().canPerform();
-        String happinessTime = timedActionService.getStatus(capybara.getHappiness());
-        String teaTime = timedActionService.getStatus(capybara.getTea());
-        Work work = capybara.getWork();
-        boolean hasWork = work.getWorkType() != WorkType.NONE;
-        Boolean hasBigJob = work != null;
-        Boolean canGoWork = null;
-        Boolean isWorking = null;
-        Boolean canGoBigJob = null;
-        Boolean isOnBigJob = null;
-        Boolean canTakeFromWork = null;
-        String takeFromWork = null;
-        Integer rise = null;
-        Integer index = null;
-        Boolean canTakeFromBigJob = null;
-        Integer takeFromBigJob = null;
-        Integer bigJobTime = null;
-        String workTime = null;
-        String improvement = null;
-        Boolean canSatiety = capybara.getSatiety().canPerform();
-        String satietyTime = timedActionService.getStatus(capybara.getSatiety());
-        Boolean canRace = capybara.getRace().getRaceAction().canPerform();
-        String raceTime = timedActionService.getStatus(capybara.getRace().getRaceAction());
-        if (capybara.getImprovement() != null) {
-            improvement = capybara.getImprovement().getImprovementValue().getLabel();
-        }
-        if (hasWork) {
-            WorkAction workAction = work.getWorkAction();
-            canGoWork = getOrElse(workAction, WorkAction::canPerform, false);
-            isWorking = getOrElse(workAction, WorkAction::isInProgress, false);
-            rise = work.getRise();
-            index = work.getIndex();
-            workTime = timedActionService.getStatus(workAction);
-            if (isWorking) {
-                canTakeFromWork = getOrElse(workAction, WorkAction::canTakeFrom, false);
-                takeFromWork = timedActionService.getStatus(workAction);
-            }
-        }
-//            if (Boolean.TRUE.equals(hasBigJob)) {
-//                canGoBigJob = capybara.getBigJob().getNextTime().isBefore(LocalDateTime.now());
-//                isOnBigJob = capybara.getBigJob().getIsOnBigJob();
-//                if (Boolean.TRUE.equals(isOnBigJob)) {
-//                    canTakeFromBigJob = capybara.getBigJob().getTimer().isBefore(LocalDateTime.now());
-//                    takeFromBigJob = capybara.getBigJob().getTimer().compareTo(LocalDateTime.now());
-//                    bigJobTime = capybara.getBigJob().getNextTime().compareTo(LocalDateTime.now());
-//                }
-//            }
-//        }
-        return CapybaraInfoDto.builder()
-                .name(capybara.getName())
-                .canTea(canTea)
-                .isTeaWaiting(capybara.getTea().isWaiting())
-                .canHappiness(canHappiness)
-                .teaTime(teaTime)
-                .hasWork(hasWork)
-                .canGoWork(canGoWork)
-                .canGoBigJob(canGoBigJob)
-                .workTime(workTime)
-                .isOnBigJob(isOnBigJob)
-                .isWorking(isWorking)
-                .canTakeFromWork(canTakeFromWork)
-                .takeFromWork(takeFromWork)
-                .rise(rise)
-                .index(index)
-                .raceTime(raceTime)
-                .canTakeFromBigJob(canTakeFromBigJob)
-                .takeFromBigJob(takeFromBigJob)
-                .bigJobTime(bigJobTime)
-                .satietyTime(satietyTime)
-                .canSatiety(canSatiety)
-                .happinessTime(happinessTime)
-                .canRace(canRace)
-                .improvement(improvement)
-                .build();
+    public CapybaraInfoMapper(TimedActionService timedActionService) {
+        super(timedActionService);
     }
 
+    public CapybaraInfoDto toDto(Capybara capybara) {
+        WorkInfoDto workInfo = new WorkInfoDto(false);
+        BigJobInfoDto bigJobInfo = new BigJobInfoDto();
+        Work work = capybara.getWork();
+
+        if (work.getWorkType() != WorkType.NONE) {
+            workInfo = mapLongAction(work.getWorkAction(), WorkInfoDto::new, w -> {
+                w.setHasWork(true);
+                w.setRise(work.getRise());
+                w.setIndex(work.getIndex());
+            });
+
+            if (work.getBigJob().isActive()) {
+                bigJobInfo = mapLongAction(
+                        work.getBigJob().getBigJobAction(),
+                        BigJobInfoDto::new
+                );
+            }
+        }
+        RaceInfoDto race = mapActionInfo(
+                capybara.getRace().getRaceAction(),
+                RaceInfoDto::new,
+                r -> r.setImprovement(capybara.getImprovement().getImprovementValue().getLabel()));
+        TeaInfoDto tea = mapActionInfo(
+                capybara.getTea(),
+                TeaInfoDto::new,
+                t -> t.setWaiting(capybara.getTea().isWaiting())
+        );
+
+        WeddingGiftInfoDto weddingGift = Utils.getOrNull(
+                capybara.getWeddingGift(),
+                wg -> mapActionInfo(wg, WeddingGiftInfoDto::new)
+        );
+
+        return CapybaraInfoDto.builder()
+                .name(capybara.getName())
+                .level(capybara.getLevel().getValue())
+                .happiness(mapActionInfo(capybara.getHappiness(), HappinessInfoDto::new))
+                .satiety(mapActionInfo(capybara.getSatiety(), SatietyInfoDto::new))
+                .weddingGift(weddingGift)
+                .tea(tea)
+                .work(workInfo)
+                .race(race)
+                .bigJob(bigJobInfo)
+                .build();
+    }
 }

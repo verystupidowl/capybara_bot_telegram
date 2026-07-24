@@ -1,48 +1,51 @@
 package ru.tggc.botapp.service.work;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
-import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.util.Text;
+import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
+import ru.tggc.botapp.service.stats.CapybaraStatsService;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
 
 @Service
 public class CriminalWorkService extends AbstractWorkService {
+    @Value("${bot.photos.work.setter.criminal}")
+    private String photo;
+
+    private final FormatService formatService;
+    private final CapybaraStatsService statsService;
+
+    public CriminalWorkService(FormatService formatService, CapybaraStatsService statsService) {
+        super(formatService, statsService);
+        this.formatService = formatService;
+        this.statsService = statsService;
+    }
 
     @Override
-    public List<String> takeFromWork(Capybara capybara) {
-        checkHasWork(capybara);
+    public String takeFromWork(Capybara capybara) {
         Work work = capybara.getWork();
-        throwIf(!work.getWorkAction().canTakeFrom(), () -> new CapybaraException("u cant take ur capy from the work"));
+        checkHasWork(work);
+        work.getWorkAction().takeFromWork();
 
-        int salary = getJobType().getCalculateSalary().apply(work.getIndex());
-        List<String> messages = new ArrayList<>();
+        int salary = getWorkType().calculateSalary(work.getIndex());
         if (salary != -1) {
-            capybara.setCurrency(capybara.getCurrency() + salary);
-            messages.add("Ты забрал капибару с работы. Она получила целых " + salary + " арбузных долек!");
-            work.setRise(work.getRise() + 1);
-            if (checkRise(capybara)) {
-                messages.add("Ух ты! Твоя капибара так усердно работала, что смогла получить повышение!" +
-                        "\nПлюс 150 арбузных долек!!!");
-            }
+            capybara.increaseMoney(salary);
+            statsService.modify(capybara, StatKey.RISE, 1);
+            return formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary);
         } else {
-            capybara.setCurrency(capybara.getCurrency() - capybara.getCurrency() / 10);
-            messages.add(Text.BUSTED);
+            capybara.increaseMoney((int) (capybara.getCurrency() / 10));
+            return formatService.get(WorkMsgKey.BUSTED);
         }
-
-        return messages;
     }
 
     @Override
     protected String getSetWorkPhoto() {
-        return "https://vk.com/photo-209917797_457242283";
+        return photo;
     }
 
     @Override
@@ -56,7 +59,7 @@ public class CriminalWorkService extends AbstractWorkService {
     }
 
     @Override
-    public WorkType getJobType() {
+    public WorkType getWorkType() {
         return WorkType.CRIMINAL;
     }
 }

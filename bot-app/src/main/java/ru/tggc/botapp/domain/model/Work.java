@@ -1,12 +1,15 @@
 package ru.tggc.botapp.domain.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,8 +30,12 @@ public class Work {
     private WorkAction workAction;
     private Integer rise;
     private Integer index;
-//    @OneToOne
-//    private BigJob bigJob;
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private BigJob bigJob;
     @Enumerated(EnumType.STRING)
     private WorkType workType;
+
+    public boolean hasWork() {
+        return workType != WorkType.NONE;
+    }
 }

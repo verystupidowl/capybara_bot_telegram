@@ -3,36 +3,50 @@ package ru.tggc.botapp.service.impl;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.Nullable;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.dto.DialogSession;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.util.HistoryType;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
-import ru.tggc.telegrambotframework.service.HistoryService;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.HistoryService;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
 public class HistoryServiceImpl implements HistoryService {
-    private final Cache<UpdateContext, DialogSession> cache = Caffeine.newBuilder()
+    private final Cache<@NonNull UpdateContext, DialogSession> cache = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofMinutes(3))
             .maximumSize(10_000)
             .build();
 
     private final KeyboardFactory keyboardFactory;
+    private final FormatService formatService;
 
-    public void setHistory(UpdateContext ctx, HistoryType type) {
+    public void setHistory(UpdateContext ctx, HistoryType type, Consumer<DialogSession> failAction) {
         DialogSession prev = cache.asMap().putIfAbsent(ctx, new DialogSession(type, new HashMap<>()));
         if (prev != null) {
-            throw new CapybaraException("ur capy already doing " + type, keyboardFactory.getKeyboardInline(KeyboardKey.RACE));
+            failAction.accept(prev);
         }
+    }
+
+    public void setHistory(UpdateContext ctx, HistoryType type) {
+        setHistory(ctx, type, prev -> {
+            throw new CapybaraException(
+                    formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
+                    keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
+            );
+        });
     }
 
     public void setHistory(UpdateContext ctx, HistoryType type, String key, String value) {

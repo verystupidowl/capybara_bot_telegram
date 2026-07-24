@@ -15,7 +15,7 @@ public class WorkServiceFactory {
 
     public WorkServiceFactory(List<WorkService> workServices) {
         this.jobTypeJobProviderMap = workServices.stream()
-                .collect(Collectors.toMap(WorkService::getJobType, Function.identity()));
+                .collect(Collectors.toMap(WorkService::getWorkType, Function.identity()));
     }
 
     public WorkService getJobProvider(WorkType workType) {

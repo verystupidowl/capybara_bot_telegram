@@ -22,7 +22,6 @@ public class Happiness implements TimedAction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Integer level;
-    private Integer maxLevel;
 
     private LocalDateTime lastHappy;
 
@@ -38,5 +37,9 @@ public class Happiness implements TimedAction {
         if (lastHappy == null) return Duration.ZERO;
         Duration passed = Duration.between(lastHappy, LocalDateTime.now());
         return passed.compareTo(COOLDOWN) >= 0 ? Duration.ZERO : COOLDOWN.minus(passed);
+    }
+
+    public Integer calculateMaxLevel(Integer capybaraLevel) {
+        return 100 + ((capybaraLevel / 10) * 10 * 2);
     }
 }

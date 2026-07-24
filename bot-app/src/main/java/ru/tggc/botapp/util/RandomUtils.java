@@ -1,11 +1,8 @@
 package ru.tggc.botapp.util;
 
 import lombok.experimental.UtilityClass;
-import ru.tggc.botapp.domain.dto.HappinessThings;
-import ru.tggc.botapp.domain.dto.fight.enums.BossAction;
-import ru.tggc.botapp.domain.dto.fight.enums.BossType;
-import ru.tggc.botapp.domain.model.Photo;
-import ru.tggc.telegrambotframework.dto.FileDto;
+import ru.tggc.botapp.fight.enums.BossAction;
+import ru.tggc.botapp.fight.enums.BossType;
 
 import java.util.List;
 import java.util.Map;
@@ -18,23 +15,9 @@ import static ru.tggc.botapp.util.CasinoTargetType.ZERO;
 
 @UtilityClass
 public class RandomUtils {
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = ThreadLocalRandom.current();
 
-    public HappinessThings getRandomHappinessThing() {
-        HappinessThings[] values = HappinessThings.values();
-        return values[RANDOM.nextInt(values.length)];
-    }
-
-    public Photo getRandomDefaultPhoto() {
-        List<String> values = CapybaraPhotos.DEFAULT_PHOTOS;
-        String id = values.get(RANDOM.nextInt(values.size()));
-        String url = "https://vk.com/photo-206143282_" + id;
-        return Photo.builder()
-                .url(url)
-                .build();
-    }
-
-    public BossType geetRandomBoss() {
+    public BossType getRandomBoss() {
         BossType[] values = BossType.values();
         return values[RANDOM.nextInt(values.length)];
     }
@@ -42,14 +25,6 @@ public class RandomUtils {
     public BossAction getRandomBossAction(BossType bossType) {
         List<BossAction> bossActions = bossType.getBossActions();
         return bossActions.get(RANDOM.nextInt(bossActions.size()));
-    }
-
-    public FileDto getRandomRacePhoto() {
-        return CapybaraPhotos.RACE_PHOTOS.get(RANDOM.nextInt(CapybaraPhotos.RACE_PHOTOS.size()));
-    }
-
-    public int getRandomInt() {
-        return RANDOM.nextInt();
     }
 
     public int getRandomInt(int maxValue) {
@@ -77,7 +52,7 @@ public class RandomUtils {
     }
 
     public static boolean chance(double v) {
-        return ThreadLocalRandom.current().nextDouble(100) < v;
+        return RANDOM.nextDouble(100) < v;
     }
 
     public static double getRandomStat(double baseStat) {

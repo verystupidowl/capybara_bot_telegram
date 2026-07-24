@@ -1,21 +1,21 @@
 package ru.tggc.botapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.dto.BlockInfoDto;
-import ru.tggc.botapp.domain.model.BlockInfo;
 import ru.tggc.botapp.domain.model.Chat;
 import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.exceptions.UserNotFoundException;
 import ru.tggc.botapp.repository.BlockRepository;
 import ru.tggc.botapp.repository.ChatRepository;
 import ru.tggc.botapp.repository.UserRepository;
-import ru.tggc.telegrambotframework.dto.ChatDto;
-import ru.tggc.telegrambotframework.dto.UserDto;
-import ru.tggc.telegrambotframework.dto.UserRole;
-import ru.tggc.telegrambotframework.service.UserService;
+import ru.tggc.telegrambotcore.dto.ChatDto;
+import ru.tggc.telegrambotcore.dto.UserDto;
+import ru.tggc.telegrambotcore.dto.UserRole;
+import ru.tggc.telegrambotcore.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -30,17 +30,17 @@ public class UserServiceImpl implements UserService {
     private final BlockRepository blockRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveOrUpdate(UserDto dto, ChatDto chatDto) {
+    public void saveOrUpdate(@NotNull UserDto userDto, @NotNull ChatDto chatDto) {
         Chat chat = chatRepository.findById(chatDto.id())
                 .orElseGet(() -> chatRepository.save(Chat.builder()
                         .name(chatDto.title())
                         .id(chatDto.id())
                         .users(new HashSet<>())
                         .build()));
-        User user = userRepository.findById(dto.userId())
+        User user = userRepository.findById(userDto.userId())
                 .orElseGet(() -> userRepository.save(User.builder()
-                        .username(dto.username())
-                        .id(dto.userId())
+                        .username(userDto.username())
+                        .id(userDto.userId())
                         .createdAt(LocalDateTime.now())
                         .lastTimeUpdatedAt(LocalDateTime.now())
                         .userRole(UserRole.USER)
@@ -67,7 +67,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean checkRoles(Long id, UserRole[] requiredRoles) {
+    public boolean checkRoles(long id, @NotNull UserRole[] requiredRoles) {
         return userRepository.findById(id).stream()
                 .anyMatch(u -> Arrays.stream(requiredRoles).toList().contains(u.getUserRole()));
     }
@@ -80,19 +80,5 @@ public class UserServiceImpl implements UserService {
                         bi.getUser().getUsername(),
                         bi.getReporter().getUsername()
                 ));
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void blockUser(String username, String reason, String reporterUsername) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User with username " + username + " not found"));
-        User reporter = userRepository.findByUsername(reporterUsername)
-                .orElseThrow(() -> new UserNotFoundException("User with reporter username " + reporterUsername + " not found"));
-
-        BlockInfo blockInfo = new BlockInfo();
-        blockInfo.setReason(reason);
-        blockInfo.setUser(user);
-        blockInfo.setReporter(reporter);
-        blockRepository.save(blockInfo);
     }
 }

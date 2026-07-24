@@ -24,5 +24,4 @@ public class Level {
     private Integer value;
     @Enumerated(EnumType.STRING)
     private Type type;
-    private Integer maxValue;
 }

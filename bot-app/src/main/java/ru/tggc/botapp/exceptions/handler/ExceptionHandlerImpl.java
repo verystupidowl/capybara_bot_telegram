@@ -5,6 +5,8 @@ import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.exceptions.CapybaraAlreadyExistsException;
 import ru.tggc.botapp.exceptions.CapybaraException;
@@ -12,12 +14,13 @@ import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
 import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.exceptions.CapybaraTiredException;
 import ru.tggc.botapp.exceptions.UserNotFoundException;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
-import ru.tggc.botapp.util.Text;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.ResponseBuilder;
-import ru.tggc.telegrambotframework.exception.ExceptionHandler;
+import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.ResponseBuilder;
+import ru.tggc.telegrambotcore.exception.ExceptionHandler;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
@@ -25,8 +28,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-import static ru.tggc.telegrambotframework.util.Utils.getOrElse;
-import static ru.tggc.telegrambotframework.util.Utils.ifPresent;
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
+import static ru.tggc.telegrambotcore.util.Utils.ifPresent;
 
 @Slf4j
 @Component
@@ -34,32 +37,37 @@ import static ru.tggc.telegrambotframework.util.Utils.ifPresent;
 public class ExceptionHandlerImpl implements ExceptionHandler {
     protected static final String DEFAULT_ERROR_MESSAGE = "Непредвиденная ошибка";
 
-    private final KeyboardFactory keyboardFactory;
+    @Value("${telegram.admin-id}")
+    private Long adminId;
 
-    public Response handleException(Exception e, Chat chat, User from) {
+    private final KeyboardFactory keyboardFactory;
+    private final FormatService formatService;
+
+    @NotNull
+    public Response handleException(@NotNull Exception e, Chat chat, @NotNull User from) {
         Throwable cause = unwrap(e);
         Response response;
         long chatId = chat.id();
         switch (cause) {
             case CapybaraNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
-                SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
+                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case UserNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
-                SendMessage message = new SendMessage(chatId, Text.DONT_HAVE_CAPYBARA);
-                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardKey.TAKE_CAPYBARA));
+                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
+                message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case CapybaraAlreadyExistsException ex -> {
                 log.info(ex.getMessage(), chatId);
-                response = Response.of(new SendMessage(chatId, Text.ALREADY_HAVE_CAPYBARA));
+                response = Response.of(new SendMessage(chatId, formatService.get(ErrorMsgKey.ALREADY_HAVE)));
             }
             case CapybaraHasNoMoneyException ex -> {
                 log.info(ex.getMessage());
-                String messageToSend = Text.NO_MONEY;
+                String messageToSend = formatService.get(ErrorMsgKey.NO_MONEY);
                 response = Response.of(new SendMessage(chatId, messageToSend));
             }
             case CapybaraTiredException ex -> {
@@ -68,8 +76,14 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
                 response = Response.of(sm);
             }
             case CapybaraException ex -> {
-                log.info(ex.getMessage(), chatId);
-                String messageToSend = ex.getMessageToSend();
+                String messageToSend;
+                if (ex.hasMsgKey()) {
+                    messageToSend = formatService.get(ex.getMsgKey());
+                } else {
+                    messageToSend = ex.getMessageToSend();
+                }
+
+                log.warn(ex.getMessage(), ex);
                 SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE));
                 ifPresent(ex.getMarkup(), sm::replyMarkup);
                 response = Response.of(sm);
@@ -77,7 +91,7 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
             case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "Введи число!"));
             default -> {
                 log.error("Error invoking callback", cause);
-                response = ResponseBuilder.toAdmin()
+                response = ResponseBuilder.to(adminId)
                         .message(buildMessageToAdmin(cause.getMessage(), chat, from))
                         .build()
                         .andThen(ResponseBuilder.to(chatId)
@@ -89,7 +103,8 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
         return response;
     }
 
-    public String buildMessageToAdmin(String message, Chat chat, User from) {
+    @NotNull
+    public String buildMessageToAdmin(@NotNull String message, Chat chat, User from) {
         return LocalDateTime.now() + "\n" + from.username() + "\n" + getOrElse(chat.title(), Function.identity(), "Личка") + "\n" + message;
     }
 

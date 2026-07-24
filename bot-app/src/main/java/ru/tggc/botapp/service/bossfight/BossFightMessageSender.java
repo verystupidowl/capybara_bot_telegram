@@ -1,0 +1,99 @@
+package ru.tggc.botapp.service.bossfight;
+
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import com.pengrad.telegrambot.model.request.InputMediaPhoto;
+import com.pengrad.telegrambot.request.DeleteMessage;
+import com.pengrad.telegrambot.request.EditMessageCaption;
+import com.pengrad.telegrambot.request.EditMessageMedia;
+import com.pengrad.telegrambot.request.EditMessageText;
+import com.pengrad.telegrambot.request.SendPhoto;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import ru.tggc.botapp.fight.BossFightState;
+import ru.tggc.botapp.keyboard.KeyboardType;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.TelegramBotSender;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static ru.tggc.telegrambotcore.util.Utils.ifPresent;
+
+
+@Service
+@RequiredArgsConstructor
+public class BossFightMessageSender {
+    private final TelegramBotSender sender;
+    private final KeyboardFactory keyboardFactory;
+
+    @Value("${bot.photos.fight.animation}")
+    private String animation;
+
+    public void sendMessages(long chatId, int oldMessageId, BossFightState fight, TelegramBot bot) {
+        List<AnimationStep> steps = getAnimationSteps(fight.getActionLogs());
+        bot.execute(new DeleteMessage(chatId, oldMessageId));
+        int messageId = bot.execute(new SendPhoto(chatId, animation)).message().messageId();
+        for (int i = 1; i < steps.size() + 1; i++) {
+            AnimationStep step = steps.get(i - 1);
+            sender.sendDelayed(telegramBot -> {
+                if (step.photoPath != null) {
+                    EditMessageMedia request = new EditMessageMedia(
+                            chatId,
+                            messageId,
+                            new InputMediaPhoto(step.photoPath)
+                                    .caption(step.text)
+                    );
+                    ifPresent(step.markup, request::replyMarkup);
+                    telegramBot.execute(request);
+                } else {
+                    telegramBot.execute(new EditMessageText(chatId, messageId, step.text));
+                }
+            }, i * 4L);
+        }
+
+        sender.sendDelayed(telegramBot -> {
+            String text = steps.stream()
+                    .map(AnimationStep::getText)
+                    .collect(Collectors.joining());
+            telegramBot.execute(new EditMessageCaption(chatId, messageId).caption(text).replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT)));
+            fight.getPlayers().values().forEach(ps -> ps.setLastAction(null));
+            fight.setActionLogs(new ArrayList<>());
+        }, (steps.size() + 1) * 4L);
+    }
+
+
+    @NotNull
+    private List<AnimationStep> getAnimationSteps(List<String> playersAction) {
+        return playersAction.stream()
+                .map(log -> new AnimationStep(
+                        log + "\n==========================\n",
+                        animation
+                ))
+                .toList();
+    }
+
+    public void sendFinishMessage(List<String> actionLogs, boolean bossDead, long chatId, TelegramBot bot, int messageId, int cost) {
+        String text = String.join("\n==========================\n", actionLogs) +
+                (bossDead ? "\nТы заработал " + cost : "boss won!");
+        bot.execute(new EditMessageCaption(chatId, messageId).caption(text));
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class AnimationStep {
+        private String text;
+        private String photoPath;
+        private InlineKeyboardMarkup markup;
+
+        public AnimationStep(String text, String photoPath) {
+            this.text = text;
+            this.photoPath = photoPath;
+        }
+    }
+}

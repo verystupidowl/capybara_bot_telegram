@@ -3,7 +3,7 @@ package ru.tggc.botapp.exceptions;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 
 public class CapybaraTiredException extends CapybaraException {
-    private static final String MESSAGE = "Твоя капибара устала! Подожди %s. Или сделай ей массаж";
+    private static final String MESSAGE = "Твоя капибара устала\uD83E\uDEE9! Подожди %s. Или сделай ей массаж";
 
     public CapybaraTiredException(String message) {
         super(MESSAGE.formatted(message));

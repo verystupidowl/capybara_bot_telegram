@@ -1,65 +1,78 @@
 package ru.tggc.botapp.service.work;
 
 import lombok.RequiredArgsConstructor;
+import ru.tggc.botapp.domain.dto.StatKey;
+import ru.tggc.botapp.domain.model.BigJob;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.timedaction.BigJobAction;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.service.WorkService;
+import ru.tggc.botapp.service.stats.CapybaraStatsService;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
-import static ru.tggc.telegrambotframework.util.Utils.throwIf;
+import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 
 @RequiredArgsConstructor
 public abstract class AbstractWorkService implements WorkService {
+    private final FormatService formatService;
+    private final CapybaraStatsService statsService;
 
     @Override
-    public List<String> takeFromWork(Capybara capybara) {
-        checkHasWork(capybara);
+    public String takeFromWork(Capybara capybara) {
         Work work = capybara.getWork();
+        checkHasWork(work);
         work.getWorkAction().takeFromWork();
 
-        int salary = getJobType().getCalculateSalary().apply(work.getIndex());
-        capybara.setCurrency(capybara.getCurrency() + salary);
+        int salary = getWorkType().calculateSalary(work.getIndex());
+        capybara.increaseMoney(salary);
 
-        List<String> messages = new ArrayList<>();
-        messages.add("Ты забрал капибару с работы. Она получила целых " + salary + " арбузных долек!");
+        statsService.modify(capybara, StatKey.RISE, 1);
 
-        work.setRise(work.getRise() + 1);
-        if (checkRise(capybara)) {
-            messages.add("Ух ты! Твоя капибара так усердно работала, что смогла получить повышение!" +
-                    "\nПлюс 150 арбузных долек!!!");
-        }
-
-        return messages;
+        return formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary);
     }
 
     @Override
     public void dismissal(Capybara capybara) {
-        checkHasWork(capybara);
-        Work work = Work.builder()
-                .workType(WorkType.NONE)
-                .build();
+        Work work = capybara.getWork();
+        checkHasWork(work);
+
+        work.setWorkType(WorkType.NONE);
+        work.setWorkAction(new WorkAction());
+        work.setRise(0);
+        work.setIndex(0);
+
+        BigJob bigJob = work.getBigJob();
+        bigJob.setActive(false);
+        bigJob.setBigJobAction(new BigJobAction());
+
         capybara.setWork(work);
     }
 
     @Override
     public String setWork(Capybara capybara) {
-        checkHasNoWork(capybara);
         WorkAction workAction = new WorkAction(getWorkDuration(), getWorkCooldown());
-        Work work = Work.builder()
-                .workType(getJobType())
-                .index(0)
-                .workAction(workAction)
-                .rise(1)
-                .build();
+        Work work = capybara.getWork();
+        checkHasNoWork(work);
+        work.setWorkAction(workAction);
+        work.setRise(1);
+        work.setIndex(0);
+        work.setWorkType(getWorkType());
         capybara.setWork(work);
         return getSetWorkPhoto();
+    }
+
+    @Override
+    public void goWork(Capybara capybara) {
+        Work work = capybara.getWork();
+        checkHasWork(work);
+        capybara.getWork().getWorkAction().startWorking();
     }
 
     protected abstract String getSetWorkPhoto();
@@ -68,33 +81,17 @@ public abstract class AbstractWorkService implements WorkService {
 
     protected abstract Duration getWorkDuration();
 
-    @Override
-    public void goWork(Capybara capybara) {
-        checkHasWork(capybara);
-        capybara.getWork().getWorkAction().startWorking();
+    protected void checkHasWork(Work work) {
+        throwIf(!work.hasWork(), () -> {
+            String message = formatService.get(WorkMsgKey.ERROR_HAS_NO_WORK);
+            return new CapybaraException(message);
+        });
     }
 
-
-    protected boolean checkRise(Capybara capybara) {
-        Work work = capybara.getWork();
-        if (work.getRise() >= 10 * (work.getIndex() + 1) && work.getIndex() <= 5) {
-            capybara.getWork().setRise(1);
-            capybara.getWork().setIndex(capybara.getWork().getIndex() + 1);
-            capybara.setCurrency(capybara.getCurrency() + 150);
-            return true;
-        }
-        return false;
-    }
-
-    protected void checkHasWork(Capybara capybara) {
-        throwIf(!checkWork(capybara), () -> new CapybaraException("Capybara has no work!"));
-    }
-
-    protected void checkHasNoWork(Capybara capybara) {
-        throwIf(checkWork(capybara), () -> new CapybaraException("Capybara has no work!"));
-    }
-
-    protected boolean checkWork(Capybara capybara) {
-        return WorkType.NONE != capybara.getWork().getWorkType();
+    protected void checkHasNoWork(Work work) {
+        throwIf(work.hasWork(), () -> {
+            String message = formatService.get(WorkMsgKey.ERROR_ALREADY_HAS_WORK);
+            return new CapybaraException(message);
+        });
     }
 }

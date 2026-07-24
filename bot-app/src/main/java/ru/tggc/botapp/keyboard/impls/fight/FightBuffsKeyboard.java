@@ -8,14 +8,15 @@ import ru.tggc.botapp.domain.model.enums.fight.FightBuffHeal;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffShield;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffSpecial;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffWeapon;
-import ru.tggc.botapp.keyboard.AbstractInlineKeyboardCreator;
+import ru.tggc.telegrambotcore.keyboard.AbstractInlineKeyboardCreator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import static ru.tggc.botapp.keyboard.KeyboardKey.FIGHT_BUFFS;
+import static ru.tggc.botapp.keyboard.KeyboardType.FIGHT_BUFFS;
+import static ru.tggc.botapp.util.KeyboardUtils.toMainMenuBtn;
 
 @Component
 public class FightBuffsKeyboard extends AbstractInlineKeyboardCreator<BuffType> {

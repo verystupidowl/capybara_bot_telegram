@@ -1,44 +1,40 @@
 package ru.tggc.botapp.handler.callback;
 
-import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.model.enums.WorkType;
-import ru.tggc.botapp.keyboard.KeyboardFactory;
-import ru.tggc.botapp.keyboard.KeyboardKey;
+import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
-import ru.tggc.telegrambotframework.annotation.handle.BotHandler;
-import ru.tggc.telegrambotframework.annotation.handle.CallbackHandle;
-import ru.tggc.telegrambotframework.annotation.params.Ctx;
-import ru.tggc.telegrambotframework.annotation.params.HandleParam;
-import ru.tggc.telegrambotframework.dto.Response;
-import ru.tggc.telegrambotframework.dto.UpdateContext;
+import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
+import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
+import ru.tggc.telegrambotcore.annotation.params.Ctx;
+import ru.tggc.telegrambotcore.annotation.params.HandleParam;
+import ru.tggc.telegrambotcore.dto.Response;
+import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
-@RequiredArgsConstructor
-public class WorkCallbackHandler extends CallbackHandler {
-    private final CapybaraService capybaraService;
-    private final KeyboardFactory keyboardFactory;
-
+public record WorkCallbackHandler(CapybaraService capybaraService,
+                                  KeyboardFactory keyboardFactory,
+                                  FormatService formatService) {
     @CallbackHandle("take_from_work")
     public Response takeFromWork(@Ctx UpdateContext ctx) {
-        return sendSimpleMessages(ctx.chatId(), capybaraService.takeFromWork(ctx));
+        return ctx.send(capybaraService.takeFromWork(ctx));
 
     }
 
     @CallbackHandle("go_job")
     public Response goJob(@Ctx UpdateContext ctx) {
-        capybaraService.goJob(ctx);
-        return sendSimpleMessage(ctx.chatId(), "ur capy has gone to work");
+        return ctx.send(capybaraService.goJob(ctx));
     }
 
     @CallbackHandle("set_job_${jobType}")
-    public Response setJob(@Ctx UpdateContext ctx,
-                           @HandleParam("jobType") WorkType workType) {
+    public Response setJob(@Ctx UpdateContext ctx, @HandleParam("jobType") WorkType workType) {
         String photoUrl = capybaraService.setJob(ctx, workType);
-        return editPhoto(
-                ctx.chatId(),
-                ctx.messageId(),
+        return ctx.edit(
                 photoUrl,
-                "Твоя капибара теперь " + workType.getLabel() + "! Поздравляю!"
+                formatService.get(WorkMsgKey.NEW_WORK, workType.getLabel()),
+                keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
         );
     }
 
@@ -46,9 +42,9 @@ public class WorkCallbackHandler extends CallbackHandler {
     public Response getJob(@Ctx UpdateContext ctx) {
         boolean hasWork = capybaraService.hasWork(ctx);
         if (!hasWork) {
-            return editMessageCaption(ctx.chatId(), ctx.messageId(), "Выбери работу", keyboardFactory.getKeyboardInline(KeyboardKey.NEW_WORK));
+            return ctx.edit("Выбери работу", keyboardFactory.getKeyboardInline(KeyboardType.NEW_WORK));
         } else {
-            return editMessageCaption(ctx.chatId(), ctx.messageId(), "Твоя капибара уже имеет работу", null);
+            return ctx.edit("Твоя капибара уже имеет работу");
         }
     }
 }
