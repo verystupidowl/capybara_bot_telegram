@@ -24,15 +24,6 @@ public class InfoKeyboard extends AbstractInlineKeyboardCreator<CapybaraInfoDto>
         return capybara -> {
             List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 
-            List<InlineKeyboardButton> mainRow = List.of(toMainMenuBtn("Моя капибара"));
-            rows.add(mainRow);
-
-            if (capybara.tea().isCanAct() && !capybara.tea().isWaiting()) {
-                InlineKeyboardButton teaBtn = btn("Пойти на чаепитие", "go_tea");
-                List<InlineKeyboardButton> tea = List.of(teaBtn);
-                rows.add(tea);
-            }
-
             if (capybara.work().isCanAct()) {
                 InlineKeyboardButton jobBtn = btn("Отправить капибару на работу", "go_job");
                 List<InlineKeyboardButton> job = List.of(jobBtn);
@@ -57,9 +48,24 @@ public class InfoKeyboard extends AbstractInlineKeyboardCreator<CapybaraInfoDto>
                 rows.add(weddingGift);
             }
 
-            InlineKeyboardButton fightBtn = btn("Бой с боссом", "fight_info");
+            if (capybara.tea().isCanAct() && !capybara.tea().isWaiting()) {
+                InlineKeyboardButton teaBtn = btn("Пойти на чаепитие", "go_tea");
+                List<InlineKeyboardButton> tea = List.of(teaBtn);
+                rows.add(tea);
+            }
+
+            if (capybara.tea().isWaiting()) {
+                InlineKeyboardButton teaBtn = btn("Забрать капибару с чаепития", "take_from_tea");
+                List<InlineKeyboardButton> tea = List.of(teaBtn);
+                rows.add(tea);
+            }
+
+            InlineKeyboardButton fightBtn = btn("Бой с боссом ❗В РАЗРАБОТКЕ❗", "fight_info");
             List<InlineKeyboardButton> fight = List.of(fightBtn);
             rows.add(fight);
+
+            List<InlineKeyboardButton> mainRow = List.of(toMainMenuBtn("Моя капибара"));
+            rows.add(mainRow);
 
             return rows;
         };

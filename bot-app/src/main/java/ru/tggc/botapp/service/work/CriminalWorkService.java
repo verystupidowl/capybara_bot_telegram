@@ -2,49 +2,45 @@ package ru.tggc.botapp.service.work;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
+import ru.tggc.botapp.service.stats.CapybaraStatsService;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class CriminalWorkService extends AbstractWorkService {
-    @Value("${bot.photos.work.criminal}")
+    @Value("${bot.photos.work.setter.criminal}")
     private String photo;
 
     private final FormatService formatService;
+    private final CapybaraStatsService statsService;
 
-    public CriminalWorkService(FormatService formatService) {
-        super(formatService);
+    public CriminalWorkService(FormatService formatService, CapybaraStatsService statsService) {
+        super(formatService, statsService);
         this.formatService = formatService;
+        this.statsService = statsService;
     }
 
     @Override
-    public List<String> takeFromWork(Capybara capybara) {
+    public String takeFromWork(Capybara capybara) {
         Work work = capybara.getWork();
         checkHasWork(work);
         work.getWorkAction().takeFromWork();
 
-        int salary = getWorkType().getCalculateSalary().apply(work.getIndex());
-        List<String> messages = new ArrayList<>();
+        int salary = getWorkType().calculateSalary(work.getIndex());
         if (salary != -1) {
             capybara.increaseMoney(salary);
-            messages.add(formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary));
-            work.setRise(work.getRise() + 1);
-            if (checkRise(capybara)) {
-                messages.add(formatService.get(WorkMsgKey.NEW_RISE));
-            }
+            statsService.modify(capybara, StatKey.RISE, 1);
+            return formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary);
         } else {
             capybara.increaseMoney((int) (capybara.getCurrency() / 10));
-            messages.add(formatService.get(WorkMsgKey.BUSTED));
+            return formatService.get(WorkMsgKey.BUSTED);
         }
-
-        return messages;
     }
 
     @Override

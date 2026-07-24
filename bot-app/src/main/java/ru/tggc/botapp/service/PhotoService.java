@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.tggc.botapp.config.BotPhotosProperties;
 import ru.tggc.botapp.domain.model.Photo;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
+import ru.tggc.botapp.domain.model.enums.WorkType;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.FileDto;
 
@@ -40,6 +41,16 @@ public class PhotoService {
             case BOOTS -> improvement.getBoots();
             case WATERMELON -> improvement.getWatermelon();
             case ANTI_LOSE -> improvement.getAntiLose();
+        };
+    }
+
+    public String getGoWorkPhoto(WorkType workType) {
+        BotPhotosProperties.GoWorkProperty goWork = botPhotosProperties.getWork().getGoWork();
+        return switch (workType) {
+            case NONE -> "";
+            case CASHIER -> goWork.getCashierGoWork();
+            case CRIMINAL -> goWork.getCriminalGoWork();
+            case IT -> goWork.getItGoWork();
         };
     }
 }

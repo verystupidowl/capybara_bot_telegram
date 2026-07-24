@@ -48,7 +48,7 @@ public class WorkAction implements LongTimedAction {
 
     @Override
     public boolean isInProgress() {
-        return startTime != null && Instant.now().isBefore(startTime.plus(duration));
+        return startTime != null;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class WorkAction implements LongTimedAction {
 
     @Override
     public boolean canTakeFrom() {
-        return startTime != null && !isInProgress();
+        return isInProgress() && Instant.now().isAfter(startTime.plus(duration));
     }
 
     @Override

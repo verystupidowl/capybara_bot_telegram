@@ -45,6 +45,21 @@ public class BotPhotosProperties {
     @Getter
     @Setter
     public static class WorkProperty {
+        private WorkSetterProperty setter = new WorkSetterProperty();
+        private GoWorkProperty goWork = new GoWorkProperty();
+    }
+
+    @Getter
+    @Setter
+    public static class GoWorkProperty {
+        private String itGoWork;
+        private String cashierGoWork;
+        private String criminalGoWork;
+    }
+
+    @Getter
+    @Setter
+    public static class WorkSetterProperty {
         private String cashier;
         private String criminal;
         private String it;

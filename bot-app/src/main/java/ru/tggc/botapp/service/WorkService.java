@@ -3,8 +3,6 @@ package ru.tggc.botapp.service;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.WorkType;
 
-import java.util.List;
-
 public interface WorkService {
 
     String setWork(Capybara capybara);
@@ -13,7 +11,7 @@ public interface WorkService {
 
     WorkType getWorkType();
 
-    List<String> takeFromWork(Capybara capybara);
+    String takeFromWork(Capybara capybara);
 
     void dismissal(Capybara capybara);
 }

@@ -9,6 +9,7 @@ import java.util.function.Function;
 public record StatKey<T>(StatType statType, Function<Capybara, T> extractor) {
     public static StatKey<Happiness> HAPPINESS = new StatKey<>(StatType.HAPPINESS, Capybara::getHappiness);
     public static StatKey<Satiety> SATIETY = new StatKey<>(StatType.SATIETY, Capybara::getSatiety);
+    public static StatKey<Integer> RISE = new StatKey<>(StatType.RISE, c -> c.getWork().getRise());
 
     public T extract(Capybara capybara) {
         return extractor.apply(capybara);
@@ -16,6 +17,7 @@ public record StatKey<T>(StatType statType, Function<Capybara, T> extractor) {
 
     private enum StatType {
         HAPPINESS,
-        SATIETY
+        SATIETY,
+        RISE
     }
 }

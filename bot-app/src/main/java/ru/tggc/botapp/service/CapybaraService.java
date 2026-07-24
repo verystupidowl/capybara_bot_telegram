@@ -39,6 +39,7 @@ import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.formatter.msgkey.RaceMsgKey;
+import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.mapper.CapybaraInfoMapper;
 import ru.tggc.botapp.mapper.CapybaraTeaMapper;
@@ -313,17 +314,25 @@ public class CapybaraService {
         return photoUrl;
     }
 
-    public void goJob(UpdateContext ctx) {
+    public PhotoDto goJob(UpdateContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
-        WorkService workService = workServiceFactory.getJobProvider(capybara.getWork().getWorkType());
+        WorkType workType = capybara.getWork().getWorkType();
+        WorkService workService = workServiceFactory.getJobProvider(workType);
         workService.goWork(capybara);
         capybaraRepository.save(capybara);
+        String photoUrl = photoService.getGoWorkPhoto(workType);
+        return PhotoDto.builder()
+                .url(photoUrl)
+                .chatId(ctx.chatId())
+                .caption(formatService.get(WorkMsgKey.GO_WORK))
+                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU))
+                .build();
     }
 
-    public List<String> takeFromWork(UpdateContext ctx) {
+    public String takeFromWork(UpdateContext ctx) {
         Capybara capybara = getCapybaraByContext(ctx);
         WorkService workService = workServiceFactory.getJobProvider(capybara.getWork().getWorkType());
-        List<String> messages = workService.takeFromWork(capybara);
+        String messages = workService.takeFromWork(capybara);
         capybaraRepository.save(capybara);
         return messages;
     }

@@ -13,23 +13,19 @@ import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
-import java.util.List;
-
 @BotHandler
 public record WorkCallbackHandler(CapybaraService capybaraService,
                                   KeyboardFactory keyboardFactory,
                                   FormatService formatService) {
     @CallbackHandle("take_from_work")
     public Response takeFromWork(@Ctx UpdateContext ctx) {
-        List<String> texts = capybaraService.takeFromWork(ctx);
-        return ctx.send(texts);
+        return ctx.send(capybaraService.takeFromWork(ctx));
 
     }
 
     @CallbackHandle("go_job")
     public Response goJob(@Ctx UpdateContext ctx) {
-        capybaraService.goJob(ctx);
-        return ctx.send("ur capy has gone to work");
+        return ctx.send(capybaraService.goJob(ctx));
     }
 
     @CallbackHandle("set_job_${jobType}")

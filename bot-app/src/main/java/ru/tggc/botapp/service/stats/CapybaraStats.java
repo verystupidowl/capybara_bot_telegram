@@ -7,9 +7,5 @@ public interface CapybaraStats<T> {
 
     void modify(Capybara capybara, Integer value);
 
-    boolean checkNewLevel(Capybara capybara);
-
-    void setToDefault(T stat);
-
     StatKey<T> getStatKey();
 }

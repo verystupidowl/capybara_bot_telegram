@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.listener.event.NewLevelEvent;
+import ru.tggc.botapp.listener.event.NewRiseEvent;
 import ru.tggc.botapp.listener.event.NewTypeEvent;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
@@ -19,6 +20,11 @@ public class CapybaraEventListener {
 
     @EventListener
     public void NewTypeListener(NewTypeEvent event) {
+        sender.send(event.response());
+    }
+
+    @EventListener
+    public void newRiseEvent(NewRiseEvent event) {
         sender.send(event.response());
     }
 }

@@ -1,19 +1,25 @@
 package ru.tggc.botapp.service.stats;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.timedaction.Happiness;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 
 import static java.lang.Math.max;
 
 @Service
-public class HappinessStatsService implements CapybaraStats<Happiness> {
+public class HappinessStatsService extends AbstractPropertyService<Happiness> {
+
+    public HappinessStatsService(FormatService formatService, ApplicationEventPublisher eventPublisher) {
+        super(formatService, eventPublisher);
+    }
 
     @Override
     @Transactional
-    public void modify(Capybara capybara, Integer value) {
+    public void modifyProperty(Capybara capybara, Integer value) {
         Happiness happiness = capybara.getHappiness();
         happiness.setLevel(max(0, happiness.getLevel() + value));
     }
