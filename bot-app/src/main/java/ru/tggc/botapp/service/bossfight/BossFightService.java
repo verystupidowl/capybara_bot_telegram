@@ -1,4 +1,4 @@
-package ru.tggc.botapp.service;
+package ru.tggc.botapp.service.bossfight;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
@@ -22,15 +22,18 @@ import ru.tggc.botapp.fight.enums.BossAction;
 import ru.tggc.botapp.fight.enums.BossType;
 import ru.tggc.botapp.fight.enums.PlayerActionType;
 import ru.tggc.botapp.fight.event.boss.BossActionResult;
-import ru.tggc.botapp.formatter.fight.FightFormatService;
+import ru.tggc.botapp.formatter.msgkey.FightEventMsgKey;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.provider.BossFightProvider;
+import ru.tggc.botapp.service.CapybaraService;
+import ru.tggc.botapp.service.TimedActionService;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.dto.UserDto;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.formatter.MsgKey;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
@@ -55,7 +58,6 @@ public class BossFightService {
     private final TimedActionService timedActionService;
     private final BossFightMessageSender messageSender;
     private final FormatService formatService;
-    private final FightFormatService fightFormatterFactory;
 
     @Setter(onMethod = @__({@Lazy, @Autowired}))
     private BossFightService self;
@@ -192,12 +194,15 @@ public class BossFightService {
                 .filter(BossFightState.PlayerState::isAlive)
                 .toList();
 
-        if (alivePlayers.isEmpty()) return;
+        if (alivePlayers.isEmpty()) {
+            return;
+        }
 
-        BossActionResult actionResult = bossAction.apply(fight, alivePlayers);
+        BossActionResult actionResult = bossAction.apply(alivePlayers);
         StringBuilder response = new StringBuilder();
         actionResult.events().forEach(event -> {
-            String format = fightFormatterFactory.format(event);
+            MsgKey msgKey = FightEventMsgKey.getMsgKeyByEvent(event.getClass());
+            String format = formatService.get(msgKey, event.getArgs());
             response.append(format).append("\n");
         });
         String checkedPlayers = checkPs(alivePlayers);
@@ -228,7 +233,8 @@ public class BossFightService {
             }
 
             ps.getLastAction().apply(fight, ps).events().forEach(event -> {
-                String action = fightFormatterFactory.format(event);
+                MsgKey msgKey = FightEventMsgKey.getMsgKeyByEvent(event.getClass());
+                String action = formatService.get(msgKey, event.getArgs());
                 response.append(action).append("\n");
             });
 

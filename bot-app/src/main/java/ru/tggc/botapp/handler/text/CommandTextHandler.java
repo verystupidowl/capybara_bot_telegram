@@ -2,7 +2,7 @@ package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.BossFightService;
+import ru.tggc.botapp.service.bossfight.BossFightService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.util.HandlerUtils;

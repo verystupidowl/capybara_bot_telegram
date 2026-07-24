@@ -1,4 +1,4 @@
-package ru.tggc.botapp.service;
+package ru.tggc.botapp.service.bossfight;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
