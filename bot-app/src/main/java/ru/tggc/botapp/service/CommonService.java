@@ -10,18 +10,18 @@ import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.repository.CapybaraRepository;
-import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
+import ru.tggc.telegrambotcore.service.HistoryService;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommonService {
-    private final HistoryServiceImpl historyServiceImpl;
+    private final HistoryService historyService;
     private final CapybaraRepository capybaraRepository;
     private final TelegramBotSender telegramBotSender;
     @Value("${bot.photos.start}")
@@ -38,7 +38,7 @@ public class CommonService {
     }
 
     public String startBugReport(UpdateContext ctx) {
-        historyServiceImpl.setHistory(ctx, HistoryType.BUG_REPORT);
+        historyService.setHistory(ctx, HistoryType.BUG_REPORT);
         return formatService.get(CommonMsgKey.START_BUG_REPORT);
     }
 

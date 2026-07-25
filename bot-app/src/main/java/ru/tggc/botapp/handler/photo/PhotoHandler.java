@@ -3,7 +3,6 @@ package ru.tggc.botapp.handler.photo;
 import com.pengrad.telegrambot.model.Message;
 import lombok.extern.slf4j.Slf4j;
 import ru.tggc.botapp.service.CapybaraService;
-import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.PhotoHandle;
@@ -11,10 +10,11 @@ import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.service.HistoryService;
 
 @Slf4j
 @BotHandler
-public record PhotoHandler(CapybaraService capybaraService, HistoryServiceImpl historyService) {
+public record PhotoHandler(CapybaraService capybaraService, HistoryService historyService) {
     @PhotoHandle("update_photo")
     public Response updatePhoto(@Ctx UpdateContext ctx, @MessageParam Message message) {
         if (historyService.isInHistory(ctx, HistoryType.CHANGE_PHOTO)) {

@@ -3,6 +3,7 @@ package ru.tggc.botapp.service.bossfight;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.CallbackQuery;
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.AnswerCallbackQuery;
 import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.EditMessageCaption;
@@ -126,7 +127,7 @@ public class BossFightService {
                     Integer messageId = query.maybeInaccessibleMessage().messageId();
 
                     if (ps == null || !ps.isAlive()) {
-                        return Response.of(new SendMessage(chatId, formatService.get(FightMsgKey.CANT_ACT)));
+                        return Response.of(new SendMessage(chatId, formatService.get(FightMsgKey.CANT_ACT)).parseMode(ParseMode.HTML));
                     }
 
                     if (ps.getLastAction() != null) {
@@ -161,7 +162,7 @@ public class BossFightService {
                             .caption(text)
                             .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.FIGHT));
                     return Response.of(message);
-                }).orElseGet(() -> Response.of(new SendMessage(chatId, "⚠️ Бой не найден."))
+                }).orElseGet(() -> Response.of(new SendMessage(chatId, "⚠️ Бой не найден.").parseMode(ParseMode.HTML))
                         .andThen(Response.of(new DeleteMessage(chatId, query.maybeInaccessibleMessage().messageId()))));
     }
 

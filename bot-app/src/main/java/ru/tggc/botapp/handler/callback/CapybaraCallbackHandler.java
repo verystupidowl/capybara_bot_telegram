@@ -8,7 +8,6 @@ import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
-import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.CasinoTargetType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
@@ -19,12 +18,13 @@ import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.HistoryService;
 
 import static ru.tggc.botapp.util.HistoryType.CHANGE_NAME;
 import static ru.tggc.botapp.util.HistoryType.CHANGE_PHOTO;
 
 @BotHandler
-public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
+public record CapybaraCallbackHandler(HistoryService historyService,
                                       CapybaraService capybaraService,
                                       KeyboardFactory keyboardFactory,
                                       CasinoService casinoService,
@@ -56,12 +56,12 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("take_from_tea")
     public Response takeFromTea(@Ctx UpdateContext ctx) {
         capybaraService.takeFromTea(ctx);
-        return ctx.send("ok");
+        return ctx.edit("Ты забрал капибару с чаепития", keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
     }
 
     @CallbackHandle("go_tea")
     public Response goTea(@Ctx UpdateContext ctx) {
-        return ctx.send(capybaraService.goTea(ctx));
+        return ctx.edit(capybaraService.goTea(ctx));
     }
 
     @CallbackHandle("fatten")
@@ -94,12 +94,13 @@ public record CapybaraCallbackHandler(HistoryServiceImpl historyService,
     @CallbackHandle("not_change")
     public Response notChange(@Ctx UpdateContext ctx) {
         historyService.removeFromHistory(ctx);
-        return ctx.sendWithDelete("Ok");
+        return ctx.delete();
     }
 
     @CallbackHandle("go_to_main")
     public Response sendGoToMainMessage(@Ctx UpdateContext ctx) {
         MyCapybaraDto capybara = capybaraService.getMyCapybara(ctx);
+        historyService.removeFromHistory(ctx);
         return ctx.edit(
                 capybara.photo(),
                 capybaraFormatter.getMyCapybara(capybara),

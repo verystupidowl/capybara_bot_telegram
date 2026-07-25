@@ -65,6 +65,14 @@ public class TelegramBotSenderImpl implements TelegramBotSender {
         );
     }
 
+    @Override
+    public void sendDelayed(@NotNull Response response, long delayMillis) {
+        taskScheduler.schedule(
+                () -> response.accept(telegramBot),
+                Instant.now().plusMillis(delayMillis)
+        );
+    }
+
     @Recover
     public void recover(RetryableWithSecsException e, Response response) {
         sendToAdmin("Сообщение для пользователя не отправилось с ошибкой " + e.getMessage());

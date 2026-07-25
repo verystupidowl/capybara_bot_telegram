@@ -3,7 +3,6 @@ package ru.tggc.botapp.handler.admin;
 import ru.tggc.botapp.domain.dto.AdminStats;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
-import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
@@ -15,13 +14,14 @@ import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.dto.UserRole;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.HistoryService;
 
 import java.util.Locale;
 
 @BotHandler
 public record AdminHandler(AdminService adminService,
                            KeyboardFactory keyboardFactory,
-                           HistoryServiceImpl historyService) {
+                           HistoryService historyService) {
     @CallbackHandle(
             value = "admin_menu",
             canPublic = false,

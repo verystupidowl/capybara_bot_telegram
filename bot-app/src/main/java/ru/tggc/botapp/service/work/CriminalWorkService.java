@@ -39,7 +39,7 @@ public class CriminalWorkService extends AbstractWorkService {
             return formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary);
         } else {
             capybara.increaseMoney((int) (capybara.getCurrency() / 10));
-            return formatService.get(WorkMsgKey.BUSTED);
+            return formatService.get(WorkMsgKey.BUSTED, capybara.getCurrency() / 10);
         }
     }
 

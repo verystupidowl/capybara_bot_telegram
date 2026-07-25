@@ -7,7 +7,6 @@ import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.service.CommonService;
 import ru.tggc.botapp.service.RaceService;
-import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.DefaultMessageHandle;
@@ -15,9 +14,10 @@ import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.HistoryService;
 
 @BotHandler
-public record DefaultMessageHandler(HistoryServiceImpl historyService,
+public record DefaultMessageHandler(HistoryService historyService,
                                     CasinoService casinoService,
                                     KeyboardFactory keyboardFactory,
                                     CapybaraService capybaraService,
@@ -30,7 +30,7 @@ public record DefaultMessageHandler(HistoryServiceImpl historyService,
         long userId = message.from().id();
         String text = message.text();
         UpdateContext ctx = new UpdateContext(chatId, userId, message.messageId());
-        HistoryType historyType = historyService.getFromHistory(ctx);
+        HistoryType historyType = (HistoryType) historyService.getFromHistory(ctx);
         if (historyType == null) {
             return null;
         }

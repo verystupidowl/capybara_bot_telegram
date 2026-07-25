@@ -13,7 +13,12 @@ public enum RaceMsgKey implements MsgKey {
     IMPROVEMENT_BOOTS("race.improvement.boots"),
     IMPROVEMENT_WATERMELON("race.improvement.watermelon"),
     IMPROVEMENT_ANTI_LOSE("race.improvement.anti-lose"),
-    OPPONENT_HAS_NO_CAPY("race.opponent-has-no-capy")
+    OPPONENT_HAS_NO_CAPY("race.opponent-has-no-capy"),
+
+    STARTING_RACE("race.running.starting-race"),
+    RUNNING_RACE("race.running.running-race"),
+    WIN("race.running.win"),
+    DRAW("race.running.draw"),
     ;
 
     private final String key;

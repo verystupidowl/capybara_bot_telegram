@@ -25,7 +25,7 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
 
     @CallbackHandle("go_job")
     public Response goJob(@Ctx UpdateContext ctx) {
-        return ctx.send(capybaraService.goJob(ctx));
+        return ctx.edit(capybaraService.goJob(ctx));
     }
 
     @CallbackHandle("set_job_${jobType}")

@@ -1,6 +1,7 @@
 package ru.tggc.botapp.service;
 
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendDice;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.CasinoMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.impl.HistoryServiceImpl;
 import ru.tggc.botapp.util.CasinoTargetType;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.botapp.util.RandomUtils;
@@ -29,6 +29,7 @@ import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
+import ru.tggc.telegrambotcore.service.HistoryService;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 import ru.tggc.telegrambotcore.util.Utils;
 
@@ -42,7 +43,7 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIfNull;
 @Service
 @RequiredArgsConstructor
 public class CasinoService {
-    private final HistoryServiceImpl historyService;
+    private final HistoryService historyService;
     private final CapybaraService capybaraService;
     private final TelegramBotSender sender;
     private final FormatService formatService;
@@ -143,7 +144,7 @@ public class CasinoService {
                     sendPhoto = new SendPhoto(chatId, winPhoto);
                     sendPhoto.caption(formatService.get(CasinoMsgKey.CASINO_SLOTS_WIN, (win - bet)));
                 }
-                tb.execute(sendPhoto);
+                tb.execute(sendPhoto.parseMode(ParseMode.HTML));
                 historyService.removeFromHistory(ctx);
             }, 3000L);
             return CompletableFuture.completedFuture(null);

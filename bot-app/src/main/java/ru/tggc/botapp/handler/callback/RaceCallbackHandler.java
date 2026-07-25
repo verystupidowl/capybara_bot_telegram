@@ -26,9 +26,9 @@ public record RaceCallbackHandler(CapybaraService capybaraService,
     @CallbackHandle("start_race")
     public Response startRace(@Ctx UpdateContext ctx) {
         raceService.startRace(ctx);
-        return ctx.send(
+        return ctx.sendWithDelete(
                 formatService.get(RaceMsgKey.START_RACE),
-                keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
+                keyboardFactory.getKeyboardInline(KeyboardType.CANCEL)
         );
     }
 
