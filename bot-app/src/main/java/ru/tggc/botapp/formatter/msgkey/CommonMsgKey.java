@@ -18,6 +18,7 @@ public enum CommonMsgKey implements MsgKey {
 
     TEA_WAITING("capybara.tea.waiting"),
     DO_TEA("capybara.tea.do-tea"),
+    DO_TEA_IN_CHAT("capybara.tea.do-tea-in-chat"),
 
     CAPYBARA_CREATED("capybara.created"),
     MY_CAPYBARA("capybara.my-capybara"),

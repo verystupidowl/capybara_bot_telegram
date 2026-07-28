@@ -19,7 +19,7 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
                                   FormatService formatService) {
     @CallbackHandle("take_from_work")
     public Response takeFromWork(@Ctx UpdateContext ctx) {
-        return ctx.send(capybaraService.takeFromWork(ctx));
+        return ctx.edit(capybaraService.takeFromWork(ctx), keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
 
     }
 

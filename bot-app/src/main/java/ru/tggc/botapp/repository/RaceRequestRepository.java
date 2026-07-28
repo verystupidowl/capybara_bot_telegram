@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.RaceRequest;
+import ru.tggc.botapp.domain.model.enums.RaceStatus;
 
 import java.util.Optional;
 
@@ -17,7 +18,7 @@ public interface RaceRequestRepository extends JpaRepository<@NonNull RaceReques
             "challenger.happiness",
             "challenger.race"
     })
-    Optional<RaceRequest> findByOpponentId(Long id);
+    Optional<RaceRequest> findByOpponentIdAndStatus(Long id, RaceStatus status);
 
     boolean existsByChallengerOrOpponent(Capybara challenger, Capybara opponent);
 }

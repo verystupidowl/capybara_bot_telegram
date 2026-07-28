@@ -1,6 +1,8 @@
 package ru.tggc.botapp.handler.admin;
 
 import ru.tggc.botapp.domain.dto.AdminStats;
+import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
 import ru.tggc.botapp.util.HistoryType;
@@ -13,6 +15,7 @@ import ru.tggc.telegrambotcore.annotation.params.Username;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.dto.UserRole;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.HistoryService;
 
@@ -21,7 +24,8 @@ import java.util.Locale;
 @BotHandler
 public record AdminHandler(AdminService adminService,
                            KeyboardFactory keyboardFactory,
-                           HistoryService historyService) {
+                           HistoryService historyService,
+                           FormatService formatService) {
     @CallbackHandle(
             value = "admin_menu",
             canPublic = false,
@@ -43,7 +47,12 @@ public record AdminHandler(AdminService adminService,
             requiredRoles = {UserRole.ADMIN, UserRole.SUPER_ADMIN}
     )
     public Response startBroadcast(@Ctx UpdateContext ctx) {
-        historyService.setHistory(ctx, HistoryType.BROADCAST);
+        historyService.setHistory(ctx, HistoryType.BROADCAST, prev -> {
+            throw new CapybaraException(
+                    formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
+                    keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
+            );
+        });
         return ctx.send("Введите сообщение для рассылки!");
     }
 

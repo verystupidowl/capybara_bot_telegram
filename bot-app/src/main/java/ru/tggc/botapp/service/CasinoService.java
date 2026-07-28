@@ -2,6 +2,7 @@ package ru.tggc.botapp.service;
 
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.request.DeleteMessage;
 import com.pengrad.telegrambot.request.SendDice;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,6 @@ import ru.tggc.botapp.formatter.msgkey.CasinoMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.util.CasinoTargetType;
-import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.botapp.util.SlotResult;
 import ru.tggc.botapp.util.SlotType;
@@ -38,7 +38,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
-import static ru.tggc.telegrambotcore.util.Utils.throwIfNull;
 
 @Service
 @RequiredArgsConstructor
@@ -59,13 +58,8 @@ public class CasinoService {
     @Setter(onMethod = @__({@Lazy, @Autowired}))
     private CasinoService self;
 
-    public void startCasino(UpdateContext ctx) {
-        historyService.setHistory(ctx, HistoryType.CASINO_SET_BET);
-    }
-
     public PhotoDto setBet(UpdateContext historyDto, String bet) {
         bet = Utils.checkNumber(bet);
-        throwIf(!historyService.isEmpty(historyDto), this::getNotPlayingException);
         historyService.putData(historyDto, "bet", bet);
         return new PhotoDto(
                 casinoSetBetPhoto,
@@ -79,21 +73,18 @@ public class CasinoService {
     public PhotoDto casino(UpdateContext ctx, CasinoTargetType type) {
         long chatId = ctx.chatId();
         Capybara capybara = capybaraService.findCapybara(ctx)
-                .orElseThrow(() -> {
-                    historyService.removeFromHistory(ctx);
-                    return new CapybaraNotFoundException();
-                });
+                .orElseThrow(CapybaraNotFoundException::new);
 
-        throwIfNull(historyService.getFromHistory(ctx), this::getNotPlayingException);
         Long betAmount = historyService.getData(ctx, "bet")
                 .map(Long::parseLong)
                 .orElseThrow();
 
-        checkBet(ctx, betAmount, capybara);
+        checkBet(betAmount, capybara);
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         PhotoDto.Builder response = PhotoDto.builder()
-                .chatId(chatId);
+                .chatId(chatId)
+                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
 
         if (wonType == type) {
             Long winAmount = type.getCalculateWin().apply(betAmount);
@@ -106,20 +97,14 @@ public class CasinoService {
             response.setUrl(losePhoto);
         }
 
-        historyService.removeFromHistory(ctx);
-
         capybaraService.save(capybara);
         return response.build();
     }
 
     public Response slots(UpdateContext ctx, long bet) {
-        throwIfNull(historyService.getFromHistory(ctx), this::getNotPlayingException);
         Capybara capybara = capybaraService.findCapybara(ctx)
-                .orElseThrow(() -> {
-                    historyService.removeFromHistory(ctx);
-                    return new CapybaraNotFoundException();
-                });
-        checkBet(ctx, bet, capybara);
+                .orElseThrow(CapybaraNotFoundException::new);
+        checkBet(bet, capybara);
 
         return bot -> {
             Message response = bot.execute(new SendDice(ctx.chatId()).slotMachine()).message();
@@ -144,15 +129,17 @@ public class CasinoService {
                     sendPhoto = new SendPhoto(chatId, winPhoto);
                     sendPhoto.caption(formatService.get(CasinoMsgKey.CASINO_SLOTS_WIN, (win - bet)));
                 }
-                tb.execute(sendPhoto.parseMode(ParseMode.HTML));
-                historyService.removeFromHistory(ctx);
-            }, 3000L);
+                tb.execute(sendPhoto
+                        .parseMode(ParseMode.HTML)
+                        .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)));
+
+                sender.sendDelayed(b -> {
+                    b.execute(new DeleteMessage(chatId, response.messageId()));
+                }, 10000L);
+
+            }, 2000L);
             return CompletableFuture.completedFuture(null);
         };
-    }
-
-    public void startSlots(UpdateContext ctx) {
-        historyService.setHistory(ctx, HistoryType.SLOTS_SET_BET);
     }
 
     @Transactional
@@ -164,15 +151,11 @@ public class CasinoService {
         return win;
     }
 
-    private void checkBet(UpdateContext ctx, long bet, Capybara capybara) {
-        throwIf(capybara.getCurrency() < bet, () -> {
-            historyService.removeFromHistory(ctx);
-            return new CapybaraHasNoMoneyException();
-        });
+    private void checkBet(long bet, Capybara capybara) {
+        throwIf(capybara.getCurrency() < bet, CapybaraHasNoMoneyException::new);
         long minBetAmount = (capybara.getLevel().getValue() / 10) * 25L;
 
         throwIf(bet < minBetAmount, () -> {
-            historyService.removeFromHistory(ctx);
             String message = formatService.get(ErrorMsgKey.CASINO_MIN_BET, minBetAmount);
             return new CapybaraException(message);
         });
@@ -191,8 +174,12 @@ public class CasinoService {
         }
     }
 
-    private RuntimeException getNotPlayingException() {
-        String message = formatService.get(ErrorMsgKey.CASINO_NOT_PLAYING);
-        return new CapybaraException(message);
+    public PhotoDto getInfo(UpdateContext ctx) {
+        return new PhotoDto(
+                casinoSetBetPhoto,
+                "Казино",
+                ctx.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardType.CASINO_INFO)
+        );
     }
 }

@@ -3,16 +3,15 @@ package ru.tggc.botapp.handler.callback;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
+import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.formatter.common.CapybaraFormatter;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
-import ru.tggc.botapp.util.CasinoTargetType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
-import ru.tggc.telegrambotcore.annotation.params.HandleParam;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
@@ -32,18 +31,26 @@ public record CapybaraCallbackHandler(HistoryService historyService,
                                       FormatService formatService) {
     @CallbackHandle("set_name")
     public Response setName(@Ctx UpdateContext ctx) {
-        historyService.setHistory(ctx, CHANGE_NAME);
         InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE);
         String message = formatService.get(CommonMsgKey.START_CHANGE_NAME);
-        return ctx.send(message, markup);
+        return ctx.ask(message, CHANGE_NAME, markup, prev -> {
+            throw new CapybaraException(
+                    formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
+                    keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
+            );
+        });
     }
 
     @CallbackHandle("set_photo")
     public Response setPhoto(@Ctx UpdateContext ctx) {
-        historyService.setHistory(ctx, CHANGE_PHOTO);
         InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.DEFAULT_PHOTO);
         String message = formatService.get(CommonMsgKey.START_CHANGE_PHOTO);
-        return ctx.send(message, markup);
+        return ctx.ask(message, CHANGE_PHOTO, markup, prev -> {
+            throw new CapybaraException(
+                    formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
+                    keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
+            );
+        });
     }
 
     @CallbackHandle("exactly_delete")
@@ -61,7 +68,7 @@ public record CapybaraCallbackHandler(HistoryService historyService,
 
     @CallbackHandle("go_tea")
     public Response goTea(@Ctx UpdateContext ctx) {
-        return ctx.edit(capybaraService.goTea(ctx));
+        return ctx.sendWithDelete(capybaraService.goTea(ctx));
     }
 
     @CallbackHandle("fatten")
@@ -115,13 +122,6 @@ public record CapybaraCallbackHandler(HistoryService historyService,
                 capybaraFormatter.getCapybaraInfo(info),
                 keyboardFactory.getKeyboardInline(KeyboardType.INFO, info)
         );
-    }
-
-    @CallbackHandle("casino_${target}")
-    public Response casino(@Ctx UpdateContext ctx,
-                           @HandleParam("target") CasinoTargetType target) {
-        PhotoDto response = casinoService.casino(ctx, target);
-        return ctx.edit(response.url(), response.caption());
     }
 
     @CallbackHandle("take_capybara")

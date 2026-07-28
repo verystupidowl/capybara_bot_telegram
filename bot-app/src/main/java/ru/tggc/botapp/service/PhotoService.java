@@ -18,6 +18,11 @@ import java.util.List;
 public class PhotoService {
     private final BotPhotosProperties botPhotosProperties;
 
+    public String getRandomGoTeaPhoto() {
+        List<String> values = botPhotosProperties.getTea().getDoTea();
+        return values.get(RandomUtils.getRandomInt(values.size()));
+    }
+
     public Photo getRandomDefaultPhoto() {
         List<String> values = botPhotosProperties.getDefaultPhotos();
         String url = values.get(RandomUtils.getRandomInt(values.size()));

@@ -25,21 +25,18 @@ import ru.tggc.botapp.domain.model.enums.RaceStatus;
 import ru.tggc.botapp.domain.model.timedaction.RaceAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.exceptions.CapybaraTiredException;
-import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.formatter.msgkey.RaceMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.repository.RaceRequestRepository;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.service.stats.CapybaraStatsService;
-import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.dto.FileDto;
 import ru.tggc.telegrambotcore.dto.FileType;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
-import ru.tggc.telegrambotcore.service.HistoryService;
 import ru.tggc.telegrambotcore.service.TelegramBotSender;
 import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 
@@ -58,7 +55,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     private final RaceRequestRepository raceRequestRepository;
     private final CapybaraService capybaraService;
     private final TimedActionService timedActionService;
-    private final HistoryService historyService;
     private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService rateLimiterService;
     private final TelegramBotSender telegramBotService;
@@ -73,7 +69,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                        UserServiceImpl userService,
                        RaceRequestRepository raceRequestRepository,
                        TimedActionService timedActionService,
-                       HistoryService historyService,
                        KeyboardFactory keyboardFactory,
                        UserRateLimiterService rateLimiterService,
                        TelegramBotSender telegramBotService,
@@ -84,7 +79,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         this.raceRequestRepository = raceRequestRepository;
         this.capybaraService = capybaraService;
         this.timedActionService = timedActionService;
-        this.historyService = historyService;
         this.keyboardFactory = keyboardFactory;
         this.rateLimiterService = rateLimiterService;
         this.telegramBotService = telegramBotService;
@@ -107,7 +101,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public Response respondRace(Capybara opponent, UpdateContext ctx, boolean accept) {
-        return raceRequestRepository.findByOpponentId(opponent.getId())
+        return raceRequestRepository.findByOpponentIdAndStatus(opponent.getId(), RaceStatus.PENDING)
                 .map(raceRequest -> {
                     Response response = Response.of(new DeleteMessage(ctx.chatId(), ctx.messageId()));
                     Capybara challenger = raceRequest.getChallenger();
@@ -122,7 +116,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                                 challenger,
                                 opponent
                         ));
-                        historyService.removeFromHistory(ctx);
                     } else {
                         raceRequest.setStatus(RaceStatus.DECLINED);
                         response = response.andThen(Response.of(new SendMessage(ctx.chatId(), "ok")));
@@ -131,8 +124,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                     challenger.setRaceRequest(null);
                     opponent.setRaceRequest(null);
 
-                    raceRequestRepository.delete(raceRequest);
-                    historyService.removeFromHistory(ctx);
+                    raceRequestRepository.save(raceRequest);
                     return response;
                 })
                 .orElseThrow(() -> new CapybaraException("No incoming challenge to respond to!"));
@@ -231,6 +223,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                 bot.execute(emc);
             }, 2000L);
         }
+        c1.getImprovement().setImprovementValue(ImprovementValue.NONE);
+        c2.getImprovement().setImprovementValue(ImprovementValue.NONE);
 
         capybaraService.save(c1);
         capybaraService.save(c2);
@@ -309,7 +303,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     protected RaceRequest getRequest(Capybara challenger, Capybara opponent) {
         boolean requestsAlreadyExists = raceRequestRepository.existsByChallengerOrOpponent(challenger, opponent);
         throwIf(requestsAlreadyExists, () -> {
-            String messageToSend = "u or ur opponent already has a challenge";
+            String messageToSend = "Ты или твой оппонент уже ждет начало забега!";
             InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.RACE);
             return new CapybaraException(messageToSend, markup);
         });
@@ -329,10 +323,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     public void startRace(UpdateContext ctx) {
         Capybara capybara = capybaraService.getRaceCapybara(ctx);
         self.checkStamina(capybara);
-        historyService.setHistory(ctx, HistoryType.START_RACE, prev -> {
-            String message = formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel());
-            throw new CapybaraException(message, keyboardFactory.getKeyboardInline(KeyboardType.RACE));
-        });
     }
 
     private Supplier<RuntimeException> fallback() {

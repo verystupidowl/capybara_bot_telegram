@@ -20,9 +20,9 @@ public class CasinoTargetKeyboard extends AbstractInlineKeyboardCreator<Void> {
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
         return () -> rows(
-                btn("Красное", "casino_RED"),
-                btn("Черное", "casino_BLACK"),
-                btn("Зеро", "casino_ZERO")
+                btn("Красное", "casino_target_RED"),
+                btn("Черное", "casino_target_BLACK"),
+                btn("Зеро", "casino_target_ZERO")
         );
     }
 }

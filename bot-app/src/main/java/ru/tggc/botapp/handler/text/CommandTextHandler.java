@@ -2,10 +2,11 @@ package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.bossfight.BossFightService;
 import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.CasinoService;
+import ru.tggc.botapp.service.bossfight.BossFightService;
 import ru.tggc.botapp.util.HandlerUtils;
+import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.MessageHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
@@ -14,13 +15,15 @@ import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.annotation.params.Username;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
+import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
 public record CommandTextHandler(CapybaraService capybaraService,
                                  CasinoService casinoService,
                                  BossFightService bossFightService,
-                                 KeyboardFactory keyboardFactory) {
+                                 KeyboardFactory keyboardFactory,
+                                 FormatService formatService) {
     @MessageHandle("уволиться с работы")
     public Response dismissal(@Ctx UpdateContext ctx) {
         capybaraService.dismissal(ctx);
@@ -29,14 +32,22 @@ public record CommandTextHandler(CapybaraService capybaraService,
 
     @MessageHandle("казино")
     public Response startCasino(@Ctx UpdateContext ctx) {
-        casinoService.startCasino(ctx);
-        return ctx.send("Введите ставку");
+        return ctx.ask(
+                "Введите ставку",
+                HistoryType.CASINO_SET_BET,
+                keyboardFactory.getKeyboardInline(KeyboardType.CANCEL),
+                HandlerUtils.fallback(formatService, keyboardFactory)
+        );
     }
 
     @MessageHandle("слоты")
     public Response startSlots(@Ctx UpdateContext ctx) {
-        casinoService.startSlots(ctx);
-        return ctx.send("Введите ставку");
+        return ctx.ask(
+                "Введите ставку",
+                HistoryType.SLOTS_SET_BET,
+                keyboardFactory.getKeyboardInline(KeyboardType.CANCEL),
+                HandlerUtils.fallback(formatService, keyboardFactory)
+        );
     }
 
     @MessageHandle("перевести дольки ${amount} ${username}")

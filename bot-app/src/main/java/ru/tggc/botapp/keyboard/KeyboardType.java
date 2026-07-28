@@ -36,4 +36,5 @@ public record KeyboardType() {
     public static final KeyboardKey<Void> MAYBE_START_FIGHT = new KeyboardKey<>("MAYBE_START_FIGHT");
     public static final KeyboardKey<Void> ADMIN_MENU = new KeyboardKey<>("ADMIN_MENU");
     public static final KeyboardKey<Void> CANCEL = new KeyboardKey<>("CANCEL");
+    public static final KeyboardKey<Void> CASINO_INFO = new KeyboardKey<>("CASINO_INFO");
 }

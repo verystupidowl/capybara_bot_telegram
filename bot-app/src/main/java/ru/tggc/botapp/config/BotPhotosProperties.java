@@ -17,7 +17,6 @@ public class BotPhotosProperties {
     private WorkProperty work = new WorkProperty();
     private String feed;
     private String fatten;
-    private String tea;
     private String newLevel;
     private String newType;
     private String start;
@@ -26,6 +25,13 @@ public class BotPhotosProperties {
     private FightProperty fight = new FightProperty();
     private List<String> defaultPhotos = new ArrayList<>();
     private RaceProperty race;
+    private TeaProperty tea = new TeaProperty();
+
+    @Getter
+    @Setter
+    public static class TeaProperty {
+        private List<String> doTea = new ArrayList<>();
+    }
 
     @Getter
     @Setter

@@ -1,5 +1,6 @@
 package ru.tggc.botapp.service.stats;
 
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +49,8 @@ public abstract class AbstractPropertyService<T> implements CapybaraStats<T> {
                 capybara.getUser().getUsername(),
                 capybara.getName()
         );
-        SendPhoto sp = new SendPhoto((long) capybara.getChat().getId(), newLevelPhoto);
+        SendPhoto sp = new SendPhoto((long) capybara.getChat().getId(), newLevelPhoto)
+                .parseMode(ParseMode.HTML);
         sp.caption(message);
         Response response = Response.of(sp);
         eventPublisher.publishEvent(new NewLevelEvent(response));
@@ -74,7 +76,8 @@ public abstract class AbstractPropertyService<T> implements CapybaraStats<T> {
                     next.getGift()
             );
 
-            SendPhoto sp = new SendPhoto((long) capybara.getChat().getId(), newTypePhoto);
+            SendPhoto sp = new SendPhoto((long) capybara.getChat().getId(), newTypePhoto)
+                    .parseMode(ParseMode.HTML);
             sp.caption(message);
             Response response = Response.of(sp);
             eventPublisher.publishEvent(new NewTypeEvent(response));
