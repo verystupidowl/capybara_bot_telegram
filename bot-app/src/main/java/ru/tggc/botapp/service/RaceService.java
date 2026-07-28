@@ -101,7 +101,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public Response respondRace(Capybara opponent, UpdateContext ctx, boolean accept) {
-        return raceRequestRepository.findByOpponentIdAndStatus(opponent.getId(), RaceStatus.PENDING)
+        return raceRequestRepository.findByOpponentId(opponent.getId())
                 .map(raceRequest -> {
                     Response response = Response.of(new DeleteMessage(ctx.chatId(), ctx.messageId()));
                     Capybara challenger = raceRequest.getChallenger();
@@ -124,7 +124,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                     challenger.setRaceRequest(null);
                     opponent.setRaceRequest(null);
 
-                    raceRequestRepository.save(raceRequest);
+                    raceRequestRepository.delete(raceRequest);
                     return response;
                 })
                 .orElseThrow(() -> new CapybaraException("No incoming challenge to respond to!"));

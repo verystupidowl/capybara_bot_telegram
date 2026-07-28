@@ -34,7 +34,7 @@ public record CasinoCallbackHandler(
                 HistoryType.SLOTS_SET_BET,
                 keyboardFactory.getKeyboardInline(KeyboardType.CANCEL),
                 HandlerUtils.fallback(formatService, keyboardFactory)
-        );
+        ).andThen(ctx.delete());
     }
 
     @CallbackHandle("casino_casino")
@@ -44,14 +44,14 @@ public record CasinoCallbackHandler(
                 HistoryType.CASINO_SET_BET,
                 keyboardFactory.getKeyboardInline(KeyboardType.CANCEL),
                 HandlerUtils.fallback(formatService, keyboardFactory)
-        );
+        ).andThen(ctx.delete());
     }
 
 
     @CallbackHandle("casino_target_${target}")
     public Response casino(@Ctx UpdateContext ctx,
                            @HandleParam("target") CasinoTargetType target) {
-        PhotoDto response = casinoService.casino(ctx, target);
-        return ctx.edit(response.url(), response.caption());
+        return casinoService.casino(ctx, target)
+                .andThen(ctx.cleanPromptAndInput());
     }
 }

@@ -270,7 +270,6 @@ public class CapybaraService {
                 ));
             }
 
-            System.out.println("PHOTOS" + photosToReturn);
             return photosToReturn;
         }
         tea.setWaiting(true);

@@ -86,6 +86,7 @@ public record DefaultMessageHandler(HistoryService historyService,
     @TextHandle(value = "CASINO_SET_BET", deleteAfterHandle = false)
     public Response casinoSetBet(@Ctx UpdateContext ctx, @MessageParam Message message) {
         String text = message.text();
-        return ctx.send(casinoService.setBet(ctx, text));
+        return ctx.sendWithDelete(casinoService.setBet(ctx, text))
+                .andThen(ctx.cleanInput());
     }
 }

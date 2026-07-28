@@ -1,8 +1,11 @@
 package ru.tggc.botapp.service;
 
 import com.pengrad.telegrambot.model.Message;
+import com.pengrad.telegrambot.model.request.InputMediaPhoto;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.DeleteMessage;
+import com.pengrad.telegrambot.request.EditMessageCaption;
+import com.pengrad.telegrambot.request.EditMessageMedia;
 import com.pengrad.telegrambot.request.SendDice;
 import com.pengrad.telegrambot.request.SendPhoto;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +73,7 @@ public class CasinoService {
     }
 
     @Transactional
-    public PhotoDto casino(UpdateContext ctx, CasinoTargetType type) {
+    public Response casino(UpdateContext ctx, CasinoTargetType userGuess) {
         long chatId = ctx.chatId();
         Capybara capybara = capybaraService.findCapybara(ctx)
                 .orElseThrow(CapybaraNotFoundException::new);
@@ -82,23 +85,89 @@ public class CasinoService {
         checkBet(betAmount, capybara);
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
-        PhotoDto.Builder response = PhotoDto.builder()
-                .chatId(chatId)
-                .markup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
+        boolean isWin = (wonType == userGuess);
+        long winAmount = isWin ? userGuess.getCalculateWin().apply(betAmount) : 0;
 
-        if (wonType == type) {
-            Long winAmount = type.getCalculateWin().apply(betAmount);
-            capybara.setCurrency(capybara.getCurrency() + winAmount);
-            response.setCaption(formatService.get(CasinoMsgKey.CASINO_CASINO_WIN, wonType.getLabel(), winAmount));
-            response.setUrl(winPhoto);
+        if (isWin) {
+            capybara.increaseMoney((int) winAmount);
         } else {
-            capybara.setCurrency(capybara.getCurrency() - betAmount);
-            response.setCaption(formatService.get(CasinoMsgKey.CASINO_CASINO_LOSE, wonType.getLabel(), betAmount));
-            response.setUrl(losePhoto);
+            capybara.decreaseMoney(Math.toIntExact(betAmount));
         }
-
         capybaraService.save(capybara);
-        return response.build();
+
+        String[] frames = getRouletteFrames(wonType);
+
+        return bot -> {
+            SendPhoto sp = new SendPhoto(chatId, casinoSetBetPhoto)
+                    .caption(frames[0])
+                    .parseMode(ParseMode.HTML);
+            Message msg = bot.execute(sp).message();
+            int messageId = msg.messageId();
+
+            for (int i = 1; i < frames.length; i++) {
+                final int frameIndex = i;
+                sender.sendDelayed(b -> {
+                    b.execute(new EditMessageCaption(chatId, messageId)
+                            .caption(frames[frameIndex])
+                            .parseMode(ParseMode.HTML));
+                }, i * 1000L);
+            }
+
+            sender.sendDelayed(b -> {
+                String resultEmoji = getEmojiForType(wonType);
+                String resultText = isWin
+                        ? "🎉 <b>Победа!</b> Выпало " + resultEmoji + " Вы выиграли <b>" + winAmount + "</b> 🪙!"
+                        : "😢 <b>Увы!</b> Выпало " + resultEmoji + " Ставка <b>" + betAmount + "</b> 🪙 сгорела.";
+
+                String finalMessage = frames[3] + "\n\n" + resultText;
+
+                InputMediaPhoto imp = new InputMediaPhoto(isWin ? winPhoto : losePhoto)
+                        .caption(finalMessage)
+                        .parseMode(ParseMode.HTML);
+                b.execute(new EditMessageMedia(chatId, messageId, imp)
+                        .replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)));
+            }, 4000L);
+
+            return CompletableFuture.completedFuture(null);
+        };
+    }
+
+    private String[] getRouletteFrames(CasinoTargetType wonType) {
+        String template = """
+                🎡 <b>Ставки сделаны! Рулетка крутится...</b>
+                
+                <b>[ %s ]</b>
+                                   ⬆️""";
+
+        return switch (wonType) {
+            case RED -> new String[]{
+                    String.format(template, "⬛ | 🟢 | ⬛ | 🔴 | ⬛"),
+                    String.format(template, "🟢 | ⬛ | 🔴 | ⬛ | 🔴"),
+                    String.format(template, "🔴 | ⬛ | 🔴 | ⬛ | 🟢"),
+                    String.format(template, "⬛ | 🟢 | 🔴 | ⬛ | 🔴")
+            };
+            case BLACK -> new String[]{
+                    String.format(template, "🟢 | ⬛ | 🔴 | ⬛ | 🔴"),
+                    String.format(template, "⬛ | 🔴 | ⬛ | 🔴 | ⬛"),
+                    String.format(template, "🔴 | ⬛ | 🟢 | 🔴 | ⬛"),
+                    String.format(template, "🟢 | 🔴 | ⬛ | 🔴 | ⬛")
+            };
+            case ZERO -> new String[]{
+                    String.format(template, "🔴 | ⬛ | 🔴 | ⬛ | 🔴"),
+                    String.format(template, "⬛ | 🔴 | ⬛ | 🔴 | ⬛"),
+                    String.format(template, "🔴 | ⬛ | 🔴 | ⬛ | 🟢"),
+                    String.format(template, "🔴 | ⬛ | 🟢 | 🔴 | ⬛")
+            };
+        };
+    }
+
+
+    private String getEmojiForType(CasinoTargetType type) {
+        return switch (type) {
+            case RED -> "🔴 Красное";
+            case BLACK -> "⬛ Черное";
+            case ZERO -> "🟢 Зеро";
+        };
     }
 
     public Response slots(UpdateContext ctx, long bet) {
@@ -137,7 +206,7 @@ public class CasinoService {
                     b.execute(new DeleteMessage(chatId, response.messageId()));
                 }, 10000L);
 
-            }, 2000L);
+            }, 2500L);
             return CompletableFuture.completedFuture(null);
         };
     }
