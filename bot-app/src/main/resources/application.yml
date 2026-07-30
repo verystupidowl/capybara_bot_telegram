@@ -50,7 +50,13 @@ bot:
         criminal-go-work: https://masterpiecer-images.s3.yandex.net/05d24fa3704911ee91345696910b1137:upscaled
     feed: https://vk.com/photo-209917797_457245510
     fatten: https://vk.com/photo-209917797_457246187
-    tea: https://vk.com/photo-209917797_457246193
+    tea:
+      go-tea: https://vk.com/photo-209917797_457246193
+      do-tea:
+        - https://masterpiecer-images.s3.yandex.net/8b67ca703b6f11eeac4f363fac71b015:upscaled
+        - https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBJifj8or9rp9WNvuGbR_AlLg99qbTnsqbtjrrjpYBAAO9xF1h1RNwDzk&s=10
+        - https://masterpiecer-images.s3.yandex.net/5fb1b13b503c741:upscaled
+        - https://masterpiecer-images.s3.yandex.net/f43d1e5326c211ee8f0e0e0aeb14d228:upscaled
     new-level: https://vk.com/photo-209917797_457246194
     new-type: https://vk.com/photo-209917797_457246195
     start: https://hi-news.ru/wp-content/uploads/2025/07/spokoimaya-kapibara-1-e1752078102391-750x523.jpg

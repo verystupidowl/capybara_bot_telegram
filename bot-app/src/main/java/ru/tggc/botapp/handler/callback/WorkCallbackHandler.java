@@ -1,6 +1,6 @@
 package ru.tggc.botapp.handler.callback;
 
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;
@@ -19,13 +19,13 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
                                   FormatService formatService) {
     @CallbackHandle("take_from_work")
     public Response takeFromWork(@Ctx UpdateContext ctx) {
-        return ctx.send(capybaraService.takeFromWork(ctx));
+        return ctx.edit(capybaraService.takeFromWork(ctx), keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
 
     }
 
     @CallbackHandle("go_job")
     public Response goJob(@Ctx UpdateContext ctx) {
-        return ctx.send(capybaraService.goJob(ctx));
+        return ctx.edit(capybaraService.goJob(ctx));
     }
 
     @CallbackHandle("set_job_${jobType}")

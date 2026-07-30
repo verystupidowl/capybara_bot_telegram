@@ -9,4 +9,12 @@ public class KeyboardUtils {
     public static InlineKeyboardButton toMainMenuBtn(String text) {
         return new InlineKeyboardButton(text).callbackData("go_to_main");
     }
+
+    public static InlineKeyboardButton toMainMenuBtn() {
+        return toMainMenuBtn("Моя капибара");
+    }
+
+    public static InlineKeyboardButton deleteMessageBtn(String text) {
+        return new InlineKeyboardButton(text).callbackData("delete_message");
+    }
 }

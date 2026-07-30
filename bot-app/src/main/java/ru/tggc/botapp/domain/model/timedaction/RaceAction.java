@@ -23,7 +23,7 @@ public class RaceAction implements TimedAction {
     private LocalDateTime lastSpent;
 
     @Transient
-    private final Duration rechargeTime = Duration.ofMinutes(1);
+    private final Duration rechargeTime = Duration.ofMinutes(3);
 
     public RaceAction(int maxCharges) {
         this.maxCharges = maxCharges;
@@ -69,6 +69,7 @@ public class RaceAction implements TimedAction {
     }
 
     public double getStaminaPercent() {
+        refresh();
         if (charges >= maxCharges) {
             return 100;
         }

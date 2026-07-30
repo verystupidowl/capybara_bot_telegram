@@ -20,7 +20,7 @@ public class NewWorkKeyboard extends AbstractInlineKeyboardCreator<Void> {
     @Override
     public Supplier<List<List<InlineKeyboardButton>>> getRowsSupplier() {
         return () -> rows(
-                btn("Программист\uD83D\uDC68\u200D\uD83D\uDCBB", "set_job_PROGRAMMING"),
+                btn("Программист\uD83D\uDC68\u200D\uD83D\uDCBB", "set_job_IT"),
                 btn("Грабитель\uD83E\uDD77", "set_job_CRIMINAL"),
                 btn("Кассир\uD83D\uDCB5", "set_job_CASHIER"),
                 toMainMenuBtn("Моя капибара")

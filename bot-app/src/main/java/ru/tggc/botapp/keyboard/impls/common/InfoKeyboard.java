@@ -64,6 +64,10 @@ public class InfoKeyboard extends AbstractInlineKeyboardCreator<CapybaraInfoDto>
             List<InlineKeyboardButton> fight = List.of(fightBtn);
             rows.add(fight);
 
+            InlineKeyboardButton casinoBtn = btn("Казино", "casino_info");
+            List<InlineKeyboardButton> casino = List.of(casinoBtn);
+            rows.add(casino);
+
             List<InlineKeyboardButton> mainRow = List.of(toMainMenuBtn("Моя капибара"));
             rows.add(mainRow);
 

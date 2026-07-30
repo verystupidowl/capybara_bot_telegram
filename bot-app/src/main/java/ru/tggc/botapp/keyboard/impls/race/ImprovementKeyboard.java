@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static ru.tggc.botapp.keyboard.KeyboardType.IMPROVEMENTS;
+import static ru.tggc.botapp.util.KeyboardUtils.toMainMenuBtn;
 
 @Component
 public class ImprovementKeyboard extends AbstractInlineKeyboardCreator<Void> {
@@ -21,7 +22,8 @@ public class ImprovementKeyboard extends AbstractInlineKeyboardCreator<Void> {
         return () -> rows(
                 btn("Удобные ботиночки", "improve_BOOTS"),
                 btn("Вкусный арбуз", "improve_WATERMELON"),
-                btn("Антипроигрыш", "improve_ANTI_LOSE")
+                btn("Антипроигрыш", "improve_ANTI_LOSE"),
+                toMainMenuBtn("Ничего")
         );
     }
 }

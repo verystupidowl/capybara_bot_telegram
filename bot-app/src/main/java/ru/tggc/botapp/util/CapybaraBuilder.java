@@ -13,7 +13,7 @@ import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
 import ru.tggc.botapp.domain.model.enums.Type;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffHeal;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffShield;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffSpecial;

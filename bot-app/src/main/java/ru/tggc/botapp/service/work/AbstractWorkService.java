@@ -5,7 +5,7 @@ import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.BigJob;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.BigJobAction;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.exceptions.CapybaraException;

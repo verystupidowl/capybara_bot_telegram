@@ -1,7 +1,7 @@
 package ru.tggc.botapp.service;
 
 import ru.tggc.botapp.domain.model.Capybara;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 
 public interface WorkService {
 

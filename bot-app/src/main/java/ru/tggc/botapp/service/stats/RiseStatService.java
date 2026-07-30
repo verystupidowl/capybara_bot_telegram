@@ -1,5 +1,6 @@
 package ru.tggc.botapp.service.stats;
 
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,7 +38,7 @@ public class RiseStatService implements CapybaraStats<Integer> {
             SendMessage sendMessage = new SendMessage(
                     (long) capybara.getChat().getId(),
                     formatService.get(WorkMsgKey.NEW_RISE)
-            );
+            ).parseMode(ParseMode.HTML);
             Response response = Response.of(sendMessage);
             eventPublisher.publishEvent(new NewRiseEvent(response));
         }

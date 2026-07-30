@@ -24,7 +24,7 @@ import ru.tggc.botapp.domain.model.Photo;
 import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.domain.model.Work;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.domain.model.enums.fight.BuffType;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffHeal;
 import ru.tggc.botapp.domain.model.enums.fight.FightBuffShield;
@@ -63,8 +63,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static ru.tggc.telegrambotcore.util.Utils.getOrElse;
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @Service
@@ -74,7 +76,7 @@ public class CapybaraService {
     private String feedPhoto;
     @Value("${bot.photos.fatten}")
     private String fattenPhoto;
-    @Value("${bot.photos.tea}")
+    @Value("${bot.photos.tea.go-tea}")
     private String teaPhoto;
 
     private final CapybaraRepository capybaraRepository;
@@ -226,7 +228,6 @@ public class CapybaraService {
         if (!byIsWaiting.isEmpty()) {
             Tea incerlocutorTea = byIsWaiting.getFirst();
             Capybara interlocutor = incerlocutorTea.getCapybara();
-            String photo = interlocutor.getPhoto().getUrl();
             CapybaraTeaDto myDto = capybaraTeaMapper.toDto(capybara);
             CapybaraTeaDto interlocutorDto = capybaraTeaMapper.toDto(interlocutor);
 
@@ -239,18 +240,35 @@ public class CapybaraService {
             capybaraRepository.save(interlocutor);
             capybaraRepository.save(capybara);
 
-            String text1 = formatService.get(CommonMsgKey.DO_TEA, myDto.name(), interlocutorDto.name());
-            photosToReturn.add(new PhotoDto(
-                    photo,
-                    text1,
-                    ctx.chatId()
-            ));
-            String text2 = formatService.get(CommonMsgKey.DO_TEA, interlocutorDto.name(), myDto.name());
-            photosToReturn.add(new PhotoDto(
-                    capybara.getPhoto().getUrl(),
-                    text2,
-                    interlocutor.getChat().getId()
-            ));
+            if (ctx.chatId() != interlocutor.getChat().getId()) {
+                String text1 = formatService.get(CommonMsgKey.DO_TEA, myDto.name(), interlocutorDto.name());
+                String text2 = formatService.get(CommonMsgKey.DO_TEA, interlocutorDto.name(), myDto.name());
+
+                String url1 = getOrElse(capybara.getPhoto().getFileId(), Function.identity(), capybara.getPhoto().getUrl());
+                String url2 = getOrElse(interlocutor.getPhoto().getFileId(), Function.identity(), interlocutor.getPhoto().getUrl());
+
+                photosToReturn.add(new PhotoDto(
+                        url1,
+                        text2,
+                        interlocutor.getChat().getId(),
+                        keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
+                ));
+
+                photosToReturn.add(new PhotoDto(
+                        url2,
+                        text1,
+                        ctx.chatId(),
+                        keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
+                ));
+            } else {
+                String text = formatService.get(CommonMsgKey.DO_TEA_IN_CHAT, myDto.name(), interlocutorDto.name());
+                photosToReturn.add(new PhotoDto(
+                        photoService.getRandomGoTeaPhoto(),
+                        text,
+                        ctx.chatId(),
+                        keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
+                ));
+            }
 
             return photosToReturn;
         }

@@ -2,6 +2,7 @@ package ru.tggc.botapp.exceptions.handler;
 
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.User;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,27 +52,28 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
         switch (cause) {
             case CapybaraNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
-                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
+                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND)).parseMode(ParseMode.HTML);
                 message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case UserNotFoundException ex -> {
                 log.info(ex.getMessage(), chatId);
-                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND));
+                SendMessage message = new SendMessage(chatId, formatService.get(ErrorMsgKey.CAPYBARA_NOT_FOUND)).parseMode(ParseMode.HTML);
                 message.replyMarkup(keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
                 response = Response.of(message);
             }
             case CapybaraAlreadyExistsException ex -> {
                 log.info(ex.getMessage(), chatId);
-                response = Response.of(new SendMessage(chatId, formatService.get(ErrorMsgKey.ALREADY_HAVE)));
+                response = Response.of(new SendMessage(chatId, formatService.get(ErrorMsgKey.ALREADY_HAVE)).parseMode(ParseMode.HTML));
             }
             case CapybaraHasNoMoneyException ex -> {
                 log.info(ex.getMessage());
                 String messageToSend = formatService.get(ErrorMsgKey.NO_MONEY);
-                response = Response.of(new SendMessage(chatId, messageToSend));
+                response = Response.of(new SendMessage(chatId, messageToSend).parseMode(ParseMode.HTML));
             }
             case CapybaraTiredException ex -> {
-                SendMessage sm = new SendMessage(chatId, ex.getMessage());
+                SendMessage sm = new SendMessage(chatId, ex.getMessage())
+                        .parseMode(ParseMode.HTML);
                 ifPresent(ex.getMarkup(), sm::replyMarkup);
                 response = Response.of(sm);
             }
@@ -84,11 +86,11 @@ public class ExceptionHandlerImpl implements ExceptionHandler {
                 }
 
                 log.warn(ex.getMessage(), ex);
-                SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE));
+                SendMessage sm = new SendMessage(chatId, Objects.requireNonNullElse(messageToSend, DEFAULT_ERROR_MESSAGE)).parseMode(ParseMode.HTML);
                 ifPresent(ex.getMarkup(), sm::replyMarkup);
                 response = Response.of(sm);
             }
-            case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "Введи число!"));
+            case NumberFormatException ignored -> response = Response.of(new SendMessage(chatId, "<b>Введи число!<b>").parseMode(ParseMode.HTML));
             default -> {
                 log.error("Error invoking callback", cause);
                 response = ResponseBuilder.to(adminId)

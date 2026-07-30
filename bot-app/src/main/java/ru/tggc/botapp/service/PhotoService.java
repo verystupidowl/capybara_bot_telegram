@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.tggc.botapp.config.BotPhotosProperties;
 import ru.tggc.botapp.domain.model.Photo;
 import ru.tggc.botapp.domain.model.enums.ImprovementValue;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.FileDto;
 
@@ -17,6 +17,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PhotoService {
     private final BotPhotosProperties botPhotosProperties;
+
+    public String getRandomGoTeaPhoto() {
+        List<String> values = botPhotosProperties.getTea().getDoTea();
+        return values.get(RandomUtils.getRandomInt(values.size()));
+    }
 
     public Photo getRandomDefaultPhoto() {
         List<String> values = botPhotosProperties.getDefaultPhotos();
