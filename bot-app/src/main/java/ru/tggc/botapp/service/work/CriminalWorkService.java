@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.service.stats.CapybaraStatsService;
 import ru.tggc.telegrambotcore.formatter.FormatService;

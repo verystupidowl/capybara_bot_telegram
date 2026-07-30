@@ -1,7 +1,7 @@
 package ru.tggc.botapp.service.factory;
 
 import org.springframework.stereotype.Service;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.service.WorkService;
 
 import java.util.List;

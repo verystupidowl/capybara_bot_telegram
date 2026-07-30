@@ -14,7 +14,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkIndex;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 
 @Entity
@@ -37,5 +38,16 @@ public class Work {
 
     public boolean hasWork() {
         return workType != WorkType.NONE;
+    }
+
+    public WorkIndex getCurrentWorkLevel() {
+        return workType.getLevelByIndex(index);
+    }
+
+    public String getCurrentRoleLabel() {
+        if (!hasWork()) {
+            return workType.getLabel();
+        }
+        return getCurrentWorkLevel().getLabel();
     }
 }

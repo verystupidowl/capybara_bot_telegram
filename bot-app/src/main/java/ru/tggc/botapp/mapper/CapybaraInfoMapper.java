@@ -11,7 +11,7 @@ import ru.tggc.botapp.domain.dto.info.WeddingGiftInfoDto;
 import ru.tggc.botapp.domain.dto.info.WorkInfoDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.Work;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.service.TimedActionService;
 import ru.tggc.telegrambotcore.util.Utils;
 

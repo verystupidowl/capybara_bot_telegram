@@ -1,6 +1,6 @@
 package ru.tggc.botapp.handler.callback;
 
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CapybaraService;

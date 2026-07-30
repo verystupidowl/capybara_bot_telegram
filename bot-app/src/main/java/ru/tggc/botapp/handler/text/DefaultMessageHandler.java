@@ -24,28 +24,6 @@ public record DefaultMessageHandler(HistoryService historyService,
                                     RaceService raceService,
                                     AdminService adminService,
                                     CommonService commonService) {
-//    @TextHandle
-//    public Response handleDefaultMessages(@MessageParam Message message) {
-//        long chatId = message.chat().id();
-//        long userId = message.from().id();
-//        String text = message.text();
-//        UpdateContext ctx = new UpdateContext(chatId, userId, message.messageId());
-//        HistoryType historyType = (HistoryType) historyService.getFromHistory(ctx);
-//        if (historyType == null) {
-//            return null;
-//        }
-//
-//        return switch (historyType) {
-//            case CASINO_SET_BET -> casinoSetBet(ctx, text);
-//            case CHANGE_NAME -> changeName(ctx, text);
-//            case SLOTS_SET_BET -> slots(ctx, text);
-//            case START_RACE -> race(ctx, text);
-//            case BROADCAST -> broadcast(ctx, text);
-//            case BUG_REPORT -> bugReport(ctx, text);
-//            default -> null;
-//        };
-//    }
-
     @TextHandle("BUG_REPORT")
     public Response bugReport(@Ctx UpdateContext ctx, @MessageParam Message message) {
         String text = message.text();

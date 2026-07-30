@@ -3,7 +3,7 @@ package ru.tggc.botapp.mapper;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.domain.model.Capybara;
-import ru.tggc.botapp.domain.model.enums.WorkType;
+import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.service.TimedActionService;
 
@@ -29,7 +29,7 @@ public class MyCapybaraMapper extends AbstractMapper<Capybara, MyCapybaraDto> {
                 .level(capybara.getLevel().getValue())
                 .type(capybara.getLevel().getType().getLabel())
                 .stamina(capybara.getRace().getRaceAction().getStaminaPercent())
-                .job(capybara.getWork().getWorkType().getLabel())
+                .job(capybara.getWork().getCurrentRoleLabel())
                 .currency(capybara.getCurrency())
                 .wedding(weddingName)
                 .satietyLevel(capybara.getSatiety().getLevel())
