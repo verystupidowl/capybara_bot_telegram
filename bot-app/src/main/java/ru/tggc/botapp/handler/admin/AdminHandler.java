@@ -2,6 +2,7 @@ package ru.tggc.botapp.handler.admin;
 
 import ru.tggc.botapp.domain.dto.AdminStats;
 import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.msgkey.AdminMsgKey;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
@@ -53,7 +54,7 @@ public record AdminHandler(AdminService adminService,
                     keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
             );
         });
-        return ctx.send("Введите сообщение для рассылки!");
+        return ctx.send(formatService.get(AdminMsgKey.BROADCAST_START));
     }
 
     @MessageHandle(value = "Админка",
@@ -79,6 +80,6 @@ public record AdminHandler(AdminService adminService,
                           @Username String reporterUsername) {
         username = username.toLowerCase(Locale.ROOT).replace("@", "");
         adminService.blockUser(username, reason, reporterUsername);
-        return ctx.send("Пользователь " + username + " забанен по причине " + reason);
+        return ctx.send(formatService.get(AdminMsgKey.BLOCK_MESSAGE, username, reporterUsername, reason));
     }
 }

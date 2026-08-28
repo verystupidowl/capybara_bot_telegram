@@ -42,9 +42,12 @@ public record WorkCallbackHandler(CapybaraService capybaraService,
     public Response getJob(@Ctx UpdateContext ctx) {
         boolean hasWork = capybaraService.hasWork(ctx);
         if (!hasWork) {
-            return ctx.edit("Выбери работу", keyboardFactory.getKeyboardInline(KeyboardType.NEW_WORK));
+            return ctx.sendWithDelete(
+                    formatService.get(WorkMsgKey.LIST_OF_WORK),
+                    keyboardFactory.getKeyboardInline(KeyboardType.NEW_WORK)
+            );
         } else {
-            return ctx.edit("Твоя капибара уже имеет работу");
+            return ctx.edit(formatService.get(WorkMsgKey.ERROR_ALREADY_HAS_WORK));
         }
     }
 }

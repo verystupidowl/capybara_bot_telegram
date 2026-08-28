@@ -12,7 +12,6 @@ import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
-import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
@@ -126,7 +125,6 @@ public record CapybaraCallbackHandler(HistoryService historyService,
 
     @CallbackHandle("take_capybara")
     public Response takeCapybara(@Ctx UpdateContext ctx) {
-        PhotoDto photoDto = capybaraService.saveCapybara(ctx);
-        return ctx.sendWithLoader(() -> photoDto, true);
+        return ctx.sendWithLoader(() -> capybaraService.saveCapybara(ctx), true);
     }
 }

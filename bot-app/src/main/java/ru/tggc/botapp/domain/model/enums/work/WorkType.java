@@ -9,15 +9,17 @@ import java.util.function.UnaryOperator;
 @Getter
 @RequiredArgsConstructor
 public enum WorkType {
-    NONE("Безработный", new WorkIndex[0], null),
-    IT("Программист", ItIndex.values(), index -> index != 0 ? RandomUtils.getRandomInt(index * 100) + 100 : 0),
-    CASHIER("Кассир", CashierIndex.values(), index -> RandomUtils.getRandomInt(index + 10) * 200 + 1),
+    NONE("Безработный", new WorkIndex[0], _ -> 0),
+    IT("Программист", ItIndex.values(), index -> index == 0 ? 0 : (index * 70) + RandomUtils.getRandomInt(index * 40)),
+    CASHIER("Кассир", CashierIndex.values(), index -> 50 + (index * 30) + RandomUtils.getRandomInt(20)),
     CRIMINAL("Бандит", CriminalIndex.values(), index -> {
-        int randomSalary = RandomUtils.getRandomInt(index + 10) * 10 + 30;
-        if (randomSalary < 100) {
+        int bustChance = RandomUtils.getRandomInt(100);
+        if (bustChance < 35) {
             return -1;
         }
-        return randomSalary;
+        int baseLoot = 100 + (index * 50);
+        int randomBonus = RandomUtils.getRandomInt(100 + (index * 50));
+        return baseLoot + randomBonus;
     });
 
     private final String label;

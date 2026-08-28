@@ -1,6 +1,7 @@
 package ru.tggc.botapp.service.work;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.dto.StatKey;
 import ru.tggc.botapp.domain.model.BigJob;
 import ru.tggc.botapp.domain.model.Capybara;
@@ -25,6 +26,7 @@ public abstract class AbstractWorkService implements WorkService {
     private final CapybaraStatsService statsService;
 
     @Override
+    @Transactional
     public String takeFromWork(Capybara capybara) {
         Work work = capybara.getWork();
         checkHasWork(work);
@@ -39,6 +41,7 @@ public abstract class AbstractWorkService implements WorkService {
     }
 
     @Override
+    @Transactional
     public void dismissal(Capybara capybara) {
         Work work = capybara.getWork();
         checkHasWork(work);
@@ -56,6 +59,7 @@ public abstract class AbstractWorkService implements WorkService {
     }
 
     @Override
+    @Transactional
     public String setWork(Capybara capybara) {
         WorkAction workAction = new WorkAction(getWorkDuration(), getWorkCooldown());
         Work work = capybara.getWork();
@@ -69,6 +73,7 @@ public abstract class AbstractWorkService implements WorkService {
     }
 
     @Override
+    @Transactional
     public void goWork(Capybara capybara) {
         Work work = capybara.getWork();
         checkHasWork(work);

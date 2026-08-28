@@ -38,7 +38,7 @@ public class AdminService {
         long userCount = userRepository.count();
         long blockedUsers = blockRepository.count();
         long capybaraCount = capybaraRepository.count();
-        String messageToSend = formatService.get(AdminMsgKey.ADMIN_STATS, userCount, blockedUsers, capybaraCount);
+        String messageToSend = formatService.get(AdminMsgKey.STATS, userCount, blockedUsers, capybaraCount);
 
         return new AdminStats(
                 userCount,
@@ -59,7 +59,7 @@ public class AdminService {
                 //ignore
             }
         })).thenRun(() -> {
-            String message = formatService.get(AdminMsgKey.ADMIN_BROADCAST_ENDED, chatIds.size());
+            String message = formatService.get(AdminMsgKey.BROADCAST_ENDED, chatIds.size());
             telegramBotSender.send(Response.of(new SendMessage(chatId, message)));
         });
     }

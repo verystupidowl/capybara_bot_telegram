@@ -86,7 +86,7 @@ public class CasinoService {
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         boolean isWin = (wonType == userGuess);
-        long winAmount = isWin ? userGuess.getCalculateWin().apply(betAmount) : 0;
+        long winAmount = isWin ? userGuess.calculate(betAmount) : 0;
 
         if (isWin) {
             capybara.increaseMoney((int) winAmount);

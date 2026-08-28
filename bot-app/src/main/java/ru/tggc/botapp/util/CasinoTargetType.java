@@ -11,10 +11,14 @@ public enum CasinoTargetType {
     ZERO("зеро", betAmount -> betAmount * 36);
 
     private final String label;
-    private final UnaryOperator<Long> calculateWin;
+    private final UnaryOperator<Long> winCalculator;
 
-    CasinoTargetType(String label, UnaryOperator<Long> calculateWin) {
+    CasinoTargetType(String label, UnaryOperator<Long> winCalculator) {
         this.label = label;
-        this.calculateWin = calculateWin;
+        this.winCalculator = winCalculator;
+    }
+
+    public Long calculate(Long amount) {
+        return winCalculator.apply(amount);
     }
 }

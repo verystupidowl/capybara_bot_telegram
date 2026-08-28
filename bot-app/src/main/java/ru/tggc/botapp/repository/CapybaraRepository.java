@@ -44,7 +44,7 @@ public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @No
 
     @EntityGraph(attributePaths = {
             "level", "level.type",
-            "work", "work.workType", "work.workAction",
+            "work", "work.workType", "work.workAction", "work.bigJob", "work.bigJob.bigJobAction",
             "happiness",
             "satiety",
             "spouse",
