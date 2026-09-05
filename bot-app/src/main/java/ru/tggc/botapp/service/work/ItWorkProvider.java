@@ -9,11 +9,11 @@ import ru.tggc.telegrambotcore.formatter.FormatService;
 import java.time.Duration;
 
 @Service
-public class ItWorkService extends AbstractWorkService {
+public class ItWorkProvider extends AbstractWorkProvider {
     @Value("${bot.photos.work.setter.it}")
     private String photo;
 
-    public ItWorkService(FormatService formatService, CapybaraStatsService statsService) {
+    public ItWorkProvider(FormatService formatService, CapybaraStatsService statsService) {
         super(formatService, statsService);
     }
 

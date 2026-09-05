@@ -11,7 +11,7 @@ import ru.tggc.botapp.domain.model.timedaction.BigJobAction;
 import ru.tggc.botapp.domain.model.timedaction.WorkAction;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
-import ru.tggc.botapp.service.WorkService;
+import ru.tggc.botapp.service.WorkProvider;
 import ru.tggc.botapp.service.stats.CapybaraStatsService;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 
@@ -21,7 +21,7 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 
 @RequiredArgsConstructor
-public abstract class AbstractWorkService implements WorkService {
+public abstract class AbstractWorkProvider implements WorkProvider {
     private final FormatService formatService;
     private final CapybaraStatsService statsService;
 

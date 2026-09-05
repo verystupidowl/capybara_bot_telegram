@@ -3,7 +3,7 @@ package ru.tggc.botapp.handler.text;
 import com.pengrad.telegrambot.model.Message;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.AdminService;
-import ru.tggc.botapp.service.CapybaraService;
+import ru.tggc.botapp.service.capybara.ServiceFacade;
 import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.service.CommonService;
 import ru.tggc.botapp.service.RaceService;
@@ -20,14 +20,14 @@ import ru.tggc.telegrambotcore.service.HistoryService;
 public record DefaultMessageHandler(HistoryService historyService,
                                     CasinoService casinoService,
                                     KeyboardFactory keyboardFactory,
-                                    CapybaraService capybaraService,
+                                    ServiceFacade serviceFacade,
                                     RaceService raceService,
                                     AdminService adminService,
                                     CommonService commonService) {
     @TextHandle("BUG_REPORT")
     public Response bugReport(@Ctx UpdateContext ctx, @MessageParam Message message) {
         String text = message.text();
-        return ctx.send(commonService.bugReport(ctx, text));
+        return commonService.bugReport(ctx, text);
     }
 
     @TextHandle("BROADCAST")
@@ -57,8 +57,7 @@ public record DefaultMessageHandler(HistoryService historyService,
     @TextHandle("CHANGE_NAME")
     public Response changeName(@Ctx UpdateContext ctx, @MessageParam Message message) {
         String text = message.text();
-        capybaraService.changeName(ctx, text);
-        return ctx.send("Твою капибару теперь зовут " + text + ", отличное имя!", keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
+        return serviceFacade.changeName(ctx, text);
     }
 
     @TextHandle(value = "CASINO_SET_BET", deleteAfterHandle = false)

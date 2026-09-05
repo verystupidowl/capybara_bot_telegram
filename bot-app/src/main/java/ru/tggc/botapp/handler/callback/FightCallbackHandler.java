@@ -1,13 +1,12 @@
 package ru.tggc.botapp.handler.callback;
 
 import com.pengrad.telegrambot.model.CallbackQuery;
-import ru.tggc.botapp.domain.dto.FightCapybaraDto;
 import ru.tggc.botapp.domain.model.enums.fight.BuffType;
 import ru.tggc.botapp.fight.enums.PlayerActionType;
 import ru.tggc.botapp.formatter.fight.FightFormatService;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.bossfight.BossFightService;
+import ru.tggc.botapp.service.capybara.ServiceFacade;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.CallbackParam;
@@ -21,7 +20,7 @@ import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
 public record FightCallbackHandler(BossFightService bossFightService,
-                                   CapybaraService capybaraService,
+                                   ServiceFacade serviceFacade,
                                    KeyboardFactory keyboardFactory,
                                    FightFormatService fightFormatService) {
     @CallbackHandle("fight_action_${action}")
@@ -29,16 +28,12 @@ public record FightCallbackHandler(BossFightService bossFightService,
                               @Username String username,
                               @CallbackParam CallbackQuery query,
                               @HandleParam("action") PlayerActionType actionType) {
-        return bossFightService.registerAction(query, new UserDto(ctx.userId(), username), actionType);
+        return bossFightService.registerAction(query, new UserDto(ctx.userId(), username, username), actionType);
     }
 
     @CallbackHandle("fight_info")
     public Response fightInfo(@Ctx UpdateContext ctx) {
-        FightCapybaraDto fightInfo = capybaraService.getFightInfo(ctx);
-        return ctx.edit(
-                fightFormatService.getFightInfo(fightInfo),
-                keyboardFactory.getKeyboardInline(KeyboardType.FIGHT_INFO, fightInfo)
-        );
+        return serviceFacade.getFightInfo(ctx);
     }
 
     @CallbackHandle("join_fight")
@@ -82,7 +77,6 @@ public record FightCallbackHandler(BossFightService bossFightService,
     public Response buyBuff(@Ctx UpdateContext ctx,
                             @HandleParam("buff") String buff,
                             @HandleParam("buffType") BuffType buffType) {
-        capybaraService.buyBuff(ctx, buff, buffType);
-        return ctx.edit("u bought a buff", keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
+        return serviceFacade.buyBuff(ctx, buff, buffType);
     }
 }

@@ -26,6 +26,8 @@ public enum CommonMsgKey implements MsgKey {
     GREETINGS("capybara.greetings"),
     START_CHANGE_NAME("capybara.start.change-name"),
     START_CHANGE_PHOTO("capybara.start.change-photo"),
+    NAME_CHANGED("capybara.name-changed"),
+    PHOTO_CHANGED("capybara.photo-changed"),
     DELETED("capybara.deleted"),
     ALREADY_DOING("capybara.error.already-doing"),
 

@@ -2,8 +2,7 @@ package ru.tggc.botapp.handler.photo;
 
 import com.pengrad.telegrambot.model.Message;
 import lombok.extern.slf4j.Slf4j;
-import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.CapybaraService;
+import ru.tggc.botapp.service.capybara.ServiceFacade;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.PhotoHandle;
@@ -11,22 +10,16 @@ import ru.tggc.telegrambotcore.annotation.params.Ctx;
 import ru.tggc.telegrambotcore.annotation.params.MessageParam;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
-import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 import ru.tggc.telegrambotcore.service.HistoryService;
 
 @Slf4j
 @BotHandler
-public record PhotoHandler(CapybaraService capybaraService,
-                           HistoryService historyService,
-                           KeyboardFactory keyboardFactory) {
+public record PhotoHandler(ServiceFacade serviceFacade,
+                           HistoryService historyService) {
     @PhotoHandle("update_photo")
     public Response updatePhoto(@Ctx UpdateContext ctx, @MessageParam Message message) {
         if (historyService.isInHistory(ctx, HistoryType.CHANGE_PHOTO)) {
-            capybaraService.setPhoto(ctx, message);
-            return ctx.send(
-                    "Ты поменял фото своей капибары",
-                    keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU)
-            ).andThen(ctx.cleanPromptAndInput());
+            return serviceFacade.setPhoto(ctx, message);
         }
         return null;
     }

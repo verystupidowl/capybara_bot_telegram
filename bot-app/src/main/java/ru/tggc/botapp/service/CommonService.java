@@ -13,6 +13,7 @@ import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.repository.CapybaraRepository;
 import ru.tggc.botapp.util.HistoryType;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
+import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
@@ -33,25 +34,26 @@ public class CommonService {
 
     private final FormatService formatService;
 
-    public PhotoDto start(Long chatId) {
-        return new PhotoDto(
+    public Response start(UpdateContext ctx) {
+        PhotoDto photoDto = new PhotoDto(
                 startPhoto,
                 formatService.get(CommonMsgKey.START_MESSAGE),
-                chatId
+                ctx.chatId()
         );
+        return ctx.send(photoDto);
     }
 
-    public String startBugReport(UpdateContext ctx) {
+    public Response startBugReport(UpdateContext ctx) {
         historyService.setHistory(ctx, HistoryType.BUG_REPORT, prev -> {
             throw new CapybaraException(
                     formatService.get(CommonMsgKey.ALREADY_DOING, prev.state().getLabel()),
                     keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE)
             );
         });
-        return formatService.get(CommonMsgKey.START_BUG_REPORT);
+        return ctx.send(formatService.get(CommonMsgKey.START_BUG_REPORT));
     }
 
-    public String bugReport(UpdateContext ctx, String text) {
+    public Response bugReport(UpdateContext ctx, String text) {
         Capybara capybara = capybaraRepository.findCapybaraWithUserByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(() -> new CapybaraException("У тебя нет капибары"));
         User user = capybara.getUser();
@@ -68,6 +70,6 @@ public class CommonService {
 
         telegramBotSender.sendToAdmin(messageToAdmin);
 
-        return formatService.get(CommonMsgKey.BUG_REPORT_THANKS);
+        return ctx.send(formatService.get(CommonMsgKey.BUG_REPORT_THANKS));
     }
 }

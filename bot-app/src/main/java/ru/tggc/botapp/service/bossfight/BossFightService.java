@@ -26,9 +26,8 @@ import ru.tggc.botapp.fight.event.boss.BossActionResult;
 import ru.tggc.botapp.formatter.msgkey.FightEventMsgKey;
 import ru.tggc.botapp.formatter.msgkey.FightMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.provider.BossFightProvider;
-import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.TimedActionService;
+import ru.tggc.botapp.service.capybara.CapybaraQueryService;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
@@ -52,8 +51,8 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 @Slf4j
 @RequiredArgsConstructor
 public class BossFightService {
+    private final CapybaraQueryService queryService;
     private final BossFightProvider provider;
-    private final CapybaraService capybaraService;
     private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService userRateLimiterService;
     private final TimedActionService timedActionService;
@@ -64,7 +63,7 @@ public class BossFightService {
     private BossFightService self;
 
     public String joinFight(UpdateContext ctx, String username) {
-        Capybara capybara = capybaraService.getFightCapybara(ctx.chatId(), ctx.userId());
+        Capybara capybara = queryService.getFightCapybara(ctx);
         throwIf(!capybara.getFight().getFightAction().canPerform(), () -> {
             String message = "u will can join only in " + timedActionService.getStatus(capybara.getFight().getFightAction());
             return new CapybaraException(message);
@@ -90,7 +89,7 @@ public class BossFightService {
 
         Set<UserDto> users = provider.popPreparedUsers(chatId);
         users.forEach(user -> {
-            Capybara fightCapybara = capybaraService.getFightCapybara(chatId, user.userId());
+            Capybara fightCapybara = queryService.getFightCapybara(chatId, user.userId());
             BossFightState.PlayerStats playerStates = createPlayerStates(fightCapybara);
             BossFightState.PlayerState ps = BossFightState.PlayerState.builder()
                     .userId(user.userId())
@@ -256,7 +255,7 @@ public class BossFightService {
             fight.getPlayers().values().stream()
                     .map(BossFightState.PlayerState::getUserId)
                     .forEach(userId -> {
-                        Capybara capybara = capybaraService.getFightCapybara(chatId, userId);
+                        Capybara capybara = queryService.getFightCapybara(chatId, userId);
                         capybara.setCurrency(capybara.getCurrency() + cost);
                         capybara.getFight().setWins(capybara.getFight().getWins() + 1);
                     });
@@ -264,7 +263,7 @@ public class BossFightService {
             fight.getPlayers().values().stream()
                     .map(BossFightState.PlayerState::getUserId)
                     .forEach(userId -> {
-                        Capybara capybara = capybaraService.getFightCapybara(chatId, userId);
+                        Capybara capybara = queryService.getFightCapybara(chatId, userId);
                         capybara.getFight().setLoses(capybara.getFight().getLoses() + 1);
                     });
         }

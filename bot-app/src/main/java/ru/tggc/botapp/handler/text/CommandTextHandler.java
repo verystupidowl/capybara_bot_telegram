@@ -2,7 +2,7 @@ package ru.tggc.botapp.handler.text;
 
 import com.pengrad.telegrambot.model.Message;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.CapybaraService;
+import ru.tggc.botapp.service.capybara.ServiceFacade;
 import ru.tggc.botapp.service.CasinoService;
 import ru.tggc.botapp.service.bossfight.BossFightService;
 import ru.tggc.botapp.util.HandlerUtils;
@@ -19,15 +19,15 @@ import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 @BotHandler
-public record CommandTextHandler(CapybaraService capybaraService,
+public record CommandTextHandler(ServiceFacade serviceFacade,
                                  CasinoService casinoService,
                                  BossFightService bossFightService,
                                  KeyboardFactory keyboardFactory,
                                  FormatService formatService) {
     @MessageHandle("уволиться с работы")
     public Response dismissal(@Ctx UpdateContext ctx) {
-        capybaraService.dismissal(ctx);
-        return ctx.send("Твоя капибара уволилась с работы");
+        return serviceFacade.dismissal(ctx);
+
     }
 
     @MessageHandle("казино")
@@ -57,9 +57,7 @@ public record CommandTextHandler(CapybaraService capybaraService,
                                   @Ctx UpdateContext ctx) {
         String targetUsername = HandlerUtils.getTargetUsername(username, message);
         Integer intAmount = Integer.parseInt(amount);
-        capybaraService.transferMoney(ctx, targetUsername, intAmount); //todo доработать
-
-        return ctx.send("ok");
+        return serviceFacade.transferMoney(ctx, targetUsername, intAmount); //todo доработать
     }
 
     @MessageHandle("test join")

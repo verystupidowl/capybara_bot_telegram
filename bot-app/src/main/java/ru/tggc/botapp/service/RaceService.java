@@ -28,6 +28,7 @@ import ru.tggc.botapp.exceptions.CapybaraTiredException;
 import ru.tggc.botapp.formatter.msgkey.RaceMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.repository.RaceRequestRepository;
+import ru.tggc.botapp.service.capybara.CapybaraQueryService;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.botapp.service.stats.CapybaraStatsService;
@@ -53,7 +54,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     private static final Random random = new Random();
 
     private final RaceRequestRepository raceRequestRepository;
-    private final CapybaraService capybaraService;
     private final TimedActionService timedActionService;
     private final KeyboardFactory keyboardFactory;
     private final UserRateLimiterService rateLimiterService;
@@ -61,12 +61,12 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     private final PhotoService photoService;
     private final CapybaraStatsService statsService;
     private final FormatService formatService;
+    private final CapybaraQueryService queryService;
 
     @Setter(onMethod_ = {@Autowired, @Lazy})
     private RaceService self;
 
-    public RaceService(CapybaraService capybaraService,
-                       UserServiceImpl userService,
+    public RaceService(UserServiceImpl userService,
                        RaceRequestRepository raceRequestRepository,
                        TimedActionService timedActionService,
                        KeyboardFactory keyboardFactory,
@@ -74,10 +74,10 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
                        TelegramBotSender telegramBotService,
                        PhotoService photoService,
                        CapybaraStatsService statsService,
-                       FormatService formatService) {
-        super(capybaraService, userService);
+                       FormatService formatService,
+                       CapybaraQueryService queryService) {
+        super(userService, queryService);
         this.raceRequestRepository = raceRequestRepository;
-        this.capybaraService = capybaraService;
         this.timedActionService = timedActionService;
         this.keyboardFactory = keyboardFactory;
         this.rateLimiterService = rateLimiterService;
@@ -85,18 +85,19 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         this.photoService = photoService;
         this.statsService = statsService;
         this.formatService = formatService;
+        this.queryService = queryService;
     }
 
     public Response acceptRace(UpdateContext ctx) {
-        Capybara capybara = capybaraService.getRaceCapybara(ctx);
+        Capybara capybara = queryService.getRaceCapybara(ctx);
         return respondRace(capybara, ctx, true);
     }
 
     public Response refuseRace(UpdateContext ctx) {
-        Capybara capybara = capybaraService.getCapybaraByContext(ctx, fallback());
+        Capybara capybara = queryService.getCapybaraByContext(ctx, fallback());
 
         Response response = respondRace(capybara, ctx, false);
-        capybaraService.save(capybara);
+        queryService.save(capybara);
         return response;
     }
 
@@ -205,8 +206,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finishRace(RaceStepContext ctx) {
-        Capybara c1 = capybaraService.getCapybara(ctx.c1.id);
-        Capybara c2 = capybaraService.getCapybara(ctx.c2.id);
+        Capybara c1 = queryService.getCapybara(ctx.c1.id);
+        Capybara c2 = queryService.getCapybara(ctx.c2.id);
 
         if (ctx.percent1 > ctx.percent2) {
             self.getResults(c1, c2);
@@ -226,8 +227,8 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         c1.getImprovement().setImprovementValue(ImprovementValue.NONE);
         c2.getImprovement().setImprovementValue(ImprovementValue.NONE);
 
-        capybaraService.save(c1);
-        capybaraService.save(c2);
+        queryService.save(c1);
+        queryService.save(c2);
     }
 
     @Transactional
@@ -321,7 +322,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public void startRace(UpdateContext ctx) {
-        Capybara capybara = capybaraService.getRaceCapybara(ctx);
+        Capybara capybara = queryService.getRaceCapybara(ctx);
         self.checkStamina(capybara);
     }
 
