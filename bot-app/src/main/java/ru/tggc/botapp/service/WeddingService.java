@@ -11,6 +11,7 @@ import ru.tggc.botapp.domain.model.enums.WeddingStatus;
 import ru.tggc.botapp.domain.model.timedaction.WeddingGift;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.repository.WeddingRequestRepository;
+import ru.tggc.botapp.service.capybara.CapybaraQueryService;
 import ru.tggc.botapp.service.factory.AbstractRequestService;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
@@ -24,22 +25,22 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 @Service
 public class WeddingService extends AbstractRequestService<WeddingRequest> {
     private final WeddingRequestRepository weddingRequestRepository;
-    private final CapybaraService capybaraService;
+    private final CapybaraQueryService queryService;
 
     @Value("${bot.photos.wedding}")
     private String weddingPhoto;
 
-    public WeddingService(CapybaraService capybaraService,
-                          UserServiceImpl userService,
-                          WeddingRequestRepository weddingRequestRepository) {
-        super(capybaraService, userService);
+    public WeddingService(UserServiceImpl userService,
+                          WeddingRequestRepository weddingRequestRepository,
+                          CapybaraQueryService queryService) {
+        super(userService, queryService);
         this.weddingRequestRepository = weddingRequestRepository;
-        this.capybaraService = capybaraService;
+        this.queryService = queryService;
     }
 
     @Transactional
     public PhotoDto respondWedding(UpdateContext ctx, boolean accept) {
-        Capybara accepter = capybaraService.getCapybaraByContext(ctx);
+        Capybara accepter = queryService.getCapybaraByContext(ctx);
         WeddingRequest request = weddingRequestRepository.findByTargetIdAndStatusAndType(
                         accepter.getId(),
                         WeddingStatus.PENDING,
@@ -47,7 +48,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId());
+        Capybara proposer = queryService.getCapybara(request.getProposer().getId());
 
         String caption;
         if (accept) {
@@ -66,8 +67,8 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
         }
 
         weddingRequestRepository.save(request);
-        capybaraService.save(proposer);
-        capybaraService.save(accepter);
+        queryService.save(proposer);
+        queryService.save(accepter);
         return PhotoDto.builder()
                 .url(weddingPhoto)
                 .caption(caption)
@@ -77,7 +78,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
 
     @Transactional
     public String respondUnWedding(UpdateContext ctx, boolean accept) {
-        Capybara accepter = capybaraService.getCapybaraByContext(ctx);
+        Capybara accepter = queryService.getCapybaraByContext(ctx);
         WeddingRequest request = weddingRequestRepository.findByTargetIdAndStatusAndType(
                         accepter.getId(),
                         WeddingStatus.PENDING,
@@ -85,7 +86,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
                 )
                 .orElseThrow(() -> new CapybaraException("No pending wedding proposal!"));
 
-        Capybara proposer = capybaraService.getCapybara(request.getProposer().getId());
+        Capybara proposer = queryService.getCapybara(request.getProposer().getId());
 
         String message;
         if (accept) {
@@ -106,7 +107,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
     }
 
     public String getWeddingGift(UpdateContext ctx) {
-        Capybara capybara = capybaraService.getCapybaraByContext(ctx);
+        Capybara capybara = queryService.getCapybaraByContext(ctx);
 
         WeddingGift weddingGift = capybara.getWeddingGift();
         throwIf(
@@ -117,7 +118,7 @@ public class WeddingService extends AbstractRequestService<WeddingRequest> {
         capybara.increaseMoney(weddingGift.getAmount());
         weddingGift.setLastTime(LocalDateTime.now());
 
-        capybaraService.save(capybara);
+        queryService.save(capybara);
 
         return "Вы получили " + weddingGift.getAmount() + " арбузных долек";
     }

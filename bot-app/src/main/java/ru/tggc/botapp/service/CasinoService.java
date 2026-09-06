@@ -19,10 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.exceptions.CapybaraHasNoMoneyException;
-import ru.tggc.botapp.exceptions.CapybaraNotFoundException;
 import ru.tggc.botapp.formatter.msgkey.CasinoMsgKey;
 import ru.tggc.botapp.formatter.msgkey.ErrorMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
+import ru.tggc.botapp.service.capybara.CapybaraQueryService;
 import ru.tggc.botapp.util.CasinoTargetType;
 import ru.tggc.botapp.util.RandomUtils;
 import ru.tggc.botapp.util.SlotResult;
@@ -46,10 +46,10 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 @RequiredArgsConstructor
 public class CasinoService {
     private final HistoryService historyService;
-    private final CapybaraService capybaraService;
     private final TelegramBotSender sender;
     private final FormatService formatService;
     private final KeyboardFactory keyboardFactory;
+    private final CapybaraQueryService queryService;
 
     @Value("${bot.photos.casino.win}")
     private String winPhoto;
@@ -75,8 +75,7 @@ public class CasinoService {
     @Transactional
     public Response casino(UpdateContext ctx, CasinoTargetType userGuess) {
         long chatId = ctx.chatId();
-        Capybara capybara = capybaraService.findCapybara(ctx)
-                .orElseThrow(CapybaraNotFoundException::new);
+        Capybara capybara = queryService.getCapybaraByContext(ctx);
 
         Long betAmount = historyService.getData(ctx, "bet")
                 .map(Long::parseLong)
@@ -86,14 +85,14 @@ public class CasinoService {
 
         CasinoTargetType wonType = RandomUtils.randomWeighted();
         boolean isWin = (wonType == userGuess);
-        long winAmount = isWin ? userGuess.getCalculateWin().apply(betAmount) : 0;
+        long winAmount = isWin ? userGuess.calculate(betAmount) : 0;
 
         if (isWin) {
             capybara.increaseMoney((int) winAmount);
         } else {
             capybara.decreaseMoney(Math.toIntExact(betAmount));
         }
-        capybaraService.save(capybara);
+        queryService.save(capybara);
 
         String[] frames = getRouletteFrames(wonType);
 
@@ -171,8 +170,7 @@ public class CasinoService {
     }
 
     public Response slots(UpdateContext ctx, long bet) {
-        Capybara capybara = capybaraService.findCapybara(ctx)
-                .orElseThrow(CapybaraNotFoundException::new);
+        Capybara capybara = queryService.getCapybaraByContext(ctx);
         checkBet(bet, capybara);
 
         return bot -> {
@@ -216,7 +214,7 @@ public class CasinoService {
         long win = (long) (bet * slotResult.multiplier());
         long currency = capybara.getCurrency() - bet + win;
         capybara.setCurrency(currency);
-        capybaraService.save(capybara);
+        queryService.save(capybara);
         return win;
     }
 

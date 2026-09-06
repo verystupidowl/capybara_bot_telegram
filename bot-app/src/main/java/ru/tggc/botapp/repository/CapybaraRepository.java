@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.tggc.botapp.domain.model.Capybara;
-import ru.tggc.botapp.domain.model.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +33,6 @@ public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @No
 
     int countByChatId(Long chatId);
 
-    String user(User user);
-
     @EntityGraph(attributePaths = {
             "photo",
             "level"
@@ -44,7 +41,7 @@ public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @No
 
     @EntityGraph(attributePaths = {
             "level", "level.type",
-            "work", "work.workType", "work.workAction",
+            "work", "work.workType", "work.workAction", "work.bigJob", "work.bigJob.bigJobAction",
             "happiness",
             "satiety",
             "spouse",

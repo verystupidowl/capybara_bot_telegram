@@ -1,18 +1,13 @@
 package ru.tggc.botapp.handler.callback;
 
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
-import ru.tggc.botapp.domain.dto.MyCapybaraDto;
-import ru.tggc.botapp.domain.dto.info.CapybaraInfoDto;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.formatter.common.CapybaraFormatter;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
-import ru.tggc.botapp.service.CapybaraService;
-import ru.tggc.botapp.service.CasinoService;
+import ru.tggc.botapp.service.capybara.ServiceFacade;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
-import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
@@ -24,10 +19,8 @@ import static ru.tggc.botapp.util.HistoryType.CHANGE_PHOTO;
 
 @BotHandler
 public record CapybaraCallbackHandler(HistoryService historyService,
-                                      CapybaraService capybaraService,
+                                      ServiceFacade serviceFacade,
                                       KeyboardFactory keyboardFactory,
-                                      CasinoService casinoService,
-                                      CapybaraFormatter capybaraFormatter,
                                       FormatService formatService) {
     @CallbackHandle("set_name")
     public Response setName(@Ctx UpdateContext ctx) {
@@ -55,35 +48,32 @@ public record CapybaraCallbackHandler(HistoryService historyService,
 
     @CallbackHandle("exactly_delete")
     public Response deleteCapybara(@Ctx UpdateContext ctx) {
-        capybaraService.deleteCapybara(ctx);
-        String message = formatService.get(CommonMsgKey.DELETED);
-        return ctx.send(message);
+        return serviceFacade.deleteCapybara(ctx);
     }
 
     @CallbackHandle("take_from_tea")
     public Response takeFromTea(@Ctx UpdateContext ctx) {
-        capybaraService.takeFromTea(ctx);
-        return ctx.edit("Ты забрал капибару с чаепития", keyboardFactory.getKeyboardInline(KeyboardType.TO_MAIN_MENU));
+        return serviceFacade.takeFromTea(ctx);
     }
 
     @CallbackHandle("go_tea")
     public Response goTea(@Ctx UpdateContext ctx) {
-        return ctx.sendWithDelete(capybaraService.goTea(ctx));
+        return serviceFacade.goTea(ctx);
     }
 
     @CallbackHandle("fatten")
     public Response fatten(@Ctx UpdateContext ctx) {
-        return ctx.edit(capybaraService.fatten(ctx));
+        return serviceFacade.fatten(ctx);
     }
 
     @CallbackHandle("feed")
     public Response feed(@Ctx UpdateContext ctx) {
-        return ctx.edit(capybaraService.feed(ctx));
+        return serviceFacade.feed(ctx);
     }
 
     @CallbackHandle("make_happy")
     public Response makeHappy(@Ctx UpdateContext ctx) {
-        return ctx.edit(capybaraService.makeHappy(ctx));
+        return serviceFacade.makeHappy(ctx);
     }
 
     @CallbackHandle("feed_fatten")
@@ -94,8 +84,7 @@ public record CapybaraCallbackHandler(HistoryService historyService,
 
     @CallbackHandle("set_default_photo")
     public Response setDefaultPhoto(@Ctx UpdateContext ctx) {
-        String response = capybaraService.setDefaultPhoto(ctx);
-        return ctx.edit(response);
+        return serviceFacade.setDefaultPhoto(ctx);
     }
 
     @CallbackHandle("not_change")
@@ -106,27 +95,16 @@ public record CapybaraCallbackHandler(HistoryService historyService,
 
     @CallbackHandle("go_to_main")
     public Response sendGoToMainMessage(@Ctx UpdateContext ctx) {
-        MyCapybaraDto capybara = capybaraService.getMyCapybara(ctx);
-        historyService.removeFromHistory(ctx);
-        return ctx.edit(
-                capybara.photo(),
-                capybaraFormatter.getMyCapybara(capybara),
-                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
-        );
+        return serviceFacade.getMyCapybara(ctx);
     }
 
     @CallbackHandle("info")
     public Response sendInfoMessage(@Ctx UpdateContext ctx) {
-        CapybaraInfoDto info = capybaraService.getInfo(ctx);
-        return ctx.edit(
-                capybaraFormatter.getCapybaraInfo(info),
-                keyboardFactory.getKeyboardInline(KeyboardType.INFO, info)
-        );
+        return serviceFacade.getInfo(ctx);
     }
 
     @CallbackHandle("take_capybara")
     public Response takeCapybara(@Ctx UpdateContext ctx) {
-        PhotoDto photoDto = capybaraService.saveCapybara(ctx);
-        return ctx.sendWithLoader(() -> photoDto, true);
+        return serviceFacade.saveCapybara(ctx);
     }
 }

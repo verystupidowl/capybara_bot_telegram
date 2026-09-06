@@ -3,7 +3,7 @@ package ru.tggc.botapp.service;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.enums.work.WorkType;
 
-public interface WorkService {
+public interface WorkProvider {
 
     String setWork(Capybara capybara);
 

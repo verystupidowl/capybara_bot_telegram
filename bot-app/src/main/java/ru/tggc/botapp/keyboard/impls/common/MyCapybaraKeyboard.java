@@ -79,7 +79,7 @@ public class MyCapybaraKeyboard extends AbstractInlineKeyboardCreator<MyCapybara
                 jobs = new ArrayList<>();
                 jobs.add(job);
             } else if (Boolean.FALSE.equals(capybara.hasWork())) {
-                InlineKeyboardButton getJob = btn("Устроиться на работу", "get_job");
+                InlineKeyboardButton getJob = btn("Устроиться на работу", "get_works");
                 jobs = new ArrayList<>();
                 jobs.add(getJob);
             }

@@ -3,7 +3,7 @@ package ru.tggc.botapp.keyboard.impls.fight;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import org.springframework.stereotype.Component;
 import ru.tggc.botapp.domain.dto.FightCapybaraDto;
-import ru.tggc.botapp.provider.BossFightProvider;
+import ru.tggc.botapp.service.bossfight.BossFightProvider;
 import ru.tggc.telegrambotcore.keyboard.AbstractInlineKeyboardCreator;
 
 import java.util.ArrayList;

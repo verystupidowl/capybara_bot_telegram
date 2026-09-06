@@ -13,14 +13,14 @@ import ru.tggc.telegrambotcore.formatter.FormatService;
 import java.time.Duration;
 
 @Service
-public class CriminalWorkService extends AbstractWorkService {
+public class CriminalWorkProvider extends AbstractWorkProvider {
     @Value("${bot.photos.work.setter.criminal}")
     private String photo;
 
     private final FormatService formatService;
     private final CapybaraStatsService statsService;
 
-    public CriminalWorkService(FormatService formatService, CapybaraStatsService statsService) {
+    public CriminalWorkProvider(FormatService formatService, CapybaraStatsService statsService) {
         super(formatService, statsService);
         this.formatService = formatService;
         this.statsService = statsService;

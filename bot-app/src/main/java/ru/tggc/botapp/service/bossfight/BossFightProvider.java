@@ -1,4 +1,4 @@
-package ru.tggc.botapp.provider;
+package ru.tggc.botapp.service.bossfight;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -31,7 +31,7 @@ public class BossFightProvider {
     }
 
     public String joinFight(Long chatId, Long userId, String username) {
-        UserDto userDto = new UserDto(userId, username);
+        UserDto userDto = new UserDto(userId, username, username);
         Set<UserDto> users = preparingFights.get(chatId, _ -> new HashSet<>());
         Objects.requireNonNull(users).add(userDto);
         preparingFights.put(chatId, users);

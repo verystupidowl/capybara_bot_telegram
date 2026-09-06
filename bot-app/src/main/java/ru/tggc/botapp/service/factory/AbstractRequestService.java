@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.User;
 import ru.tggc.botapp.exceptions.CapybaraException;
-import ru.tggc.botapp.service.CapybaraService;
 import ru.tggc.botapp.service.RequestService;
+import ru.tggc.botapp.service.capybara.CapybaraQueryService;
 import ru.tggc.botapp.service.impl.UserServiceImpl;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 
@@ -13,14 +13,14 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
 @RequiredArgsConstructor
 public abstract class AbstractRequestService<Rq> implements RequestService {
-    private final CapybaraService capybaraService;
     private final UserServiceImpl userService;
+    private final CapybaraQueryService queryService;
 
     @Override
     public void sendRequest(String opponentUsername, UpdateContext ctx) {
-        Capybara challenger = capybaraService.getCapybaraByContext(ctx);
+        Capybara challenger = queryService.getCapybaraByContext(ctx);
         User user = userService.getUserByUsername(opponentUsername);
-        Capybara opponent = capybaraService.getCapybaraByUserId(user.getId(), ctx.chatId());
+        Capybara opponent = queryService.getCapybaraByUserId(user.getId(), ctx.chatId());
         throwIf(challenger.equals(opponent), () -> new CapybaraException("u cant challenge urself!"));
 
         challenge(challenger, opponent);

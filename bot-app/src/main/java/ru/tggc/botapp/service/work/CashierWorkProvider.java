@@ -9,11 +9,11 @@ import ru.tggc.telegrambotcore.formatter.FormatService;
 import java.time.Duration;
 
 @Service
-public class CashierWorkService extends AbstractWorkService {
+public class CashierWorkProvider extends AbstractWorkProvider {
     @Value("${bot.photos.work.setter.cashier}")
     private String photo;
 
-    public CashierWorkService(FormatService formatService, CapybaraStatsService statsService) {
+    public CashierWorkProvider(FormatService formatService, CapybaraStatsService statsService) {
         super(formatService, statsService);
     }
 
