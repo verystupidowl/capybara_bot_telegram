@@ -4,13 +4,14 @@ import ru.tggc.botapp.service.WeddingService;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CallbackHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
+import ru.tggc.telegrambotcore.dto.Access;
 import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 @BotHandler
 public record WeddingHandler(WeddingService weddingService) {
-    @CallbackHandle("accept_wedding")
+    @CallbackHandle(value = "accept_wedding", access = Access.ANYONE)
     public Response acceptWedding(@Ctx UpdateContext ctx) {
         PhotoDto response = weddingService.respondWedding(ctx, true);
         return ctx.send(response);

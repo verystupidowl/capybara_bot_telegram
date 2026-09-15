@@ -1,12 +1,15 @@
 package ru.tggc.botapp.handler.text;
 
+import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.formatter.common.CapybaraFormatter;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
+import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.CommonService;
 import ru.tggc.botapp.service.capybara.ServiceFacade;
 import ru.tggc.telegrambotcore.annotation.handle.BotHandler;
 import ru.tggc.telegrambotcore.annotation.handle.CommandHandle;
 import ru.tggc.telegrambotcore.annotation.params.Ctx;
+import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.Response;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 import ru.tggc.telegrambotcore.formatter.FormatService;
@@ -30,7 +33,14 @@ public record CommandHandler(ServiceFacade serviceFacade,
 
     @CommandHandle("my_capybara")
     public Response myCapybara(@Ctx UpdateContext ctx) {
-        return serviceFacade.getMyCapybara(ctx);
+        MyCapybaraDto capybara = serviceFacade.getMyCapybara(ctx);
+        var photoDto = new PhotoDto(
+                capybara.photo(),
+                capybaraFormatter.getMyCapybara(capybara),
+                ctx.chatId(),
+                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
+        );
+        return ctx.send(photoDto);
     }
 
     @CommandHandle(value = "top_capybar", canPrivate = true)

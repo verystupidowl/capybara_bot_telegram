@@ -38,8 +38,9 @@ public class CriminalWorkProvider extends AbstractWorkProvider {
             statsService.modify(capybara, StatKey.RISE, 1);
             return formatService.get(WorkMsgKey.TAKE_FROM_WORK, salary);
         } else {
-            capybara.increaseMoney((int) (capybara.getCurrency() / 10));
-            return formatService.get(WorkMsgKey.BUSTED, capybara.getCurrency() / 10);
+            long fine = capybara.getCurrency() / 10;
+            capybara.setCurrency(capybara.getCurrency() - fine);
+            return formatService.get(WorkMsgKey.BUSTED, fine);
         }
     }
 

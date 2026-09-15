@@ -15,9 +15,9 @@ import java.util.function.Consumer;
 public class HandlerUtils {
 
     public String getTargetUsername(String username, Message message) {
-        if (username == null && message.replyToMessage() != null) {
+        if (message.replyToMessage() != null) {
             return message.replyToMessage().from().username();
-        } else if (username == null && message.replyToMessage() == null) {
+        } else if (message.replyToMessage() == null) {
             throw new CapybaraException("Ответь на сообщение");
         }
         return username;

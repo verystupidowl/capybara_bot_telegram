@@ -1,7 +1,9 @@
 package ru.tggc.botapp.handler.callback;
 
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
+import ru.tggc.botapp.domain.dto.MyCapybaraDto;
 import ru.tggc.botapp.exceptions.CapybaraException;
+import ru.tggc.botapp.formatter.common.CapybaraFormatter;
 import ru.tggc.botapp.formatter.msgkey.CommonMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
 import ru.tggc.botapp.service.capybara.ServiceFacade;
@@ -21,7 +23,8 @@ import static ru.tggc.botapp.util.HistoryType.CHANGE_PHOTO;
 public record CapybaraCallbackHandler(HistoryService historyService,
                                       ServiceFacade serviceFacade,
                                       KeyboardFactory keyboardFactory,
-                                      FormatService formatService) {
+                                      FormatService formatService,
+                                      CapybaraFormatter capybaraFormatter) {
     @CallbackHandle("set_name")
     public Response setName(@Ctx UpdateContext ctx) {
         InlineKeyboardMarkup markup = keyboardFactory.getKeyboardInline(KeyboardType.NOT_CHANGE);
@@ -95,7 +98,12 @@ public record CapybaraCallbackHandler(HistoryService historyService,
 
     @CallbackHandle("go_to_main")
     public Response sendGoToMainMessage(@Ctx UpdateContext ctx) {
-        return serviceFacade.getMyCapybara(ctx);
+        MyCapybaraDto capybara = serviceFacade.getMyCapybara(ctx);
+        return ctx.edit(
+                capybara.photo(),
+                capybaraFormatter.getMyCapybara(capybara),
+                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
+        );
     }
 
     @CallbackHandle("info")

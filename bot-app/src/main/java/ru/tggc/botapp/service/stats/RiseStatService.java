@@ -24,13 +24,13 @@ public class RiseStatService implements CapybaraStats<Integer> {
     @Transactional
     public void modify(Capybara capybara, Integer value) {
         Work work = capybara.getWork();
-        work.setRise(work.getRise() + 1);
+        work.setRise(work.getRise() + value);
         checkRise(capybara);
     }
 
     private void checkRise(Capybara capybara) {
         Work work = capybara.getWork();
-        if (work.getRise() >= 10 * (work.getIndex() + 1) && work.getIndex() <= 5) {
+        if (work.getRise() >= 10 * (work.getIndex() + 1) && work.getWorkType().hasNewLevel(work.getIndex())) {
             work.setRise(1);
             work.setIndex(work.getIndex() + 1);
             capybara.increaseMoney(150);

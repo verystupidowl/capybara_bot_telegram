@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - logicalFilePath: db/changelog/001-baseline.yaml
+  - changeSet:
+      id: 001-initial-schema
+      author: capybara
+      comment: Initial PostgreSQL schema matching the existing JPA model. Existing databases require explicit verified baseline adoption.
+      preConditions:
+        - onFail: HALT
+        - onError: HALT
+        - onFailMessage: "Schema is not empty. Do not recreate tables. Follow docs/database.md to verify and adopt the baseline."
+        - dbms:
+            type: postgresql
+        - sqlCheck:
+            expectedResult: "0"
+            sql: >-
+              SELECT count(*) FROM information_schema.tables
+              WHERE table_schema = current_schema()
+              AND table_type = 'BASE TABLE'
+              AND lower(table_name) NOT IN ('databasechangelog', 'databasechangeloglock')
+      changes:
+        - sqlFile:
+            path: sql/001-initial-schema.sql
+            relativeToChangelogFile: true
+            encoding: UTF-8
+            splitStatements: true
+            stripComments: true
+      # No destructive automatic rollback for the initial data-bearing schema.

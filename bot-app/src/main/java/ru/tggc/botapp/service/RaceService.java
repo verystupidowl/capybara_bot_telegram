@@ -44,7 +44,6 @@ import ru.tggc.telegrambotcore.service.UserRateLimiterService;
 import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 
@@ -94,7 +93,7 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
     }
 
     public Response refuseRace(UpdateContext ctx) {
-        Capybara capybara = queryService.getCapybaraByContext(ctx, fallback());
+        Capybara capybara = queryService.getCapybaraByContext(ctx, this::fallback);
 
         Response response = respondRace(capybara, ctx, false);
         queryService.save(capybara);
@@ -285,14 +284,6 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         });
     }
 
-    private String getStatus(RaceAction raceAction) {
-        return timedActionService.getStatus(raceAction);
-    }
-
-    private String getWinningEmoji(int percent1, int percent2) {
-        return percent1 > percent2 ? "🥇" : "";
-    }
-
     @Override
     protected void saveRequest(Capybara challenger, Capybara opponent, RaceRequest request) {
         challenger.setRaceRequest(request);
@@ -326,11 +317,17 @@ public class RaceService extends AbstractRequestService<RaceRequest> {
         self.checkStamina(capybara);
     }
 
-    private Supplier<RuntimeException> fallback() {
-        return () -> {
-            String message = formatService.get(RaceMsgKey.OPPONENT_HAS_NO_CAPY);
-            return new CapybaraException(message, keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
-        };
+    private String getStatus(RaceAction raceAction) {
+        return timedActionService.getStatus(raceAction);
+    }
+
+    private String getWinningEmoji(int percent1, int percent2) {
+        return percent1 > percent2 ? "🥇" : "";
+    }
+
+    private RuntimeException fallback() {
+        String message = formatService.get(RaceMsgKey.OPPONENT_HAS_NO_CAPY);
+        return new CapybaraException(message, keyboardFactory.getKeyboardInline(KeyboardType.TAKE_CAPYBARA));
     }
 
     public static class RaceStepContext {

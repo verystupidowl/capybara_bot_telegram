@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.tggc.botapp.domain.model.Capybara;
+import ru.tggc.botapp.exceptions.CapybaraException;
 import ru.tggc.botapp.domain.model.enums.work.WorkType;
 import ru.tggc.botapp.formatter.msgkey.WorkMsgKey;
 import ru.tggc.botapp.keyboard.KeyboardType;
@@ -28,7 +29,8 @@ public class CapybaraWorkService {
 
     @Transactional
     public String takeFromWork(UpdateContext ctx) {
-        Capybara capybara = queryService.getCapybaraByContext(ctx);
+        Capybara capybara = queryService.getWorkCapybaraForUpdate(ctx);
+        requireJob(capybara);
         WorkProvider workProvider = workServiceFactory.getWorkProvider(capybara.getWork().getWorkType());
         String messages = workProvider.takeFromWork(capybara);
         queryService.save(capybara);
@@ -37,7 +39,8 @@ public class CapybaraWorkService {
 
     @Transactional
     public PhotoDto goJob(UpdateContext ctx) {
-        Capybara capybara = queryService.getCapybaraByContext(ctx);
+        Capybara capybara = queryService.getWorkCapybaraForUpdate(ctx);
+        requireJob(capybara);
         WorkType workType = capybara.getWork().getWorkType();
         WorkProvider workProvider = workServiceFactory.getWorkProvider(workType);
         workProvider.goWork(capybara);
@@ -53,7 +56,10 @@ public class CapybaraWorkService {
 
     @Transactional
     public String setJob(UpdateContext ctx, WorkType workType) {
-        Capybara capybara = queryService.getCapybaraByContext(ctx);
+        if (workType == null || workType == WorkType.NONE) {
+            throw new CapybaraException(formatService.get(WorkMsgKey.ERROR_HAS_NO_WORK));
+        }
+        Capybara capybara = queryService.getWorkCapybaraForUpdate(ctx);
 
         WorkProvider workProvider = workServiceFactory.getWorkProvider(workType);
         String photoUrl = workProvider.setWork(capybara);
@@ -67,10 +73,21 @@ public class CapybaraWorkService {
         return workCapybara.getWork().hasWork();
     }
 
+    @Transactional
     public void dismissal(UpdateContext ctx) {
-        Capybara capybara = queryService.getCapybaraByContext(ctx);
+        Capybara capybara = queryService.getWorkCapybaraForUpdate(ctx);
+        requireJob(capybara);
+        if (capybara.getWork().getWorkAction().isInProgress()) {
+            throw new CapybaraException("Сначала забери капибару с работы");
+        }
         WorkProvider workProvider = workServiceFactory.getWorkProvider(capybara.getWork().getWorkType());
         workProvider.dismissal(capybara);
         queryService.save(capybara);
+    }
+
+    private void requireJob(Capybara capybara) {
+        if (capybara.getWork() == null || !capybara.getWork().hasWork()) {
+            throw new CapybaraException(formatService.get(WorkMsgKey.ERROR_HAS_NO_WORK));
+        }
     }
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import ru.tggc.botapp.domain.dto.TopCapybaraDto;
 import ru.tggc.botapp.domain.model.Capybara;
 import ru.tggc.botapp.domain.model.timedaction.Tea;
@@ -14,6 +15,7 @@ import ru.tggc.telegrambotcore.dto.PhotoDto;
 import ru.tggc.telegrambotcore.dto.UpdateContext;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -25,21 +27,30 @@ import static ru.tggc.telegrambotcore.util.Utils.throwIf;
 public class CapybaraQueryService {
     private final CapybaraRepository repository;
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Capybara getWorkCapybaraForUpdate(UpdateContext ctx) {
+        return repository.findForWorkUpdate(ctx.userId(), ctx.chatId())
+                .orElseThrow(CapybaraNotFoundException::new);
+    }
+
     @Transactional(readOnly = true)
     public Capybara getCapybara(Long id) {
         return repository.findById(id)
                 .orElseThrow(CapybaraNotFoundException::new);
     }
 
+    @Transactional(readOnly = true)
     public Capybara getCapybaraByUserId(long userId, long chatId) {
         return repository.findMyCapybaraByUserIdAndChatId(userId, chatId)
                 .orElseThrow(CapybaraNotFoundException::new);
     }
 
+    @Transactional(readOnly = true)
     public Capybara getCapybaraByContext(UpdateContext ctx) {
         return getCapybaraByUserId(ctx.userId(), ctx.chatId());
     }
 
+    @Transactional(readOnly = true)
     public Capybara getCapybaraByContext(UpdateContext ctx, Supplier<RuntimeException> supplier) {
         return repository.findMyCapybaraByUserIdAndChatId(ctx.userId(), ctx.chatId())
                 .orElseThrow(supplier);
@@ -90,6 +101,7 @@ public class CapybaraQueryService {
                 .orElseThrow(CapybaraNotFoundException::new);
     }
 
+    @Transactional(readOnly = true)
     public Capybara getFightCapybara(long chatId, long userId) {
         return repository.findFightCapybaraByChatIdAndUserId(chatId, userId)
                 .orElseThrow(CapybaraNotFoundException::new);
@@ -103,10 +115,10 @@ public class CapybaraQueryService {
 
     @Transactional
     public void updateTeas(Tea... teas) {
-        for (Tea tea : teas) {
+        Arrays.stream(teas).forEach(tea -> {
             tea.setWaiting(false);
             tea.setLastTea(LocalDateTime.now());
-        }
+        });
     }
 
     @Transactional(readOnly = true)
@@ -131,6 +143,7 @@ public class CapybaraQueryService {
                 .toList();
     }
 
+    @Transactional
     public void saveAll(List<Capybara> sourcecapybara) {
         repository.saveAll(sourcecapybara);
     }

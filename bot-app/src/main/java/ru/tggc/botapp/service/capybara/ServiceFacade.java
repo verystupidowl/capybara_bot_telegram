@@ -42,14 +42,9 @@ public class ServiceFacade {
     private final FightFormatService fightFormatService;
     private final HistoryService historyService;
 
-    public Response getMyCapybara(UpdateContext ctx) {
+    public MyCapybaraDto getMyCapybara(UpdateContext ctx) {
         historyService.removeFromHistory(ctx);
-        MyCapybaraDto capybara = profileService.getMyCapybara(ctx);
-        return ctx.edit(
-                capybara.photo(),
-                capybaraFormatter.getMyCapybara(capybara),
-                keyboardFactory.getKeyboardInline(KeyboardType.MY_CAPYBARA, capybara)
-        );
+        return profileService.getMyCapybara(ctx);
     }
 
     public Response getInfo(UpdateContext ctx) {

@@ -4,6 +4,10 @@ import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Repository;
 import ru.tggc.botapp.domain.model.Capybara;
 
@@ -12,6 +16,10 @@ import java.util.Optional;
 
 @Repository
 public interface CapybaraRepository extends JpaRepository<@NonNull Capybara, @NonNull Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Capybara c where c.user.id = :userId and c.chat.id = :chatId")
+    Optional<Capybara> findForWorkUpdate(@Param("userId") long userId, @Param("chatId") long chatId);
 
     @NotNull
     @EntityGraph(attributePaths = {

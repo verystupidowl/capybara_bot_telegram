@@ -1,6 +1,7 @@
 package ru.tggc.botapp.domain.model.timedaction;
 
 import lombok.Data;
+import jakarta.persistence.Embeddable;
 import lombok.NoArgsConstructor;
 import ru.tggc.botapp.exceptions.CapybaraException;
 
@@ -8,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 @Data
+@Embeddable
 @NoArgsConstructor
 public class WorkAction implements LongTimedAction {
     private Instant lastTaken;
@@ -55,25 +57,27 @@ public class WorkAction implements LongTimedAction {
     public Duration timeUntilFinish() {
         if (!isInProgress()) return Duration.ZERO;
         Instant end = startTime.plus(duration);
-        return Duration.between(Instant.now(), end);
+        Duration remaining = Duration.between(Instant.now(), end);
+        return remaining.isNegative() ? Duration.ZERO : remaining;
     }
 
     @Override
     public boolean canTakeFrom() {
-        return isInProgress() && Instant.now().isAfter(startTime.plus(duration));
+        return isInProgress() && duration != null && !Instant.now().isBefore(startTime.plus(duration));
     }
 
     @Override
     public boolean canPerform() {
+        if (duration == null || cooldown == null) return false;
         if (isInProgress()) return false;
         if (lastTaken == null) return true;
-        return Instant.now().isAfter(lastTaken.plus(cooldown));
+        return !Instant.now().isBefore(lastTaken.plus(cooldown));
     }
 
     @Override
     public Duration timeUntilNext() {
         if (isInProgress()) return timeUntilFinish();
-        if (lastTaken == null) return Duration.ZERO;
+        if (lastTaken == null || cooldown == null) return Duration.ZERO;
         Instant nextAvailable = lastTaken.plus(cooldown);
         return Duration.between(Instant.now(), nextAvailable).isNegative()
                 ? Duration.ZERO

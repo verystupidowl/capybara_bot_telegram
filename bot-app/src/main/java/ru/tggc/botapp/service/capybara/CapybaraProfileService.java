@@ -31,6 +31,8 @@ import ru.tggc.telegrambotcore.formatter.FormatService;
 import ru.tggc.telegrambotcore.keyboard.KeyboardFactory;
 
 import java.util.List;
+import java.util.Arrays;
+import java.util.Comparator;
 
 @Slf4j
 @Service
@@ -80,21 +82,27 @@ public class CapybaraProfileService {
         Capybara capybara = queryService.getCapybaraByContext(ctx);
         capybara.decreaseMoney(50);
         if (TelegramMessageUtils.hasPhoto(message)) {
-            PhotoSize photoSize = message.photo()[0];
+            PhotoSize photoSize = largestPhoto(message.photo());
             Photo photo = capybara.getPhoto();
             photo.setFileId(photoSize.fileId());
             photo.setFileSize(photoSize.fileSize());
-            photo.setFileUniqueId(photo.getFileUniqueId());
+            photo.setFileUniqueId(photoSize.fileUniqueId());
             photo.setType(FileType.PHOTO);
         } else if (message.animation() != null) {
             Animation animation = message.animation();
             Photo photo = capybara.getPhoto();
             photo.setFileId(animation.fileId());
             photo.setFileSize(animation.fileSize());
-            photo.setFileUniqueId(photo.getFileUniqueId());
+            photo.setFileUniqueId(animation.fileUniqueId());
             photo.setType(FileType.DOC);
         }
         queryService.save(capybara);
+    }
+
+    static PhotoSize largestPhoto(PhotoSize[] photos) {
+        return Arrays.stream(photos)
+                .max(Comparator.comparingLong((PhotoSize p) -> (long) p.width() * p.height()))
+                .orElseThrow(() -> new IllegalArgumentException("Message has no photo sizes"));
     }
 
     @Transactional
